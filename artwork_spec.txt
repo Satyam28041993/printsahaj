@@ -1,0 +1,1039 @@
+=== Artwork-Verification-System-Product-Spec.pdf (34 pages) ===
+
+--- Page 1 ---
+Artwork & Plate Verification
+System — Product
+Specification
+Working name: (TBD — see §14)
+Owner: Satyam Singh
+Date: 16 August 2026
+Platforms: Flutter (Android APK + Web). Multi-tenant
+SaaS — sellable to any printer.
+Status: Specification. Pre-build.
+1. The Problem (validated with a
+real job)
+Test case: CGM2026-27-1326 — DAILY KALONJI
+100ML LABEL, Daily Pharma, printed by Prakruti
+Graphics.
+Three documents exist for this one job, in three
+different places:
+
+
+--- Page 2 ---
+Document
+Where it
+lives
+What it says
+Client-
+approved
+artwork +
+job sheet
+Email
+attachment,
+17-Apr-26
+6 COL +
+VARNISH, colours:
+Yellow, Magenta,
+Cyan, Black, Gold,
+P 7483 C. Label
+114×76mm.
+Chromo. Flexo.
+Vendor
+separation
+PDF
+Email
+attachment,
+20-Apr-26
+6 pages: Cyan,
+Magenta, Yellow,
+Black, 617, 7483
+Vendor
+composite
+proof
+Same email
+Header: Col: 6
+The error: approval sheet declares 7 units (6 colours
++ varnish). Separation set contains 6. The varnish
+plate is absent from the set.
+Why the human eye misses it: the declaration and
+the plate set are never on screen at the same time.
+This is not a spelling error, not a design error — it is a
+cross-document consistency failure. No amount of
+careful reading of any single document catches it.
+Second finding from the same job: the mandatory
+declaration "DAILY PHARMA" (manufacturer name)
+
+
+--- Page 3 ---
+exists on only one plate — P 7483 C. If that unit
+misprints, misregisters, or runs dry, the label loses a
+legally mandatory field while looking otherwise
+perfect.
+Third finding: the job sheet has printed sign-off fields
+— Checked by QC Dept, Approved by Pre-Press
+Incharge, Approved by Manufacturing Incharge. All
+three are blank. Rev: 01, Date: 00-00-00 . The
+process is designed but not enforced, because paper
+cannot enforce anything.
+Also note the vendor's own disclaimer printed on
+their proof: "…shall not be responsible beyond that,
+Customers are advised to check plates carefully
+before printing." Liability is explicitly transferred to the
+printer, who has no systematic tool to discharge it.
+The core insight
+This product is not a spell checker. Spell checking is
+one small module. The product is a cross-document
+consistency engine that holds the job spec, the
+approved artwork, the separations, and the printed
+sample in one place and compares them against each
+other.
+2. Product Scope — Three Steps
+
+
+--- Page 4 ---
+STEP 1                    STEP 2             
+STEP 3
+Incoming artwork    →     Separation vs 
+spec    →    Press-side check
+(client → printer)        (vendor → 
+printer)         (plates on machine)
+Content & compliance      Plate integrity    
+Plate presence
+Before quoting            Before plate 
+making        Before/during run
+Saves: rework cycles      Saves: plate cost 
++        Saves: reject run
+                                  machine 
+time
+Build priority: Step 2 → Step 1 → Step 3. Reasoning
+in §12.
+3. STEP 1 — Incoming Artwork
+Check
+Trigger: client sends artwork. Runs before quoting or
+before sending to plate vendor.
+Input: PDF (preferred, has text layer) or AI/EPS/high-
+res image.
+3.1 Text-layer checks (deterministic)
+
+
+--- Page 5 ---
+Extract all text with position, font, size, colour
+Spell check — English + Indian languages
+(Devanagari, Gujarati, Tamil, Telugu, Kannada,
+Bengali, Marathi). Custom dictionary per customer
+(brand names, product names, ingredient terms)
+Number sanity — decimal placement, unit
+consistency (mg/g/ml), nutritional table arithmetic
+where derivable
+Font size floor — Legal Metrology prescribes
+minimum heights for declarations. Flag any
+mandatory field below the threshold in the active
+rule pack
+Duplicate / contradictory fields — two different
+MRPs, two net quantities, mismatched batch
+formats
+3.2 Compliance checks (rule-pack driven —
+see §7)
+Applies the rule pack selected for the job's product
+category and jurisdiction.
+Example — FSSAI packaged food pack, applied to the
+Kalonji label:
+Requirement
+Found
+Status
+Manufacturer
+name + full
+Daily Pharma, 111 First
+Floor, Parvati
+✓
+
+
+--- Page 6 ---
+Requirement
+Found
+Status
+address
+Industrial Premises,
+Lower Parel, Mumbai-
+400013
+FSSAI licence
+number
+11522004000066
+✓
+Net quantity
+100 ml
+✓
+MRP field with
+"incl. of all
+taxes"
+present, blank
+(variable data)
+✓ field
+present
+Best before /
+shelf life
+24 months from
+packing
+✓
+Veg / non-veg
+mark
+green square symbol
+✓
+Customer
+care contact
+7977201178 + email
+✓
+Batch number
+field
+present, blank
+(variable data)
+✓ field
+present
+Country of
+origin
+PRODUCT OF INDIA
+✓
+Ingredients list
+present
+✓
+
+
+--- Page 7 ---
+Requirement
+Found
+Status
+Nutritional
+information
+present
+✓
+3.3 Variable-data field handling
+Batch No., Pkd., MRP are blank boxes filled at print
+time. The system must:
+Recognise them as declared variable fields, not
+missing content
+Let the user mark regions as variable during job
+setup
+Exclude them from "missing text" errors but
+include them in field-presence checks
+3.4 Barcode / QR checks
+See §8.
+3.5 Output
+A query list the printer sends back to the client — not
+a pass/fail. Each item: what was checked, what was
+found, what needs confirmation.
+
+
+--- Page 8 ---
+4. STEP 2 — Separation vs
+Approved Spec (CORE MODULE)
+This is the highest-value module and the one to build
+first.
+Inputs:
+1. Job spec (digitised approval sheet — §4.1)
+2. Client-approved composite artwork PDF
+3. Vendor separation PDF (multi-page, one page per
+plate)
+4. Vendor composite proof PDF (optional but useful
+— carries a header line)
+4.1 Digitised job sheet
+The existing paper job sheet is already a structured
+spec. It becomes the system's source of truth:
+Job ID / SEQ No.
+File name             : DAILY KALONJI 100 
+ML
+Customer              : DAILY PHARMA
+Date                  : 17/04/2026
+No. of colours        : 6 COL + VARNISH
+Colour list           : Yellow, Magenta, 
+Cyan, Black, Gold, P 7483 C
+Paper                 : Chromo
+Label size            : 114 mm x 76 mm
+Print type            : Flexo
+
+
+--- Page 9 ---
+Revision              : 01
+Checked by Pre-Press  : (name + timestamp)
+Checked by QC Dept    : (name + timestamp)
+Approved by Pre-Press Incharge : (name + 
+timestamp)
+Approved by Mfg Incharge       : (name + 
+timestamp)
+Everything downstream compares against this record.
+4.2 Deterministic checks (machine is 100%
+certain)
+A. Plate count
+Declared units (incl. varnish/coating) vs 
+separation page count
+On the test job: declared 7 (6 col + varnish), found 6
+→ FAIL. This is the flagship catch.
+B. Colour name mapping
+Vendor uses production names; the job sheet uses
+commercial names. A per-customer mapping table
+resolves them:
+Job
+sheet
+Separation
+header
+Mapped
+Cyan
+Cyan
+✓
+
+
+--- Page 10 ---
+Job
+sheet
+Separation
+header
+Mapped
+Magenta
+Magenta
+✓
+Yellow
+Yellow
+✓
+Black
+Black
+✓
+Gold
+617
+via mapping
+table
+P 7483 C
+7483
+via mapping
+table
+Varnish
+—
+MISSING
+Unmapped names are flagged for the user to resolve
+once; the mapping is then remembered.
+C. Text completeness — composite vs merged
+separations
+Extract text from the approved composite. Extract text
+from every separation page and merge. Compare.
+Text in composite but in no separation → content
+will not print
+Text in a separation but not in composite →
+unapproved content added
+D. Per-plate text map + single-plate dependency
+warning
+
+
+--- Page 11 ---
+Build a table showing which text sits on which plate.
+Then flag any mandatory declaration that exists on
+only one plate.
+On the test job:
+Black: ingredients, nutritional facts, usage, storage,
+address, Lic. No., 100 ml, PRODUCT OF INDIA
+617 (Gold): duplicate text set — DAILY KALONJI,
+table structures, Batch/Pkd/MRP labels
+7483 (Green): "DAILY PHARMA" only → single-
+plate dependency on a mandatory field → WARN
+C/M/Y: images only, no text
+E. Geometry validation
+From the separation header ( PLATE : 1.14MM LABEL
+SIZE : 76.000 X 114MM CLY: 238.125MM PAPER
+SIZE : 169MM ):
+Check
+Formula
+Test job
+Cylinder repeat is
+a whole tooth
+count
+CLY ÷
+3.175
+238.125 ÷
+3.175 = 75 ✓
+Repeat
+accommodates
+label rows
+(label
+height ×
+rows) +
+gaps ≤ CLY
+(114×2)=228,
+gap 10.125 ✓
+
+
+--- Page 12 ---
+Check
+Formula
+Test job
+Paper width
+accommodates
+label columns
+(label width
+× cols) +
+trims ≤
+paper
+(76×2)=152 ≤
+169 ✓
+Label size
+matches job sheet
+header vs
+spec
+114×76 ✓
+Plate thickness
+recorded
+present
+1.14mm ✓
+F. Header consistency across pages
+Job code, date, and Col: count must be identical on
+every separation page and on the composite. A
+mismatch means pages from two different revisions
+have been mixed — a silent and expensive failure.
+G. Version lock
+Hash the client-approved file at approval time. Every
+later comparison runs against that hash. If the vendor
+worked from a different file, the hash mismatch
+surfaces it immediately. This alone prevents the
+single most expensive error class in the industry:
+correct-looking plates made from the wrong
+revision.
+H. Ups / imposition count
+Composite shows 4-up (2×2). Verify each separation
+carries the same repeat count and positions.
+
+
+--- Page 13 ---
+4.3 Rule-based flags (machine asks, human
+answers)
+Same text appearing on two plates — intentional
+overprint/trap, or duplication error?
+Mandatory declaration on a single spot plate
+Instruction present in the approval email/sheet
+with no corresponding plate (varnish)
+Registration mark presence and consistency
+across all pages
+Element position drift between plates beyond
+tolerance
+4.4 Out of scope for automation (human
+judgement)
+Trap and overprint intent
+Colour choice, shade approval, ink sequence
+Aesthetic decisions
+The report must state these are not checked, so no
+one assumes they were.
+5. STEP 3 — Press-Side Check
+Context constraint that drives the design: the
+machine is stopped, an operator and QC are waiting,
+and the whole check must complete in under ~60
+
+
+--- Page 14 ---
+seconds. A flatbed scanner at the press is not
+practical. Mobile camera is a core requirement, not
+an optional phase.
+5.1 Why this is technically easier than
+general OCR
+The system already knows what the text should be.
+This is constrained verification, not open-ended
+reading. Expected text acts as a dictionary and
+expected layout gives positional priors — accuracy is
+far higher than general-purpose OCR on the same
+image.
+5.2 Scope reduction after Step 2
+If Step 2 passed, content is already verified. Step 3
+only needs to answer: are all plates mounted and
+printing?
+On the test job that means checking:
+Gold elements present (top border, 100ml band,
+"Kalonji Oil" underline)
+Green "DAILY PHARMA" present
+Varnish window applied
+All four CMYK images present
+Registration marks aligned
+This is spot-check, not full-text OCR — which is
+what makes the 60-second budget achievable.
+
+
+--- Page 15 ---
+5.3 Capture design
+Corner alignment guides on screen — user
+frames the label. Enables
+homography/perspective correction so the
+captured image is warped into the approved
+artwork's geometry
+Burst capture — take 3–5 frames, auto-select
+sharpest. Invisible to the user
+Pre-loaded job — the approved PDF must be
+selected during machine setup, before the press
+stops. At the press: photo only
+Works on a stopped press with a sample pulled
+onto the inspection table (flat, reasonable light) —
+not on a moving web
+5.4 Output must never be PASS/FAIL
+3 areas need your eyes:
+  ⚠  Gold plate — "Kalonji Oil" underline 
+not detected
+  ⚠  MRP zone — low confidence, check 
+manually
+  ⚠  Green plate — "DAILY PHARMA" faint
+  47 other elements matched  ✓
+Reasoning: this converts a 200-word manual read
+into looking at 3 specific places. It keeps the human as
+
+
+--- Page 16 ---
+the decision-maker, which is both operationally
+correct and the right liability posture (§10).
+5.5 Offline requirement
+Press floors have poor connectivity. Step 3 must work
+fully offline with the job pre-downloaded, syncing
+results when connection returns.
+6. Additional Modules (beyond the
+three steps)
+These are what turn a tool into a product a printer will
+pay monthly for.
+6.1 Digital sign-off & audit trail — HIGH
+PRIORITY
+Replaces the blank paper sign-off boxes. Each stage
+records who approved, what file version, timestamp,
+device. Immutable log.
+Why this matters commercially: it converts the
+vendor's liability disclaimer from a threat into a
+defence. When a dispute happens, the printer has a
+record.
+6.2 Revision management
+
+
+--- Page 17 ---
+Rev 01, 02, 03… with diff between revisions. Answers
+"what changed since last time?" — currently answered
+by memory.
+6.3 Customer approval portal
+Client receives a link, views artwork, approves or
+comments. Approval is captured with hash +
+timestamp. Removes the email chain entirely.
+6.4 Job library & re-order verification
+Repeat orders are common. Store every approved job.
+On re-order, diff the new file against the last approved
+version — usually only MRP or batch format changed.
+Turns a full review into a 10-second diff.
+6.5 Reports
+Exportable PDF per job: what was checked, results,
+who signed off, file hashes. Attach to the job bag.
+Send to client. Use in disputes.
+6.6 Braille inspection (Phase 3)
+Required for pharma exports to the EU. Detection, dot
+spacing, decoded value. Only relevant if pharma
+export customers are targeted.
+6.7 Font size verification
+
+
+--- Page 18 ---
+Legal Metrology prescribes minimum heights for
+specified declarations. Measure actual rendered
+height in the PDF against the rule pack threshold.
+6.8 Colour / plate ink sequence record
+Not colour approval (needs spectrophotometer), but
+recording the declared sequence and flagging
+deviation from the job sheet.
+6.9 Ink coverage estimate (nice-to-have)
+Per-plate coverage percentage from separations.
+Useful for costing — and links naturally to the
+calculator tools discussed separately.
+6.10 Multi-language declaration check
+Indian labels often carry declarations in multiple
+languages. Verify each required language block is
+present per the rule pack.
+7. Compliance Rule Packs — How
+Norms Actually Work
+This is the most important architectural decision in
+the product.
+7.1 The principle
+
+
+--- Page 19 ---
+The application does not know any law. It knows
+how to apply a rule pack.
+Rules are never hardcoded. They are versioned JSON
+documents fetched from the server. When a
+regulation changes, a new rule pack is published —
+every client gets it immediately, with no app update,
+no Play Store release, no per-customer deployment.
+7.2 Rule pack structure
+{
+  "pack_id": "fssai-packaged-food",
+  "version": "3.1",
+  "jurisdiction": "IN",
+  "category": "packaged_food",
+  "effective_from": "2026-04-01",
+  "source_reference": "FSSAI Labelling & 
+Display Regulations",
+  "last_verified": "2026-08-01",
+  "verified_by": "internal",
+  "disclaimer": "Checklist aid. Not legal 
+certification.",
+  "rules": [
+    {
+      "id": "mfr_name_address",
+      "label": "Manufacturer name and 
+complete address",
+      "type": "field_presence",
+      "severity": "mandatory",
+      "detection": ["regex", 
+"layout_region", "manual_confirm"]
+
+
+--- Page 20 ---
+    },
+    {
+      "id": "fssai_licence",
+      "label": "FSSAI licence number",
+      "type": "pattern",
+      "pattern": "^[0-9]{14}$",
+      "severity": "mandatory"
+    },
+    {
+      "id": "net_quantity",
+      "label": "Net quantity declaration",
+      "type": "field_presence",
+      "severity": "mandatory",
+      "min_font_height_mm": 1.0
+    }
+  ]
+}
+7.3 Pack library (build progressively)
+Pack
+Priority
+Notes
+Legal Metrology —
+packaged
+commodities
+1st
+Applies to nearly
+every retail pack.
+Broadest reuse.
+FSSAI — packaged
+food
+2nd
+Highest volume
+category
+Cosmetics
+3rd
+
+
+--- Page 21 ---
+Pack
+Priority
+Notes
+Pharma / drug
+labelling
+4th
+Most complex,
+highest value
+Liquor — state-
+wise
+5th
+Every state
+differs. Separate
+pack per state.
+Plastic / EPR
+marking
+6th
+Export destination
+packs (EU, US,
+GCC)
+Later
+7.4 How a pack is selected for a job
+During job setup: product category + jurisdiction (+
+state, where relevant). The system loads the matching
+pack and shows which pack version was used in the
+report.
+7.5 Three honest limits — must be visible in
+the product
+1. The app is not a compliance authority. It runs a
+checklist someone wrote. Report wording: "11 of 12
+checklist items found. 1 not detected." Never
+"COMPLIANT ✓".
+
+
+--- Page 22 ---
+2. Rule packs need a maintainer. Initially you. As
+the pack library grows this becomes real ongoing
+work — and eventually a reason to charge more,
+or to partner with a compliance consultant.
+3. Every pack carries its own provenance —
+source reference, last-verified date, verifier. Visible
+to the user. If a pack is stale, say so.
+7.6 Customer-specific packs
+Beyond regulation: a brand's own rules ("logo clear
+space ≥ 5mm", "always include #TAGLINE", "MRP font
+never below 8pt"). Same engine, customer-scoped
+pack. This is a strong upsell and a retention lock.
+8. Barcode & QR Verification
+Two entirely different problems. Keep them separate in
+the product.
+8.1 In artwork (Step 1 / Step 2) — fully
+solvable
+Extract the barcode from the PDF (vector or
+embedded raster), then:
+Decode the symbol
+Checksum validation — EAN-13/UPC check digit
+must be correct. A wrong check digit means the
+
+
+--- Page 23 ---
+barcode will not scan, and this is entirely
+deterministic
+GS1 structure parsing — GTIN, and Application
+Identifiers for batch (10), expiry (17), serial (21)
+where present
+Value match — decoded GTIN vs the value
+recorded in the job spec. Catches the case where
+artwork carries a previous product's barcode
+Quiet zone — required clear space present
+X-dimension / magnification — within the
+standard's permitted range for the symbology
+Bar Width Reduction — flexo requires BWR
+compensation. Record what the job spec declares
+and whether it was applied
+Colour combination — bars must be dark on light
+with adequate contrast. Flag red/light bars, or bars
+printed on a spot colour with poor contrast
+QR — decode, verify payload matches spec,
+check error-correction level and module size
+8.2 On printed sample (Step 3) — partial
+only, be honest
+Decode / no-decode — a phone camera can
+reliably tell you whether the printed barcode scans
+at all. This is genuinely useful and catches the
+worst failure
+
+
+--- Page 24 ---
+Formal ISO/IEC 15416 grading (A–F) — not
+possible with a phone camera. Grading requires
+a calibrated verifier with controlled illumination and
+aperture
+Product rule: never display a grade from a phone
+capture. Show "scanned successfully" or "failed to
+scan", and state that formal grading requires a verifier.
+Claiming a grade you cannot measure destroys
+credibility with exactly the customers who know the
+difference.
+9. Technical Architecture
+9.1 Stack
+Layer
+Choice
+Reasoning
+Mobile
+Flutter
+(Android
+APK)
+Press floor,
+offline, camera
+Web
+Flutter Web
+Pre-press desk,
+large PDFs, dual-
+monitor review
+Auth / DB /
+Storage
+Firebase
+(Auth,
+Matches existing
+stack
+
+
+--- Page 25 ---
+Layer
+Choice
+Reasoning
+Firestore,
+Storage)
+PDF/CV
+processing
+Python
+service on
+Cloud Run
+See 9.2
+Rule engine
+JSON packs
++ evaluator
+(server-side)
+Hot-updatable
+Offline
+Local cache +
+sync queue
+Press floor
+connectivity
+9.2 Why processing cannot live in Flutter or
+Cloud Functions
+PDF text extraction with position data, page rendering,
+image diffing, homography, and barcode decoding
+need mature native libraries. Cloud Functions are too
+constrained on memory, execution time, and binary
+dependencies for multi-page separation PDFs.
+Run a Python service on Cloud Run:
+PyMuPDF — text with coordinates, font metrics,
+page rendering
+pdfplumber — table and layout structure
+OpenCV — image diff, alignment, homography
+
+
+--- Page 26 ---
+pyzbar / zxing-cpp — barcode decode
+Pillow , NumPy — image handling
+OCR: PaddleOCR or Tesseract (constrained
+mode with expected-text dictionary)
+Flutter handles UI, capture, and job workflow. All heavy
+work is an API call.
+9.3 Multi-tenancy (required — this is sold to
+any printer)
+Tenant = printer company
+Per-tenant: users, roles, customers, jobs, colour
+mapping tables, custom dictionaries, custom rule
+packs, branding on reports
+Strict data isolation. Printers compete with each
+other; a leak ends the business
+Shared: regulatory rule packs, symbology
+standards, engine
+9.4 Roles
+Role
+Can do
+Admin
+Everything, user management,
+billing
+Pre-press
+Create jobs, upload artwork, run
+Steps 1 & 2
+
+
+--- Page 27 ---
+Role
+Can do
+QC
+Run all checks, sign off
+Press operator
+Step 3 only, view assigned jobs
+Manager
+Approve, view all reports,
+dashboards
+Customer
+(external)
+View own jobs,
+approve/comment only
+9.5 Data handling — a hard requirement
+Printers will not upload customer artwork to a system
+they do not trust. Non-negotiable:
+Explicit retention policy, stated in plain language
+Per-tenant encryption at rest
+Configurable auto-delete after job completion
+On-premise deployment option for large
+customers — this will be asked for
+No cross-tenant training or analytics on artwork
+content, ever
+10. Liability Positioning
+The vendor already prints "Customers are advised to
+check plates carefully before printing." This product
+
+
+--- Page 28 ---
+must not absorb that liability.
+Rules baked into the product:
+1. Never output "APPROVED", "PASS", or
+"COMPLIANT". Output findings and counts.
+2. Every report states what was not checked (colour,
+trap intent, aesthetics).
+3. Every report names the human who signed off.
+4. Rule pack version and last-verified date appear on
+every compliance report.
+5. Terms of service state clearly: decision-support
+tool, not a guarantee.
+Framed correctly, this is a selling point, not a
+weakness: the product gives the printer a
+documented, timestamped record of diligence —
+which is exactly what they currently lack when a
+dispute arises.
+11. Commercial Model
+This is a paid product from day one. It is not a free
+traffic tool.
+Value anchor: one rejected label run costs lakhs in
+material, machine time, and customer relationship.
+One plate set remade costs plate charges plus
+
+
+--- Page 29 ---
+schedule slip. Against that, ₹2,000–5,000/month is
+trivial.
+Tier
+For
+Approx
+Starter
+1 user, Step 1 + 2,
+limited jobs/month
+₹1,500–
+2,500/mo
+Standard
+5 users, all 3 steps,
+audit trail, reports
+₹4,000–
+6,000/mo
+Pro
+Unlimited users,
+customer portal,
+custom rule packs,
+API
+₹10,000–
+15,000/mo
+Enterprise
+On-premise,
+integrations, SLA
+Custom
+Adjacent revenue: custom rule pack authoring,
+onboarding/training, and integration with the existing
+CRM/ERP work (Flexora) — same customer, same
+conversation.
+12. Build Order & Milestones
+Phase 0 — Validation (2–3 weeks)
+
+
+--- Page 30 ---
+Script-only, no UI. Run Step 2 checks over the last 20
+jobs at PGPL.
+Reprocess the Kalonji job — the varnish gap must
+be caught. This is regression test #1
+Count how many other real errors surface
+Decision gate: if 20 historical jobs surface fewer
+than 2–3 genuine issues, reconsider scope before
+building further
+Phase 1 — Step 2, web only (6–8 weeks)
+Job spec entry, three-file upload, all deterministic
+checks, findings report, PDF export.
+Success: PGPL uses it on every job for one month
+without falling back to manual.
+Phase 2 — Step 1 + sign-off (6–8 weeks)
+Spell check, variable-field marking, first two rule packs
+(Legal Metrology, FSSAI), barcode artwork checks,
+digital sign-off, audit trail, revision management.
+Success: 3 external printers paying.
+Phase 3 — Step 3, Flutter APK (8–10 weeks)
+Camera capture with alignment guides, offline job
+cache, spot-check comparison, sync.
+Success: used at the press on live jobs, under 60
+seconds per check.
+
+
+--- Page 31 ---
+Phase 4 — Scale
+Customer approval portal, job library re-order diff,
+more rule packs, on-premise option, integrations.
+Why Step 2 first: cheapest to build (pure PDF, no
+camera, no OCR), highest saving per catch (before
+plates are made), and there is already a proven failure
+case to test against.
+13. Risk Register
+Risk
+Severity
+Mitigation
+Separation
+PDFs vary by
+vendor
+(headers,
+naming,
+structure)
+High
+Build a parser profile
+per vendor. Collect
+samples from 5+
+plate makers before
+finalising the parser
+Printers won't
+upload
+customer
+artwork
+High
+On-premise option,
+clear retention policy,
+auto-delete
+Rule packs go
+stale
+High
+Provenance on every
+pack, visible last-
+verified date,
+
+
+--- Page 32 ---
+Risk
+Severity
+Mitigation
+quarterly review
+cycle
+False positives
+cause distrust
+High
+Never PASS/FAIL.
+Show confidence.
+Let users dismiss
+and remember
+dismissals
+Step 3 too
+slow for press
+reality
+Medium
+Pre-load job before
+the press stops;
+spot-check not full
+OCR
+Multi-tenant
+data leak
+Critical
+Strict isolation, per-
+tenant encryption,
+audit logging
+Enterprise
+incumbent
+moves down-
+market
+Medium
+Existing tools are
+explicitly built for
+large organisations.
+Price and simplicity
+are the moat
+Scope creep
+across three
+steps at once
+High
+Ship Step 2 alone.
+Resist the rest until it
+is in daily use
+
+
+--- Page 33 ---
+14. Open Items
+[ ] Product name and domain (must not be tied to
+any one step)
+[ ] Confirm what actually happened with the
+varnish plate on the Kalonji job — separate later
+file, or genuinely missed?
+[ ] Collect separation PDFs from 5+ different plate
+vendors to test parser robustness
+[ ] Verify all Legal Metrology minimum font heights
+against the current source text before encoding
+them
+[ ] Decide: is the customer-facing approval portal
+in scope for v1, or Phase 4?
+[ ] Pricing validation with 5 printers before
+publishing tiers
+[ ] Confirm colour mapping conventions (Gold →
+617, P 7483 C → 7483) — is this vendor-specific
+or an industry convention?
+15. One-Line Summary
+A cross-document consistency engine for label
+and packaging jobs: it holds the job spec, the
+approved artwork, the plate separations, and the
+printed sample together and tells a human exactly
+
+
+--- Page 34 ---
+where to look — with an audit trail proving they
+looked.
+
+
