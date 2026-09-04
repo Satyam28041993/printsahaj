@@ -38,3 +38,13 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Customer artwork — NEVER commit. This repo is public, and these are real
+# jobs belonging to real clients. Only the README in samples/ is tracked.
+samples/**/*.pdf
+samples/**/*.ai
+samples/**/*.eps
+samples/**/*.tif
+samples/**/*.tiff
+samples/**/*.jpg
+samples/**/*.png
