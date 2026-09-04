@@ -1,0 +1,17 @@
+{
+  "name": "PrintSahaj",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "web-dev",
+      "command": "cd web && npm run dev",
+      "description": "Next.js dev server for the marketing landing page (http://localhost:3000)."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 3000
+    }
+  ]
+}
