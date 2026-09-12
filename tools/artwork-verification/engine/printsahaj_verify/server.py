@@ -19,7 +19,7 @@ from printsahaj_verify.job_spec import JobSpecError
 from printsahaj_verify.remarks import add_remark, load_remarks
 from printsahaj_verify.reporting.json_report import build_report
 from printsahaj_verify.reporting.terminal import format_report
-from printsahaj_verify.run import run_job
+from printsahaj_verify.run import load_stages_checked, run_job, run_stage
 from printsahaj_verify.store import (
     create_or_update_job,
     job_folder,
@@ -193,7 +193,17 @@ class DeskHandler(BaseHTTPRequestHandler):
                 job_id = path[len("/api/jobs/") : -len("/report")]
                 folder = job_folder(job_id)
                 spec, results, files = run_job(folder)
-                _json(self, 200, build_report(spec, results, files, load_remarks(folder)))
+                _json(
+                    self,
+                    200,
+                    build_report(
+                        spec,
+                        results,
+                        files,
+                        load_remarks(folder),
+                        load_stages_checked(folder),
+                    ),
+                )
                 return
             if path.startswith("/api/jobs/") and path.endswith("/report.txt"):
                 job_id = path[len("/api/jobs/") : -len("/report.txt")]
@@ -224,6 +234,17 @@ class DeskHandler(BaseHTTPRequestHandler):
                 payload = _read_json(self)
                 folder = create_or_update_job(payload)
                 _json(self, 200, job_snapshot(Path(folder).name))
+                return
+            if path.startswith("/api/jobs/") and path.endswith("/check"):
+                job_id = path[len("/api/jobs/") : -len("/check")]
+                payload = _read_json(self)
+                stage = str(payload.get("stage", "approval"))
+                spec, results, files, checked = run_stage(job_folder(job_id), stage)
+                report = build_report(
+                    spec, results, files, load_remarks(job_folder(job_id)), checked
+                )
+                report["stage"] = stage
+                _json(self, 200, report)
                 return
             if path.startswith("/api/jobs/") and path.endswith("/files"):
                 job_id = path[len("/api/jobs/") : -len("/files")]

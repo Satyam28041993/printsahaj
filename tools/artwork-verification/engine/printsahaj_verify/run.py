@@ -1,20 +1,27 @@
-"""Run every implemented check for a job folder."""
+"""Run checks for one step, or for the whole job."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from printsahaj_verify.approval_sheet import parse_approval_sheet
+from printsahaj_verify.checks.approval_sheet_check import check_approval_sheet
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_ID as ARTWORK_ID
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_TITLE as ARTWORK_TITLE
 from printsahaj_verify.checks.artwork_vs_approval import check_artwork_vs_approval
 from printsahaj_verify.checks.colour_names import check_colour_names
 from printsahaj_verify.checks.geometry import check_geometry
 from printsahaj_verify.checks.headers import check_headers
+from printsahaj_verify.checks.job_identity import check_job_identity
 from printsahaj_verify.checks.plate_count import CHECK_ID as PLATE_ID
 from printsahaj_verify.checks.plate_count import CHECK_TITLE as PLATE_TITLE
 from printsahaj_verify.checks.plate_count import check_plate_count
+from printsahaj_verify.checks.plate_text_map import CHECK_ID as PLATE_TEXT_ID
+from printsahaj_verify.checks.plate_text_map import CHECK_TITLE as PLATE_TEXT_TITLE
 from printsahaj_verify.checks.plate_text_map import check_plate_text_map
 from printsahaj_verify.checks.printout import check_printout
+from printsahaj_verify.checks.text_completeness import CHECK_ID as TEXT_ID
+from printsahaj_verify.checks.text_completeness import CHECK_TITLE as TEXT_TITLE
 from printsahaj_verify.checks.text_completeness import check_text_completeness
 from printsahaj_verify.extract import (
     DocumentText,
@@ -24,10 +31,12 @@ from printsahaj_verify.extract import (
     read_document_text,
 )
 from printsahaj_verify.files import JobFiles, discover_job_files, is_pdf
-from printsahaj_verify.job_spec import JobSpec, load_job_spec
-from printsahaj_verify.models import CheckResult
+from printsahaj_verify.job_spec import JobSpec, JobSpecError, load_job_spec
+from printsahaj_verify.models import Certainty, CheckResult, Finding
+from printsahaj_verify.stages import STAGE_ORDER, previous_stage
 
 JOB_FILE_NAME = "job.json"
+STAGES_FILE_NAME = "stages.json"
 
 IMAGE_TEXT_REASON = (
     "File is an image. This tool does not read text from images. "
@@ -58,7 +67,11 @@ def _artwork_vs_approval_result(
     return check_artwork_vs_approval(client_doc, approval_doc)
 
 
-def _plate_count_result(spec: JobSpec, files: JobFiles) -> CheckResult:
+def _plate_count_result(
+    spec: JobSpec,
+    files: JobFiles,
+    header_col: int | None,
+) -> CheckResult:
     if files.separations is None:
         return CheckResult(
             check_id=PLATE_ID,
@@ -74,11 +87,51 @@ def _plate_count_result(spec: JobSpec, files: JobFiles) -> CheckResult:
                 "(one page per plate)."
             ),
         )
-    return check_plate_count(spec, count_pdf_pages(files.separations))
+    pages = count_pdf_pages(files.separations)
+    if spec.has_colour_line:
+        return check_plate_count(spec, pages)
+    if header_col is None:
+        return CheckResult(
+            check_id=PLATE_ID,
+            title=PLATE_TITLE,
+            not_run_reason="Colour line nahi hai, vendor Col: bhi nahi padha",
+        )
+    if pages == header_col:
+        return CheckResult(
+            check_id=PLATE_ID,
+            title=PLATE_TITLE,
+            observations={
+                "declared_units": str(header_col),
+                "separation_pages": str(pages),
+                "source": "vendor header Col:",
+            },
+        )
+    return CheckResult(
+        check_id=PLATE_ID,
+        title=PLATE_TITLE,
+        findings=[
+            Finding(
+                check_id=PLATE_ID,
+                summary=(
+                    f"Vendor Col: {header_col}, SEP pages {pages}. "
+                    "Plate count match nahi karta."
+                ),
+                certainty=Certainty.DETERMINISTIC,
+                expected=f"Col: {header_col}",
+                found=f"{pages} separation pages",
+                location="Vendor header Col: vs SEP page count",
+            )
+        ],
+        observations={
+            "declared_units": str(header_col),
+            "separation_pages": str(pages),
+            "source": "vendor header Col:",
+        },
+    )
 
 
 def file_hashes(files: JobFiles) -> dict[str, str]:
-    """Fingerprint each uploaded PDF so a later swap is visible."""
+    """Fingerprint each uploaded file so a later swap is visible."""
     hashes: dict[str, str] = {}
     for label, path in (
         ("client_artwork", files.client_artwork),
@@ -91,28 +144,150 @@ def file_hashes(files: JobFiles) -> dict[str, str]:
     return hashes
 
 
-def run_job(folder: Path) -> tuple[JobSpec, list[CheckResult], JobFiles]:
-    """Load the job and run every check. Missing files become not-run results."""
-    spec = load_job_spec(folder / JOB_FILE_NAME)
-    files = discover_job_files(folder)
+def load_stages_checked(folder: Path) -> list[str]:
+    """Which steps have been run on this job."""
+    path = folder / STAGES_FILE_NAME
+    if not path.is_file():
+        return []
+    import json
 
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    checked = raw.get("checked", [])
+    if not isinstance(checked, list):
+        raise JobSpecError("stages.json checked must be a list")
+    return [str(item) for item in checked if str(item) in STAGE_ORDER]
+
+
+def save_stage_checked(folder: Path, stage_id: str) -> list[str]:
+    """Record that a step was checked. Does not claim the step is OK."""
+    import json
+
+    checked = load_stages_checked(folder)
+    if stage_id not in checked:
+        checked.append(stage_id)
+    path = folder / STAGES_FILE_NAME
+    path.write_text(
+        json.dumps({"checked": checked}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return checked
+
+
+def apply_approval_defaults(folder: Path, spec: JobSpec, files: JobFiles) -> JobSpec:
+    """If the job has no colour line yet, copy it from the approval sheet."""
+    if spec.has_colour_line or files.approval is None or not is_pdf(files.approval):
+        return spec
+    try:
+        sheet = parse_approval_sheet(files.approval)
+    except JobSpecError:
+        return spec
+    if not sheet.colour_declaration or not sheet.colour_list:
+        return spec
+    from printsahaj_verify.job_spec import (
+        job_spec_to_dict,
+        load_job_spec,
+        parse_colour_declaration,
+    )
+
+    try:
+        count, _specials = parse_colour_declaration(sheet.colour_declaration)
+    except JobSpecError:
+        return spec
+    if len(sheet.colour_list) != count:
+        return spec
+    payload = job_spec_to_dict(spec)
+    payload["colour_declaration"] = sheet.colour_declaration
+    payload["colour_list"] = list(sheet.colour_list)
+    payload["special_units"] = list(sheet.special_units)
+    if (
+        spec.label_width_mm <= 0
+        and sheet.label_width_mm
+        and sheet.label_height_mm
+    ):
+        payload["label_size_mm"] = [sheet.label_width_mm, sheet.label_height_mm]
+    if not spec.file_name and sheet.product_name:
+        payload["file_name"] = sheet.product_name
+    path = folder / JOB_FILE_NAME
+    path.write_text(
+        __import__("json").dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return load_job_spec(path)
+
+
+def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
     client_doc = _pdf_text(files.client_artwork)
     approval_doc = _pdf_text(files.approval)
     composite_doc = _pdf_text(files.vendor_composite)
     separations_doc = _pdf_text(files.separations)
-
-    approved_for_text = approval_doc or client_doc
     header = parse_vendor_header(composite_doc.full_text) if composite_doc else None
     vendor_docs = [doc for doc in (composite_doc, separations_doc) if doc is not None]
+    identity_docs = [doc for doc in (approval_doc, composite_doc) if doc is not None]
+    identity_paths = [
+        path
+        for path in (
+            files.client_artwork,
+            files.approval,
+            files.vendor_composite,
+            files.separations,
+        )
+        if path is not None
+    ]
+    identity = check_job_identity(spec, identity_paths, identity_docs)
+    mixed_jobs = any(
+        item.certainty is Certainty.DETERMINISTIC for item in identity.findings
+    )
+    approved_for_text = approval_doc or client_doc
+    if mixed_jobs:
+        text_result = CheckResult(
+            check_id=TEXT_ID,
+            title=TEXT_TITLE,
+            not_run_reason="Alag jobs mix hain. Wording compare skip.",
+        )
+        plate_text = CheckResult(
+            check_id=PLATE_TEXT_ID,
+            title=PLATE_TEXT_TITLE,
+            not_run_reason="Alag jobs mix hain. Text map skip.",
+        )
+    else:
+        text_result = check_text_completeness(approved_for_text, separations_doc)
+        plate_text = check_plate_text_map(spec, separations_doc)
 
-    results = [
+    return [
+        identity,
+        check_approval_sheet(files.approval),
         _artwork_vs_approval_result(files, client_doc, approval_doc),
-        _plate_count_result(spec, files),
+        _plate_count_result(spec, files, header.col_count if header else None),
         check_colour_names(spec, separations_doc),
         check_geometry(spec, header),
         check_headers(spec, vendor_docs),
-        check_text_completeness(approved_for_text, separations_doc),
-        check_plate_text_map(spec, separations_doc),
+        text_result,
+        plate_text,
         check_printout(files.printouts),
     ]
-    return spec, results, files
+
+
+def run_job(folder: Path) -> tuple[JobSpec, list[CheckResult], JobFiles]:
+    """Load the job and run every check. Missing files become not-run results."""
+    spec = load_job_spec(folder / JOB_FILE_NAME)
+    files = discover_job_files(folder)
+    spec = apply_approval_defaults(folder, spec, files)
+    return spec, _collect_results(spec, files), files
+
+
+def run_stage(
+    folder: Path,
+    stage_id: str,
+) -> tuple[JobSpec, list[CheckResult], JobFiles, list[str]]:
+    """Run every check, then mark this step as checked if the previous step is done."""
+    if stage_id not in STAGE_ORDER:
+        raise JobSpecError(f"Unknown stage: {stage_id}")
+    previous = previous_stage(stage_id)
+    already = load_stages_checked(folder)
+    if previous is not None and previous not in already:
+        raise JobSpecError(
+            f"Pehle {previous} step check karo. Yeh step uske baad aata hai."
+        )
+    spec, results, files = run_job(folder)
+    checked = save_stage_checked(folder, stage_id)
+    return spec, results, files, checked

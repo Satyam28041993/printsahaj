@@ -10,19 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-#: Words that name a printing unit which is not a process/spot colour.
-SPECIAL_UNIT_WORDS: frozenset[str] = frozenset(
-    {
-        "VARNISH",
-        "COATING",
-        "WHITE",
-        "PRIMER",
-        "FOIL",
-        "EMBOSS",
-        "LAMINATE",
-        "LAMINATION",
-    }
-)
+# Special units live in rule_packs/special_units.default.json — not here.
 
 
 class JobSpecError(ValueError):
@@ -87,17 +75,18 @@ def parse_colour_declaration(text: str) -> tuple[int, tuple[str, ...]]:
     colour_count = int(digits)
 
     extras: list[str] = []
+    from printsahaj_verify.special_units import canonical_special_unit
+
     for raw in parts[1:]:
-        token = raw.strip().upper()
+        token = raw.strip()
         if not token:
             continue
-        word = token.split()[0]
-        if word not in SPECIAL_UNIT_WORDS:
+        try:
+            extras.append(canonical_special_unit(token))
+        except ValueError as error:
             raise JobSpecError(
-                f"Unknown special unit {raw!r} in colour_declaration {text!r}. "
-                f"Known: {', '.join(sorted(SPECIAL_UNIT_WORDS))}"
-            )
-        extras.append("Varnish" if word == "VARNISH" else word.title())
+                f"{error} in colour_declaration {text!r}"
+            ) from error
     return colour_count, tuple(extras)
 
 
@@ -109,10 +98,12 @@ def _as_string(data: dict[str, Any], key: str) -> str:
 
 
 def _normalise_special(name: str) -> str:
-    word = name.strip().upper().split()[0]
-    if word not in SPECIAL_UNIT_WORDS:
-        raise JobSpecError(f"Unknown special unit: {name!r}")
-    return "Varnish" if word == "VARNISH" else word.title()
+    from printsahaj_verify.special_units import canonical_special_unit
+
+    try:
+        return canonical_special_unit(name)
+    except ValueError as error:
+        raise JobSpecError(str(error)) from error
 
 
 def load_job_spec(path: Path) -> JobSpec:

@@ -7,7 +7,9 @@
     "Magenta": ["Magenta", "M", "Process Magenta"],
     "Yellow": ["Yellow", "Y", "Process Yellow"],
     "Black": ["Black", "K", "Key", "Process Black"],
-    "Gold": ["617", "PANTONE 617", "PANTONE 617 C", "P 617 C"],
-    "P 7483 C": ["7483", "P 7483 C", "PANTONE 7483", "PANTONE 7483 C"]
+    "Gold": ["617", "GOLD", "PANTONE 617", "PANTONE 617 C", "P 617 C"],
+    "P 7483 C": ["7483", "P 7483 C", "PANTONE 7483", "PANTONE 7483 C"],
+    "White": ["White", "P P WHITE", "P WHITE", "OPAQUE WHITE"],
+    "UV": ["UV", "RAYS UV"]
   }
 }

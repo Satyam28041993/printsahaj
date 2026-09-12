@@ -8,6 +8,7 @@ from printsahaj_verify.extract import preview_page_count
 from printsahaj_verify.files import JobFiles, is_pdf
 from printsahaj_verify.job_spec import JobSpec, job_spec_to_dict
 from printsahaj_verify.models import Certainty, CheckResult
+from printsahaj_verify.reporting.checklist import build_checklist
 from printsahaj_verify.reporting.terminal import NOT_CHECKED_LINES
 from printsahaj_verify.run import file_hashes
 
@@ -50,8 +51,9 @@ def build_report(
     results: list[CheckResult],
     files: JobFiles,
     remarks: dict,
+    stages_checked: list[str] | None = None,
 ) -> dict[str, object]:
-    """JSON report: findings, flags, not-run, not-checked, remarks. No verdict."""
+    """JSON report: short checklist plus findings. No verdict words."""
     certain = [
         finding.to_dict()
         for result in results
@@ -76,6 +78,7 @@ def build_report(
             "Print photo text, alignment and logo (automatic)",
             "Barcode ISO grade",
         ],
+        "checklist": build_checklist(results, stages_checked or []),
         "remarks": remarks,
         "counts": {
             "findings": len(certain),

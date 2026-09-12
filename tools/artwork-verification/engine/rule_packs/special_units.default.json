@@ -1,0 +1,20 @@
+{
+  "pack_id": "special-units-default",
+  "version": "1",
+  "note": "Printing units that are not process/spot colours. Loaded at runtime.",
+  "units": {
+    "VARNISH": "Varnish",
+    "COATING": "Coating",
+    "WHITE": "White",
+    "PRIMER": "Primer",
+    "FOIL": "Foil",
+    "EMBOSS": "Emboss",
+    "LAMINATE": "Lamination",
+    "LAMINATION": "Lamination",
+    "MATT": "Lamination",
+    "MATTE": "Lamination",
+    "GLOSS": "Lamination",
+    "UV": "UV",
+    "RAYS": "UV"
+  }
+}

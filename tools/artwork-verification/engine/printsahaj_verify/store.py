@@ -150,12 +150,24 @@ def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
     spec = load_job_spec(folder / JOB_FILE_NAME)
     from printsahaj_verify.files import discover_job_files
     from printsahaj_verify.reporting.json_report import files_to_dict, slots_to_dict
+    from printsahaj_verify.run import load_stages_checked
+    from printsahaj_verify.stages import stage_definitions
 
     files = discover_job_files(folder)
     return {
         "job": job_spec_to_dict(spec),
         "files": files_to_dict(files),
         "slots": slots_to_dict(files),
+        "stages_checked": load_stages_checked(folder),
+        "stage_defs": [
+            {
+                "stage_id": item.stage_id,
+                "title": item.title,
+                "hint": item.hint,
+                "slots": list(item.slots),
+            }
+            for item in stage_definitions()
+        ],
         "remarks": load_remarks(folder),
         "folder": str(folder),
     }

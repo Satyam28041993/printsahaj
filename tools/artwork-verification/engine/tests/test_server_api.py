@@ -103,7 +103,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("6 COL + VARNISH", home)
         self.assertNotIn("DAILY PHARMA", home)
         self.assertIn("accept=", home)
-        self.assertIn("PDF ya image", home)
+        self.assertIn("First approval", home)
         self.assertIn("preview", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
