@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Static files for Firebase Hosting. The verification desk is not this site.
+  output: "export",
+  images: { unoptimized: true },
 };
 
 export default nextConfig;
