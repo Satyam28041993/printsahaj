@@ -47,11 +47,23 @@ if errorlevel 1 (
   exit /b 1
 )
 
+if not exist "%~dp0gemini-key.txt" (
+  type nul > "%~dp0gemini-key.txt"
+  echo Created empty gemini-key.txt in this folder.
+)
+
 echo.
+echo Checking port 8765...
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8765" ^| findstr "LISTENING"') do (
+  echo Closing old process on port 8765  PID %%P
+  taskkill /F /PID %%P >nul 2>&1
+)
+timeout /t 2 /nobreak >nul
+
 echo Starting the tool. The browser opens after the server is ready.
 echo Do not close this black window.
 echo Close the window when you want to stop the tool.
-echo Optional: put your Gemini key in gemini-key.txt in this same folder.
+echo Gemini key file: gemini-key.txt in this folder.
 echo.
 
 cd /d "%~dp0engine"

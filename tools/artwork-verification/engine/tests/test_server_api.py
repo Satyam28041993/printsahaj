@@ -121,9 +121,14 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("First approval", home)
         self.assertIn("preview", home)
         self.assertIn("data-pick=", home)
+        bat = Path(__file__).resolve().parents[2] / "start-tool.bat"
+        bat_text = bat.read_text(encoding="utf-8")
+        self.assertIn("taskkill", bat_text)
+        self.assertIn("gemini-key.txt", bat_text)
         self.assertIn('.get("job")', home)
         self.assertIn("Uploading", home)
         self.assertIn("gemini-key.txt", home)
+        self.assertIn("Gemini: ON", home)
         self.assertIn("data-compare", home)
         self.assertIn("viewer-modal", home)
         self.assertIn("Magnifier", home)
@@ -147,9 +152,16 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("http://127.0.0.1:8765", text)
         self.assertIn("start-tool.bat", text)
         self.assertNotIn("PASS", text)
-        banner = ready_banner("http://127.0.0.1:8765")
+        blocked = bind_error_message(
+            "127.0.0.1",
+            8765,
+            OSError("[WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions"),
+        )
+        self.assertIn("old Artwork Verification window", blocked)
+        banner = ready_banner("http://127.0.0.1:8765", gemini_line="Gemini: OFF")
         self.assertIn("is running", banner)
         self.assertIn("http://127.0.0.1:8765", banner)
+        self.assertIn("Gemini:", banner)
 
     def test_png_upload_keeps_extension_and_has_preview(self) -> None:
         import urllib.request

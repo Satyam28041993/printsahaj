@@ -106,6 +106,11 @@ class LabelMarkTests(unittest.TestCase):
 
 
 class VisionNoteTests(unittest.TestCase):
+    def setUp(self) -> None:
+        from printsahaj_verify import vision as vision_mod
+
+        vision_mod._STATUS_CACHE = None
+
     def test_key_file_is_read_when_env_is_empty(self) -> None:
         from printsahaj_verify.vision import read_gemini_api_key
 
@@ -114,6 +119,21 @@ class VisionNoteTests(unittest.TestCase):
         path.write_text("\ufeff# comment\nAIza-test-key-123\n", encoding="utf-8")
         with patch.dict("os.environ", {GEMINI_KEY_ENV: ""}):
             self.assertEqual(read_gemini_api_key(path), "AIza-test-key-123")
+
+    def test_probe_reports_when_google_accepts_the_key(self) -> None:
+        from printsahaj_verify.vision import gemini_status, probe_gemini
+
+        with patch.dict("os.environ", {GEMINI_KEY_ENV: "test-key"}):
+            with patch("printsahaj_verify.vision._get_gemini", return_value=b"{}"):
+                from printsahaj_verify import vision as vision_mod
+
+                vision_mod._STATUS_CACHE = None
+                ok, detail = probe_gemini()
+                self.assertTrue(ok)
+                self.assertIn("accepted", detail.lower())
+                status = gemini_status(force=True)
+                self.assertTrue(status["gemini_ok"])
+                vision_mod._STATUS_CACHE = None
 
     def test_env_key_wins_over_file(self) -> None:
         from printsahaj_verify.vision import read_gemini_api_key

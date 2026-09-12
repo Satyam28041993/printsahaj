@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import subprocess
 import sys
 import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -20,7 +23,7 @@ from printsahaj_verify.remarks import add_remark, load_remarks
 from printsahaj_verify.reporting.json_report import build_report
 from printsahaj_verify.reporting.terminal import format_report
 from printsahaj_verify.run import load_stages_checked, run_job, run_stage
-from printsahaj_verify.vision import gemini_configured
+from printsahaj_verify.vision import gemini_banner_line, gemini_status
 from printsahaj_verify.store import (
     create_or_update_job,
     delete_all_jobs,
@@ -42,22 +45,100 @@ OPEN_BROWSER_ENV = "PRINTSAHAJ_OPEN_BROWSER"
 
 def bind_error_message(host: str, port: int, error: OSError) -> str:
     """Explain why the desk could not listen, in language a person can act on."""
+    text = str(error)
+    blocked = "10013" in text or "forbidden" in text.lower() or "access permissions" in text.lower()
+    extra = ""
+    if blocked:
+        extra = (
+            " An old Artwork Verification window is still holding this port. "
+            "Close every black tool window, then run start-tool.bat again."
+        )
     return (
-        f"Port {port} did not open ({error}). "
+        f"Port {port} did not open ({error}).{extra} "
         f"If the tool is already running, open http://{host}:{port} in the browser. "
         "Otherwise run start-tool.bat again."
     )
 
 
-def ready_banner(url: str) -> str:
+def ready_banner(url: str, gemini_line: str | None = None) -> str:
     """Lines printed after the desk is listening."""
+    gemini = gemini_line if gemini_line is not None else gemini_banner_line()
     return (
         "\n========================================\n"
         "Artwork Verification is running\n"
         f"Browser: {url}\n"
+        f"{gemini}\n"
         "Do not close this window\n"
         "========================================\n"
     )
+
+
+def listening_pids(port: int) -> list[int]:
+    """Process ids listening on *port*. Empty when they cannot be read."""
+    pids: list[int] = []
+    try:
+        if os.name == "nt":
+            raw = subprocess.check_output(
+                ["netstat", "-ano", "-p", "tcp"],
+                text=True,
+                errors="replace",
+                timeout=8,
+            )
+            for line in raw.splitlines():
+                if f":{port}" not in line or "LISTENING" not in line.upper():
+                    continue
+                parts = line.split()
+                if not parts:
+                    continue
+                try:
+                    pid = int(parts[-1])
+                except ValueError:
+                    continue
+                if pid > 0 and pid not in pids:
+                    pids.append(pid)
+        else:
+            raw = subprocess.check_output(
+                ["ss", "-lptn"],
+                text=True,
+                errors="replace",
+                timeout=8,
+            )
+            needle = f":{port} "
+            for line in raw.splitlines():
+                if needle not in line and f":{port}\n" not in line + "\n":
+                    if f":{port}" not in line:
+                        continue
+                for match in re.findall(r"pid=(\d+)", line):
+                    pid = int(match)
+                    if pid > 0 and pid not in pids:
+                        pids.append(pid)
+    except (FileNotFoundError, subprocess.CalledProcessError, OSError, subprocess.TimeoutExpired):
+        return []
+    return pids
+
+
+def clear_desk_port(port: int) -> list[int]:
+    """Stop Windows processes holding *port* so a new start-tool.bat can bind.
+
+    Only those PIDs are closed. Linux leaves the port alone.
+    """
+    if os.name != "nt":
+        return []
+    stopped: list[int] = []
+    for pid in listening_pids(port):
+        if pid == os.getpid():
+            continue
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/PID", str(pid)],
+                check=False,
+                timeout=8,
+                capture_output=True,
+            )
+            stopped.append(pid)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+    return stopped
 
 
 def _json(handler: BaseHTTPRequestHandler, status: int, payload: object) -> None:
@@ -165,15 +246,12 @@ class DeskHandler(BaseHTTPRequestHandler):
         parts = [item for item in path.split("/") if item]
         try:
             if path == "/api/health":
-                _json(
-                    self,
-                    200,
-                    {
-                        "ok": True,
-                        "tool": "artwork-verification",
-                        "gemini": gemini_configured(),
-                    },
-                )
+                payload = {
+                    "ok": True,
+                    "tool": "artwork-verification",
+                }
+                payload.update(gemini_status())
+                _json(self, 200, payload)
                 return
             if path == "/api/jobs":
                 _json(self, 200, {"jobs": list_jobs()})
@@ -348,8 +426,21 @@ def serve(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
     try:
         server = ThreadingHTTPServer((host, port), DeskHandler)
     except OSError as error:
-        print(bind_error_message(host, port, error), file=sys.stderr)
-        raise SystemExit(1) from error
+        stopped = clear_desk_port(port)
+        if stopped:
+            print(
+                f"Closed old process on port {port}: {stopped}. Starting again...",
+                file=sys.stderr,
+            )
+            time.sleep(1.5)
+            try:
+                server = ThreadingHTTPServer((host, port), DeskHandler)
+            except OSError as error2:
+                print(bind_error_message(host, port, error2), file=sys.stderr)
+                raise SystemExit(1) from error2
+        else:
+            print(bind_error_message(host, port, error), file=sys.stderr)
+            raise SystemExit(1) from error
     url = f"http://{host}:{port}"
     print(ready_banner(url), file=sys.stderr)
     if os.environ.get(OPEN_BROWSER_ENV, "1") != "0":

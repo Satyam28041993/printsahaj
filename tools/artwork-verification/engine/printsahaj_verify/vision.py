@@ -104,6 +104,71 @@ def gemini_configured() -> bool:
     return bool(read_gemini_api_key())
 
 
+_STATUS_CACHE: dict[str, object] | None = None
+GEMINI_PROBE_TIMEOUT_SEC = 15
+
+
+def _get_gemini(url: str, timeout: int) -> bytes:
+    """HTTP GET. Patch this in tests — do not call the network there."""
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read()
+
+
+def probe_gemini() -> tuple[bool, str]:
+    """Ask Google whether this key is accepted. Does not send artwork."""
+    key = read_gemini_api_key()
+    if not key:
+        return False, "No key in gemini-key.txt"
+    model = gemini_model_name()
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        + urllib.parse.quote(model, safe="")
+        + "?key="
+        + urllib.parse.quote(key)
+    )
+    try:
+        _get_gemini(url, GEMINI_PROBE_TIMEOUT_SEC)
+    except urllib.error.HTTPError as error:
+        return False, f"Google did not accept the key (HTTP {error.code})"
+    except urllib.error.URLError:
+        return False, "Could not reach Google from this machine"
+    return True, "Google accepted the key"
+
+
+def gemini_status(force: bool = False) -> dict[str, object]:
+    """Cached Gemini key state for the banner and the desk. Never includes the key."""
+    global _STATUS_CACHE
+    if _STATUS_CACHE is not None and not force:
+        return dict(_STATUS_CACHE)
+    configured = gemini_configured()
+    if not configured:
+        payload: dict[str, object] = {
+            "gemini": False,
+            "gemini_ok": False,
+            "gemini_detail": "No key in gemini-key.txt next to start-tool.bat",
+        }
+        _STATUS_CACHE = payload
+        return dict(payload)
+    ok, detail = probe_gemini()
+    payload = {"gemini": True, "gemini_ok": ok, "gemini_detail": detail}
+    _STATUS_CACHE = payload
+    return dict(payload)
+
+
+def gemini_banner_line() -> str:
+    """One line for the black window after the desk starts."""
+    status = gemini_status()
+    if status["gemini_ok"]:
+        return "Gemini: ON — Google accepted the key"
+    if status["gemini"]:
+        return "Gemini: KEY NOT ACCEPTED — " + str(status["gemini_detail"])
+    return (
+        "Gemini: OFF — paste the key in gemini-key.txt "
+        "next to start-tool.bat, save, restart this window"
+    )
+
+
 def gemini_model_name() -> str:
     """Model id, overridable with PRINTSAHAJ_GEMINI_MODEL."""
     return os.environ.get(GEMINI_MODEL_ENV, DEFAULT_GEMINI_MODEL).strip() or (

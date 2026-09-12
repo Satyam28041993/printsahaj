@@ -343,7 +343,12 @@
         };
       });
       const def = defs.find((d) => d.stage_id === activeStage) || defs[0];
-      document.getElementById("job-hint").textContent = def ? def.hint : "";
+      const geminiHint = snapshot.gemini_ok
+        ? "Gemini: ON — Google accepted the key."
+        : snapshot.gemini
+          ? "Gemini: key is present but Google did not accept it. Check gemini-key.txt."
+          : "Gemini: OFF — paste the key in gemini-key.txt next to start-tool.bat, save, restart the black window.";
+      document.getElementById("job-hint").textContent = (def ? def.hint + " " : "") + geminiHint;
       document.getElementById("stage-panel").innerHTML = renderStage(def, checked, defs);
       bindStage(def, defs, checked);
     }
