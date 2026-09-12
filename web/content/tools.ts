@@ -23,7 +23,7 @@ export const tools: ToolsContent = {
       href: "/tools/artwork-verification",
       summary:
         "Compares the job sheet, the approved artwork, and the plate files, and shows where they disagree.",
-      status: "First version on the computer. App link will open here.",
+      status: "Open the tool — it lives apart from this website.",
     },
   ],
 };
@@ -34,6 +34,8 @@ export interface ArtworkToolPage {
   summary: string;
   points: string[];
   note: string;
+  openLabel: string;
+  openHref: string;
   backLabel: string;
   backHref: string;
 }
@@ -49,7 +51,9 @@ export const artworkTool: ArtworkToolPage = {
     "Text that is on the artwork but on no plate — or the other way around",
   ],
   note:
-    "The app will open from this page. Until then the first version runs on a computer, in its own folder, separate from this website.",
+    "The tool runs on your computer, not inside this website. Start it, then open the button below. After print, add the machine photo and write a remark — the tool does not automatically grade the photo.",
+  openLabel: "Open Artwork Verification",
+  openHref: "http://127.0.0.1:8765",
   backLabel: "All tools",
   backHref: "/tools",
 };
