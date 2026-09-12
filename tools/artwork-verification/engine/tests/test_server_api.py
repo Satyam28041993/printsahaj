@@ -83,6 +83,11 @@ class ServerApiTests(unittest.TestCase):
             saved = json.loads(response.read().decode("utf-8"))
         self.assertEqual(saved["role"], "separations")
 
+        with urllib.request.urlopen(self.base + "/") as response:
+            home = response.read().decode("utf-8")
+        self.assertIn("Artwork Verification", home)
+        self.assertIn("Naya job", home)
+
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))
         plate = next(item for item in report["checks"] if item["check_id"] == "plate_count")

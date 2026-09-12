@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Artwork Verification</title>
+  <style>
+    :root { --ink: #14161a; --muted: #5a616b; --line: #e3e5e9; --accent: #0d9488; --bg: #f7f7f8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Segoe UI, system-ui, sans-serif; color: var(--ink); background: var(--bg); }
+    header { background: #fff; border-bottom: 1px solid var(--line); padding: 16px 20px; }
+    header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    main { max-width: 880px; margin: 0 auto; padding: 20px; }
+    h1 { margin: 0; font-size: 22px; }
+    button, .btn { background: var(--accent); color: #fff; border: 0; border-radius: 999px; padding: 10px 16px; cursor: pointer; font: inherit; }
+    button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    input, textarea { width: 100%; padding: 8px 10px; margin: 6px 0 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+    label { font-size: 13px; color: var(--muted); }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+    .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .err { color: #b42318; }
+    .muted { color: var(--muted); font-size: 13px; }
+    pre { white-space: pre-wrap; font-size: 13px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Artwork Verification</h1>
+    <p>Yeh website nahi hai. Yeh tool tumhare computer par chal raha hai.</p>
+  </header>
+  <main>
+    <section id="list-view">
+      <div class="row">
+        <strong>Jobs</strong>
+        <button type="button" id="new-btn">Naya job</button>
+      </div>
+      <div id="job-list"></div>
+    </section>
+
+    <section id="new-view" class="hidden">
+      <button type="button" class="ghost" id="back-list">← Jobs</button>
+      <h2>Naya job</h2>
+      <label>Job code</label>
+      <input id="job_id" placeholder="CGM2026-27-1326" />
+      <label>Artwork ka naam</label>
+      <input id="file_name" placeholder="DAILY KALONJI 100 ML" />
+      <label>Customer</label>
+      <input id="customer" />
+      <label>Rang line</label>
+      <input id="colour_declaration" placeholder="6 COL + VARNISH" />
+      <label>Rang ke naam (comma se)</label>
+      <input id="colour_list" placeholder="Yellow, Magenta, Cyan, Black, Gold, P 7483 C" />
+      <label>Label width mm</label>
+      <input id="label_w" />
+      <label>Label height mm</label>
+      <input id="label_h" />
+      <label>Zaroori likhai (comma se)</label>
+      <input id="mandatory_texts" placeholder="DAILY PHARMA" />
+      <p id="new-err" class="err"></p>
+      <button type="button" id="save-job">Job banao</button>
+    </section>
+
+    <section id="job-view" class="hidden">
+      <button type="button" class="ghost" id="back-jobs">← Jobs</button>
+      <h2 id="job-title"></h2>
+      <div id="slots"></div>
+      <p id="job-err" class="err"></p>
+      <button type="button" id="run-btn">Sab match karo — report nikalo</button>
+      <div id="report"></div>
+      <div class="card">
+        <label>Remark kisne likha</label>
+        <input id="remark-by" />
+        <label>Remark</label>
+        <textarea id="remark-text" rows="3" placeholder="Jo theek / jo galat — yahan likho"></textarea>
+        <button type="button" class="ghost" id="save-remark">Remark save karo</button>
+      </div>
+    </section>
+  </main>
+  <script>
+    const SLOTS = [
+      ["client_artwork", "1. Client artwork", "Client ne jo artwork bheja"],
+      ["approval", "2. First approval PDF", "Jo PDF client ko approval ke liye bheja"],
+      ["vendor_composite", "3. Vendor artwork PDF", "Ek plate par kitne label, cylinder, paper, colour"],
+      ["separations", "4. Colour separation PDF", "Har rang / plate ka page"],
+      ["printout", "5. Printout photo", "Machine par jo print hua"],
+    ];
+    let currentId = "";
+
+    function show(id) {
+      document.querySelectorAll("main > section").forEach((el) => el.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    async function j(path, opts) {
+      const res = await fetch(path, opts);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    }
+
+    async function loadList() {
+      const data = await j("/api/jobs");
+      const box = document.getElementById("job-list");
+      if (!data.jobs.length) {
+        box.innerHTML = '<p class="muted">Abhi koi job nahi. Naya job banao.</p>';
+        return;
+      }
+      box.innerHTML = data.jobs.map((job) => (
+        `<div class="card"><div class="row">
+          <div><strong>${job.job_id}</strong><div class="muted">${job.file_name} · ${job.customer || ""}</div></div>
+          <button type="button" class="ghost" data-open="${job.job_id}">Kholo</button>
+        </div></div>`
+      )).join("");
+      box.querySelectorAll("[data-open]").forEach((btn) => {
+        btn.onclick = () => openJob(btn.getAttribute("data-open"));
+      });
+    }
+
+    async function openJob(id) {
+      currentId = id;
+      const data = await j("/api/jobs/" + encodeURIComponent(id));
+      document.getElementById("job-title").textContent = id + "  ·  " + (data.job.file_name || "");
+      const files = data.files || {};
+      document.getElementById("slots").innerHTML = SLOTS.map(([role, title, hint]) => {
+        const have = files[role];
+        return `<div class="card"><div class="row">
+          <div><strong>${title}</strong><div class="muted">${have || hint}</div></div>
+          <label class="btn">${have ? "Badlo" : "Upload"}
+            <input type="file" data-role="${role}" hidden />
+          </label>
+        </div></div>`;
+      }).join("");
+      document.querySelectorAll("input[type=file]").forEach((input) => {
+        input.onchange = () => upload(input.getAttribute("data-role"), input.files[0]);
+      });
+      show("job-view");
+    }
+
+    async function upload(role, file) {
+      if (!file) return;
+      const body = new FormData();
+      body.append("role", role);
+      body.append("file", file, file.name);
+      const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body });
+      const data = await res.json();
+      if (data.error) {
+        document.getElementById("job-err").textContent = data.error;
+        return;
+      }
+      openJob(currentId);
+    }
+
+    function itemLines(items) {
+      if (!items || !items.length) return "<p class='muted'>None</p>";
+      return items.map((item) => `<p>• ${item.summary || ""}<br>
+        <span class="muted">${item.expected ? "Expected: " + item.expected + " · " : ""}${item.found ? "Found: " + item.found : ""}</span></p>`).join("");
+    }
+
+    document.getElementById("new-btn").onclick = () => { document.getElementById("new-err").textContent = ""; show("new-view"); };
+    document.getElementById("back-list").onclick = () => { show("list-view"); loadList(); };
+    document.getElementById("back-jobs").onclick = () => { show("list-view"); loadList(); };
+
+    document.getElementById("save-job").onclick = async () => {
+      try {
+        const colours = document.getElementById("colour_list").value.split(",").map((s) => s.trim()).filter(Boolean);
+        const payload = {
+          job_id: document.getElementById("job_id").value.trim(),
+          file_name: document.getElementById("file_name").value.trim(),
+          customer: document.getElementById("customer").value.trim(),
+          print_type: "Flexo",
+        };
+        const dec = document.getElementById("colour_declaration").value.trim();
+        if (dec) { payload.colour_declaration = dec; payload.colour_list = colours; }
+        const w = document.getElementById("label_w").value.trim();
+        const h = document.getElementById("label_h").value.trim();
+        if (w && h) payload.label_size_mm = [Number(w), Number(h)];
+        const man = document.getElementById("mandatory_texts").value.split(",").map((s) => s.trim()).filter(Boolean);
+        if (man.length) payload.mandatory_texts = man;
+        await j("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        openJob(payload.job_id);
+      } catch (err) {
+        document.getElementById("new-err").textContent = err.message;
+      }
+    };
+
+    document.getElementById("run-btn").onclick = async () => {
+      try {
+        const report = await j("/api/jobs/" + encodeURIComponent(currentId) + "/report");
+        const notRun = (report.checks || []).filter((c) => !c.ran);
+        document.getElementById("report").innerHTML = `
+          <div class="card">
+            <strong>${report.counts.findings} certain · ${report.counts.flags} judge karo · ${report.counts.checks_not_run} checks nahi chale</strong>
+            <p>Yeh report PASS / APPROVED / FAIL nahi kehti. Faisla tumhara hai.</p>
+            <h3>Certain findings</h3>${itemLines(report.findings)}
+            <h3>Judge karo</h3>${itemLines(report.flags)}
+            <h3>Jo check nahi chala</h3>
+            ${notRun.map((c) => `<p class="muted">• ${c.title}: ${c.not_run_reason}</p>`).join("") || "<p class='muted'>None</p>"}
+            <h3>Jo yeh tool check hi nahi karta</h3>
+            ${(report.not_checked || []).map((x) => `<p class="muted">• ${x}</p>`).join("")}
+          </div>`;
+      } catch (err) {
+        document.getElementById("job-err").textContent = err.message;
+      }
+    };
+
+    document.getElementById("save-remark").onclick = async () => {
+      const remark = document.getElementById("remark-text").value;
+      await j("/api/jobs/" + encodeURIComponent(currentId) + "/remarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remark, by: document.getElementById("remark-by").value }),
+      });
+      document.getElementById("remark-text").value = "";
+      document.getElementById("run-btn").click();
+    };
+
+    loadList().catch((err) => {
+      document.getElementById("job-list").innerHTML = '<p class="err">' + err.message + "</p>";
+    });
+  </script>
+</body>
+</html>

@@ -34,12 +34,16 @@ export default function ArtworkVerificationToolPage() {
         {artworkTool.note}
       </p>
 
-      <a
-        href={artworkTool.openHref}
-        className="mt-6 inline-flex rounded-full bg-teal-700 px-5 py-3 text-sm font-medium text-white hover:bg-teal-600"
-      >
-        {artworkTool.openLabel}
-      </a>
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+          {artworkTool.startHeading}
+        </h2>
+        <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-600 dark:text-slate-300">
+          {artworkTool.startSteps.map((step) => (
+            <li key={step}>{step}</li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }

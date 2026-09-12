@@ -24,6 +24,7 @@ from printsahaj_verify.store import (
     save_upload,
 )
 
+DESK_HTML = Path(__file__).resolve().parent / "static" / "desk.html"
 WEB_ROOT = Path(__file__).resolve().parents[2] / "app" / "build" / "web"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -176,25 +177,22 @@ class DeskHandler(BaseHTTPRequestHandler):
         _json(self, 404, {"error": f"Unknown path {path}"})
 
     def _serve_static(self, path: str) -> None:
-        if not WEB_ROOT.is_dir():
-            _json(
-                self,
-                200,
-                {
-                    "tool": "artwork-verification",
-                    "hint": "Start the Flutter app, or open /api/jobs",
-                },
-            )
-            return
-        relative = path.lstrip("/") or "index.html"
-        target = (WEB_ROOT / relative).resolve()
-        if WEB_ROOT not in target.parents and target != WEB_ROOT:
-            _json(self, 404, {"error": "not found"})
-            return
-        if target.is_dir():
-            target = target / "index.html"
-        if not target.is_file():
-            target = WEB_ROOT / "index.html"
+        # The built-in desk always works. Flutter web, if built, is at /app/.
+        if path in {"/", "/index.html", "/desk", "/desk.html"}:
+            target = DESK_HTML
+        elif path.startswith("/app"):
+            relative = path[len("/app") :].lstrip("/") or "index.html"
+            target = (WEB_ROOT / relative).resolve()
+            if not WEB_ROOT.is_dir() or (
+                WEB_ROOT not in target.parents and target != WEB_ROOT
+            ):
+                target = DESK_HTML
+            elif target.is_dir():
+                target = target / "index.html"
+            if not target.is_file():
+                target = DESK_HTML
+        else:
+            target = DESK_HTML
         data = target.read_bytes()
         types = {
             ".html": "text/html; charset=utf-8",
@@ -205,8 +203,9 @@ class DeskHandler(BaseHTTPRequestHandler):
             ".wasm": "application/wasm",
         }
         self.send_response(200)
-        self.send_header("Content-Type", types.get(target.suffix, "application/octet-stream"))
+        self.send_header("Content-Type", types.get(target.suffix, "text/html; charset=utf-8"))
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(data)
 

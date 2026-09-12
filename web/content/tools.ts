@@ -23,7 +23,7 @@ export const tools: ToolsContent = {
       href: "/tools/artwork-verification",
       summary:
         "Compares the job sheet, the approved artwork, and the plate files, and shows where they disagree.",
-      status: "Open the tool — it lives apart from this website.",
+      status: "Runs on your computer. Double-click start-tool.bat",
     },
   ],
 };
@@ -34,8 +34,8 @@ export interface ArtworkToolPage {
   summary: string;
   points: string[];
   note: string;
-  openLabel: string;
-  openHref: string;
+  startHeading: string;
+  startSteps: string[];
   backLabel: string;
   backHref: string;
 }
@@ -51,9 +51,14 @@ export const artworkTool: ArtworkToolPage = {
     "Text that is on the artwork but on no plate — or the other way around",
   ],
   note:
-    "The tool runs on your computer, not inside this website. Start it, then open the button below. After print, add the machine photo and write a remark — the tool does not automatically grade the photo.",
-  openLabel: "Open Artwork Verification",
-  openHref: "http://127.0.0.1:8765",
+    "This page is only a door. The tool does not live on the website. A button to 127.0.0.1 will fail until the tool is started on this same computer.",
+  startHeading: "Computer par kaise chalao",
+  startSteps: [
+    "Folder tools/artwork-verification kholo",
+    "start-tool.bat par double-click (Windows). Pehli baar Python maang sakta hai — PATH mein add karna",
+    "Do second baad browser khulega: http://127.0.0.1:8765",
+    "Wahan job banao, PDFs daalo, match chalao. Jo window khuli hai use band mat karna",
+  ],
   backLabel: "All tools",
   backHref: "/tools",
 };

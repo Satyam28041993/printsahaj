@@ -1,45 +1,20 @@
 # Artwork Verification
 
-Yeh PrintSahaj **website nahi** hai. Website par sirf iska **link** hai.
+Yeh PrintSahaj website nahi hai. Website is tool ko **start nahi** karti.
 
-## Kaam ka silsila
+## Windows par chalana
 
-1. Client artwork aata hai — naam, code, PDF
-2. First approval wala PDF (jo client ko mail par bheja)
-3. Vendor ke do PDF
-   - poora artwork (kitne label, cylinder, paper, colour)
-   - colour separation
-4. Sab match — report + remark
-5. Print ke baad machine wali photo — abhi aankh se dekho aur remark likho
-   (photo se automatic text/alignment/logo check is version mein nahi chalta)
+1. `start-tool.bat` par **double-click**
+2. Browser khulega — `http://127.0.0.1:8765`
+3. Kali window **kholi rehne do** jab tak tool use karo
 
-Kabhi PASS / APPROVED / FAIL nahi likhta.
+Agar Chrome bole "can't be reached": bat file nahi chali, ya Python PATH mein nahi hai.
 
-## Folder
-
-```
-engine/    hisab-kitab + local desk
-app/       Flutter screen (web + kal Android APK)
-samples/   test jobs
-jobs/      live jobs (git nahi)
-```
-
-## Chalana
+## Linux / Mac
 
 ```bash
-cd tools/artwork-verification/engine
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m printsahaj_verify --serve
+chmod +x start-tool.sh
+./start-tool.sh
 ```
 
-Browser: http://127.0.0.1:8765
-
-Pehli baar Flutter web build:
-
-```bash
-cd ../app
-flutter build web
-```
-
-Phone APK kal: isi `app/` folder se `flutter build apk`.
+Phir browser mein http://127.0.0.1:8765
