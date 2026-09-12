@@ -9,6 +9,13 @@ CHECK_ID = "text_completeness"
 CHECK_TITLE = "Text completeness"
 #: Ignore tokens this short — they are usually codes or crumbs.
 SAMPLE_LIMIT = 20
+#: RIP plates are often outlined images. A handful of tokens is not a text layer.
+MIN_PLATE_TEXT_TOKENS = 8
+NO_PLATE_TEXT = (
+    "Separation pages have no readable text layer (outlined or image plates). "
+    "Token compare was not used. Open each plate preview, or use Gemini "
+    "for a plate-by-plate look."
+)
 
 
 def _unique(tokens: list[str]) -> list[str]:
@@ -39,6 +46,16 @@ def check_text_completeness(
 
     approved_tokens = set(_unique(approved.all_tokens))
     plate_tokens = set(_unique(separations.all_tokens))
+    if len(plate_tokens) < MIN_PLATE_TEXT_TOKENS:
+        return CheckResult(
+            check_id=CHECK_ID,
+            title=CHECK_TITLE,
+            not_run_reason=NO_PLATE_TEXT,
+            observations={
+                "source_tokens": str(len(approved_tokens)),
+                "plate_tokens": str(len(plate_tokens)),
+            },
+        )
 
     missing_on_plates = sorted(approved_tokens - plate_tokens)
     extra_on_plates = sorted(plate_tokens - approved_tokens)

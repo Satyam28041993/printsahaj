@@ -12,10 +12,17 @@ from printsahaj_verify.constants import (
     MEASUREMENT_TOLERANCE_MM,
     PREVIEW_MAX_WIDTH_PX,
     PREVIEW_MAX_ZOOM,
+    PREVIEW_MIN_WIDTH_PX,
+    PUNCH_GREEN_MIN_G,
+    PUNCH_GREEN_RATIO,
+    PUNCH_MIN_AREA_MM2,
+    PUNCH_SIZE_TOLERANCE_MM,
+    VIEWER_MAX_WIDTH_PX,
+    VIEWER_MAX_ZOOM,
     points_to_mm,
 )
 from printsahaj_verify.job_spec import JobSpecError
-from printsahaj_verify.probe import read_colorants, read_spans
+from printsahaj_verify.probe import read_colorants, read_page_device_colorants, read_spans
 
 #: Smallest token kept when comparing text across files.
 MIN_COMPARE_TOKEN_LENGTH = 2
@@ -55,6 +62,7 @@ class DocumentText:
     path: Path
     pages: list[PageText] = field(default_factory=list)
     colorants: list[str] = field(default_factory=list)
+    page_colorants: list[str] = field(default_factory=list)
 
     @property
     def full_text(self) -> str:
@@ -102,6 +110,7 @@ def read_document_text(path: Path) -> DocumentText:
                 path=path,
                 pages=pages,
                 colorants=read_colorants(document),
+                page_colorants=read_page_device_colorants(document),
             )
     except JobSpecError:
         raise
@@ -127,11 +136,24 @@ def preview_page_count(path: Path) -> int:
         raise JobSpecError(f"Cannot open for preview {path}: {error}") from error
 
 
-def render_preview_png(path: Path, page_number: int = 1) -> bytes:
+def clamp_preview_width(max_width_px: int | None) -> tuple[int, float]:
+    """Thumbnail cap, or a wider cap for the compare window."""
+    if max_width_px is None:
+        return PREVIEW_MAX_WIDTH_PX, PREVIEW_MAX_ZOOM
+    width = max(PREVIEW_MIN_WIDTH_PX, min(int(max_width_px), VIEWER_MAX_WIDTH_PX))
+    return width, VIEWER_MAX_ZOOM
+
+
+def render_preview_png(
+    path: Path,
+    page_number: int = 1,
+    max_width_px: int | None = None,
+) -> bytes:
     """Rasterise one PDF page or an image to PNG for the desk preview.
 
     ``page_number`` is 1-based. This is a picture for a human, not a grade.
     """
+    cap, max_zoom = clamp_preview_width(max_width_px)
     try:
         with pymupdf.open(path) as document:
             if document.page_count < 1:
@@ -145,7 +167,7 @@ def render_preview_png(path: Path, page_number: int = 1) -> bytes:
             width = page.rect.width
             if width <= 0:
                 raise JobSpecError(f"Page has no width: {path}")
-            zoom = min(PREVIEW_MAX_WIDTH_PX / width, PREVIEW_MAX_ZOOM)
+            zoom = min(cap / width, max_zoom)
             pixmap = page.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom), alpha=False)
             return pixmap.tobytes("png")
     except JobSpecError:
@@ -224,6 +246,83 @@ def hash_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _is_punch_green(color: object) -> bool:
+    if not isinstance(color, (tuple, list)) or len(color) < 3:
+        return False
+    red, green, blue = float(color[0]), float(color[1]), float(color[2])
+    return (
+        green >= PUNCH_GREEN_MIN_G
+        and green > red * PUNCH_GREEN_RATIO
+        and green > blue * 0.9
+    )
+
+
+def _near_label_mm(
+    width_mm: float,
+    height_mm: float,
+    label_width_mm: float | None,
+    label_height_mm: float | None,
+) -> bool:
+    area = width_mm * height_mm
+    if area < PUNCH_MIN_AREA_MM2:
+        return False
+    if label_width_mm is None or label_height_mm is None:
+        return width_mm >= 30 and height_mm >= 30
+    pair = sorted((width_mm, height_mm))
+    expect = sorted((label_width_mm, label_height_mm))
+    return (
+        abs(pair[0] - expect[0]) <= PUNCH_SIZE_TOLERANCE_MM
+        and abs(pair[1] - expect[1]) <= PUNCH_SIZE_TOLERANCE_MM
+    )
+
+
+def count_label_frames(
+    path: Path,
+    label_width_mm: float | None,
+    label_height_mm: float | None,
+) -> int | None:
+    """Count green punch-line frames around each up on a vendor composite.
+
+    Each label on the imposition has a green punch / die line. That count is
+    the number of ups. None when no such frames could be read.
+    """
+    try:
+        with pymupdf.open(path) as document:
+            if document.page_count < 1:
+                return None
+            page = document[0]
+            centers: list[tuple[float, float]] = []
+            for drawing in page.get_drawings():
+                if not (
+                    _is_punch_green(drawing.get("color"))
+                    or _is_punch_green(drawing.get("fill"))
+                ):
+                    continue
+                rect = drawing.get("rect")
+                if rect is None:
+                    continue
+                width_mm = points_to_mm(rect.width)
+                height_mm = points_to_mm(rect.height)
+                if not _near_label_mm(
+                    width_mm, height_mm, label_width_mm, label_height_mm
+                ):
+                    continue
+                centers.append(
+                    (points_to_mm((rect.x0 + rect.x1) / 2), points_to_mm((rect.y0 + rect.y1) / 2))
+                )
+    except Exception as error:  # noqa: BLE001
+        raise JobSpecError(f"Cannot read punch frames {path}: {error}") from error
+    if not centers:
+        return None
+    unique: list[tuple[float, float]] = []
+    gap = PUNCH_SIZE_TOLERANCE_MM
+    for x_mm, y_mm in centers:
+        if any(abs(x_mm - ox) <= gap and abs(y_mm - oy) <= gap for ox, oy in unique):
+            continue
+        unique.append((x_mm, y_mm))
+    return len(unique) if unique else None
 
 
 def page_size_mm(path: Path) -> tuple[float, float]:

@@ -267,11 +267,22 @@ class DeskHandler(BaseHTTPRequestHandler):
                 target = resolve_slot_file(job_id, role)
                 if len(parts) == 6 and parts[5] == "preview":
                     page_raw = query.get("page", ["1"])[0]
+                    width_raw = query.get("width", [""])[0]
                     try:
                         page = int(page_raw)
                     except ValueError as error:
                         raise JobSpecError("preview page must be a number") from error
-                    _bytes(self, render_preview_png(target, page), "image/png")
+                    max_width = None
+                    if width_raw:
+                        try:
+                            max_width = int(width_raw)
+                        except ValueError as error:
+                            raise JobSpecError("preview width must be a number") from error
+                    _bytes(
+                        self,
+                        render_preview_png(target, page, max_width_px=max_width),
+                        "image/png",
+                    )
                     return
                 if len(parts) == 5:
                     content_type = SUFFIX_TYPES.get(

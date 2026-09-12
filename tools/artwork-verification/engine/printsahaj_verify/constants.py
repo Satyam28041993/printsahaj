@@ -20,10 +20,19 @@ MM_PER_POINT: float = MM_PER_INCH / POINTS_PER_INCH
 # micrometre is well below anything the trade can measure.
 MEASUREMENT_TOLERANCE_MM: float = 0.001
 
-# Desk preview: render the first page (or the image) no wider than this.
+# Desk thumbnail: render the first page (or the image) no wider than this.
 PREVIEW_MAX_WIDTH_PX: int = 900
 # Tiny pages would otherwise be scaled up into huge pixmaps.
 PREVIEW_MAX_ZOOM: float = 4.0
+# Full preview / compare window. Text on a wide imposition must stay readable.
+PREVIEW_MIN_WIDTH_PX: int = 200
+VIEWER_MAX_WIDTH_PX: int = 2800
+VIEWER_MAX_ZOOM: float = 8.0
+# Green punch-line frames around each label on a vendor composite.
+PUNCH_SIZE_TOLERANCE_MM: float = 12.0
+PUNCH_GREEN_MIN_G: float = 0.45
+PUNCH_GREEN_RATIO: float = 1.25
+PUNCH_MIN_AREA_MM2: float = 800.0
 
 
 def points_to_mm(points: float) -> float:

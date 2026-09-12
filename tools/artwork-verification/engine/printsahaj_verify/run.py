@@ -21,6 +21,7 @@ from printsahaj_verify.checks.job_identity import check_job_identity
 from printsahaj_verify.checks.plate_count import CHECK_ID as PLATE_ID
 from printsahaj_verify.checks.plate_count import CHECK_TITLE as PLATE_TITLE
 from printsahaj_verify.checks.plate_count import check_plate_count
+from printsahaj_verify.checks.plate_review import check_plate_review
 from printsahaj_verify.checks.plate_text_map import CHECK_ID as PLATE_TEXT_ID
 from printsahaj_verify.checks.plate_text_map import CHECK_TITLE as PLATE_TEXT_TITLE
 from printsahaj_verify.checks.plate_text_map import check_plate_text_map
@@ -39,7 +40,12 @@ from printsahaj_verify.files import JobFiles, discover_job_files, is_pdf
 from printsahaj_verify.job_spec import JobSpec, JobSpecError, load_job_spec
 from printsahaj_verify.models import Certainty, CheckResult, Finding
 from printsahaj_verify.stages import STAGE_ORDER, previous_stage
-from printsahaj_verify.vision import VisionNotes, compare_label_previews
+from printsahaj_verify.vision import (
+    PlateVisionNote,
+    VisionNotes,
+    compare_label_previews,
+    review_separation_plates,
+)
 
 JOB_FILE_NAME = "job.json"
 STAGES_FILE_NAME = "stages.json"
@@ -86,6 +92,32 @@ def _vision_notes(files: JobFiles) -> tuple[VisionNotes | None, str | None]:
         return compare_label_previews(files.client_artwork, files.approval), None
     except (JobSpecError, OSError, TimeoutError, ValueError) as error:
         return None, str(error)
+
+
+def _plate_vision_notes(
+    files: JobFiles,
+    page_count: int,
+) -> tuple[tuple[PlateVisionNote, ...] | None, str | None]:
+    """Gemini look at each SEP page against the client artwork."""
+    artwork = files.client_artwork or files.approval
+    if artwork is None or files.separations is None or page_count < 1:
+        return None, None
+    try:
+        return review_separation_plates(artwork, files.separations, page_count), None
+    except (JobSpecError, OSError, TimeoutError, ValueError) as error:
+        return None, str(error)
+
+
+def _approval_label_mm(files: JobFiles) -> tuple[float, float] | None:
+    if files.approval is None or not is_pdf(files.approval):
+        return None
+    try:
+        sheet = parse_approval_sheet(files.approval)
+    except JobSpecError:
+        return None
+    if sheet.label_width_mm and sheet.label_height_mm:
+        return (sheet.label_width_mm, sheet.label_height_mm)
+    return None
 
 
 def _plate_count_result(
@@ -279,6 +311,10 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         text_result = check_text_completeness(approved_for_text, separations_doc)
         plate_text = check_plate_text_map(spec, separations_doc)
 
+    sep_pages = len(separations_doc.pages) if separations_doc else 0
+    plate_notes, plate_vision_error = _plate_vision_notes(files, sep_pages)
+    approval_label = _approval_label_mm(files)
+
     return [
         identity,
         check_approval_sheet(files.approval),
@@ -300,7 +336,13 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         ),
         _plate_count_result(spec, files, header.col_count if header else None),
         check_colour_names(spec, separations_doc),
-        check_geometry(spec, header),
+        check_geometry(
+            spec,
+            header,
+            approval_label,
+            files.vendor_composite,
+        ),
+        check_plate_review(separations_doc, plate_notes, plate_vision_error),
         check_headers(spec, vendor_docs),
         text_result,
         plate_text,

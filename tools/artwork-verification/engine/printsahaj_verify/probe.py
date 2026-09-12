@@ -30,6 +30,7 @@ from printsahaj_verify.constants import points_to_mm
 #: for it without rendering anything.
 SEPARATION_PATTERN = re.compile(r"/Separation\s*/([^\s/\[\]<>]+)")
 DEVICEN_PATTERN = re.compile(r"/DeviceN\s*\[([^\]]*)\]")
+DEVICE_COLORANT_PATTERN = re.compile(r"/DeviceColorant\s*/([^\s/\[\]<>]+)")
 
 #: Text shorter than this is usually a stray artefact rather than content.
 MIN_MEANINGFUL_TEXT_LENGTH = 1
@@ -127,6 +128,32 @@ def read_colorants(document: pymupdf.Document) -> list[str]:
         if name not in seen:
             seen.append(name)
     return seen
+
+
+def page_colorant_from_xref_text(text: str) -> str:
+    """Plate ink name from one page's ``/SeparationInfo /DeviceColorant``."""
+    match = DEVICE_COLORANT_PATTERN.search(text)
+    if not match:
+        return ""
+    from printsahaj_verify.colour_map import normalise_ink_name
+
+    return normalise_ink_name(match.group(1))
+
+
+def read_page_device_colorants(document: pymupdf.Document) -> list[str]:
+    """Ink name on each separation page, in page order.
+
+    RIP plates often have no text layer. The page object still names the ink.
+    """
+    names: list[str] = []
+    for page in document:
+        try:
+            obj = document.xref_object(page.xref, compressed=False)
+        except Exception:  # noqa: BLE001
+            names.append("")
+            continue
+        names.append(page_colorant_from_xref_text(obj))
+    return names
 
 
 def probe_document(path: Path) -> DocumentProbe:

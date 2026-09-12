@@ -29,7 +29,6 @@ APPROVAL_NOT_CHECKED = (
 
 VENDOR_NOT_CHECKED = (
     "Colour shade on each plate",
-    "Whether the written ups layout is the intended one",
     "Trap and overprint intent",
 )
 
@@ -216,32 +215,75 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
     geometry = by_id.get("geometry")
     headers = by_id.get("headers")
     wording = by_id.get("text_completeness")
+    plate_look = by_id.get("plate_review")
     obs = geometry.observations if geometry else {}
     plate_obs = plates.observations if plates else {}
     pages = plate_obs.get("separation_pages", "?")
     declared = plate_obs.get("declared_units") or obs.get("header_col", "?")
     colour_obs = colours.observations if colours else {}
     matched = colour_obs.get("matched_colours", "none")
+    plate_names = colour_obs.get("plate_names") or (
+        plate_look.observations.get("plates", "none") if plate_look else "none"
+    )
     ups_detail = obs.get("ups_written", "")
-    if obs.get("ups_across") and obs.get("ups_around"):
+    if obs.get("ups_source") == "punch_frames" and ups_detail:
+        ups_detail = f"{ups_detail} green punch frames on the composite"
+    elif obs.get("ups_across") and obs.get("ups_around"):
         ups_detail = (
             f"{ups_detail} (across {obs['ups_across']} × around {obs['ups_around']})"
             if ups_detail
             else f"across {obs['ups_across']} × around {obs['ups_around']}"
         )
+    label_detail = obs.get("label_written", "")
+    approval_mm = obs.get("approval_label_mm", "")
+    if label_detail and approval_mm and obs.get("label_matches_approval") == "yes":
+        label_item = _item(
+            "label",
+            "Label size vs first approval",
+            STATE_CLEAR,
+            f"Vendor {label_detail} matches first-approval {approval_mm}.",
+        )
+    elif label_detail and obs.get("label_matches_approval") == "no":
+        label_item = _item(
+            "label",
+            "Label size vs first approval",
+            STATE_ISSUE,
+            f"Vendor {label_detail} does not match first-approval {approval_mm}.",
+        )
+    elif label_detail:
+        label_item = _item(
+            "label",
+            "Label size vs first approval",
+            STATE_CLEAR,
+            f"Label size is written: {label_detail}. First-approval size was not read.",
+        )
+    else:
+        label_item = _mentioned(
+            obs,
+            "label_written",
+            "label",
+            "Label size vs first approval",
+            "Label size is written: {value}.",
+            "Label size was not read on the vendor composite.",
+            geometry,
+        )
+    wording_ok = (
+        "This row asks: do first-approval label words also sit on at least "
+        "one plate, so they will print. No missing words were flagged."
+    )
     return [
         _from_check(
             plates,
             "plates",
             "Separation plates",
-            f"Plate count matches: {pages} SEP pages for {declared} units.",
+            f"Plate count matches: {pages} SEP pages for {declared} units. Names: {plate_names}.",
         ),
         _mentioned(
             obs,
             "cylinder_written",
             "cylinder",
-            "Cylinder (CLY) is written",
-            "Cylinder is written: {value}.",
+            "Cylinder (CLY) in mm and teeth",
+            "Cylinder: {value}.",
             "Cylinder (CLY) was not read on the vendor composite.",
             geometry,
         ),
@@ -258,25 +300,25 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             {"ups_written": ups_detail} if ups_detail else obs,
             "ups_written",
             "ups",
-            "Ups are written",
-            "Ups are written: {value}.",
-            "Ups were not read on the vendor composite.",
+            "Ups (labels on the composite)",
+            "Ups counted: {value}.",
+            "Ups were not read. Look for green punch lines around each label on the composite.",
             geometry,
         ),
-        _mentioned(
-            obs,
-            "label_written",
-            "label",
-            "Label size is written",
-            "Label size is written: {value}.",
-            "Label size was not read on the vendor composite.",
-            geometry,
-        ),
+        label_item,
         _from_check(
             colours,
             "sep_colours",
             "Separation colours",
-            f"Declared colours were found on the SEP set ({matched}).",
+            f"Declared colours were found on the SEP set ({matched}). Plates: {plate_names}.",
+        ),
+        _from_check(
+            plate_look,
+            "plate_matter",
+            "Each separation plate vs artwork",
+            plate_look.observations.get("plates", "Each plate was listed.")
+            if plate_look
+            else "Each plate was listed.",
         ),
         _from_check(
             headers,
@@ -287,8 +329,8 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
         _from_check(
             wording,
             "wording_on_plates",
-            "Wording on plates vs approval",
-            "No missing approval wording was flagged on the plates.",
+            "Wording on plates vs first approval",
+            wording_ok,
         ),
     ]
 

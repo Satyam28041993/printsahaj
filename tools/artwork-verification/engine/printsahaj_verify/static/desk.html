@@ -69,7 +69,6 @@
     .uploading { color: var(--gold); font-weight: 600; margin: 12px 0 8px; }
     .compare-pick { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin: 10px 0 8px; cursor: pointer; }
     .compare-pick input { width: auto; margin: 0; }
-    .viewer-modal { max-width: min(1400px, 100%); }
     .viewer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .viewer-grid.one { grid-template-columns: 1fr; }
     .viewer-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
@@ -77,15 +76,15 @@
       position: relative;
       overflow: auto;
       background: #1a1712;
-      min-height: 360px;
-      max-height: calc(100vh - 220px);
+      min-height: 0;
+      height: calc(100vh - 150px);
       border-radius: 10px;
     }
     .viewer-img { display: block; transform-origin: top left; }
     .loupe {
       position: absolute;
-      width: 180px;
-      height: 180px;
+      width: 280px;
+      height: 280px;
       border-radius: 50%;
       border: 3px solid #fffdf8;
       box-shadow: 0 4px 16px rgba(0,0,0,0.45);
@@ -170,6 +169,20 @@
       overflow: auto;
       padding: 22px 24px 28px;
     }
+    .modal-back.viewer-open {
+      padding: 8px;
+      align-items: stretch;
+    }
+    .modal.viewer-modal {
+      max-width: calc(100vw - 16px);
+      width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
+      height: calc(100vh - 16px);
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal.viewer-modal .viewer-grid { flex: 1; min-height: 0; }
   </style>
 </head>
 <body>
@@ -226,11 +239,12 @@
       printout: ["Printout", "Photo after the machine print"],
     };
     const TICK = { issue: "✗", clear: "✓", judge: "!", wait: "—", eye: "◉" };
-    const ZOOM_MIN = 1;
+    const ZOOM_MIN = 0.25;
     const ZOOM_MAX = 8;
     const ZOOM_STEP = 0.25;
-    const LOUPE_SIZE = 180;
-    const LOUPE_MAG = 2.5;
+    const LOUPE_SIZE = 280;
+    const LOUPE_MAG = 3;
+    const VIEWER_WIDTH = 2800;
     let currentId = "";
     let snapshot = null;
     let checklist = null;
@@ -259,9 +273,10 @@
       return data;
     }
 
-    function previewUrl(role, page) {
+    function previewUrl(role, page, width) {
       return "/api/jobs/" + encodeURIComponent(currentId) + "/files/" +
-        encodeURIComponent(role) + "/preview?page=" + page + "&v=" + Date.now();
+        encodeURIComponent(role) + "/preview?page=" + page +
+        (width ? "&width=" + width : "") + "&v=" + Date.now();
     }
 
     function stageLocked(stageId, defs, checked) {
@@ -575,7 +590,7 @@
         </div>
         <div class="viewer-stage" data-stage="${role}">
           <img class="viewer-img" data-viewer-img="${role}" data-page="${page}" data-pages="${pages}"
-            src="${previewUrl(role, page)}" alt="${escapeHtml(copy)} full preview" />
+            src="${previewUrl(role, page, VIEWER_WIDTH)}" alt="${escapeHtml(copy)} full preview" />
           <div class="loupe hidden" data-loupe-lens="${role}"></div>
         </div>
       </div>`;
@@ -584,14 +599,14 @@
     function openViewer(roles) {
       const box = document.getElementById("viewer-modal");
       const many = roles.length > 1;
-      box.className = "modal-back is-open";
+      box.className = "modal-back is-open viewer-open";
       box.hidden = false;
       box.innerHTML = `<div class="modal viewer-modal">
         <div class="row">
           <strong>${many ? "Compare" : "Full preview"}</strong>
           <button type="button" class="ghost" id="close-viewer">Close</button>
         </div>
-        <p class="muted">${many ? "Both files, side by side. Zoom or use the magnifying glass." : "Zoom in or out, or use the magnifying glass."}</p>
+        <p class="muted">${many ? "Both files, side by side. Zoom in until the type is readable, or use the magnifying glass." : "Zoom in until the type is readable, or use the magnifying glass."}</p>
         <div class="viewer-grid${many ? "" : " one"}">${roles.map(viewerPane).join("")}</div>
       </div>`;
       document.getElementById("close-viewer").onclick = closeViewer;
@@ -635,7 +650,7 @@
           if (page < 1) page = max;
           if (page > max) page = 1;
           img.setAttribute("data-page", String(page));
-          img.src = previewUrl(role, page);
+          img.src = previewUrl(role, page, VIEWER_WIDTH);
           const pageLabel = document.querySelector('[data-viewer-page-label="' + role + '"]');
           if (pageLabel) pageLabel.textContent = "Page " + page + " / " + max;
         };
@@ -662,9 +677,15 @@
         const y = event.clientY - rect.top;
         lens.style.left = (event.clientX - stageRect.left - LOUPE_SIZE / 2 + stage.scrollLeft) + "px";
         lens.style.top = (event.clientY - stageRect.top - LOUPE_SIZE / 2 + stage.scrollTop) + "px";
+        const natW = img.naturalWidth || rect.width;
+        const natH = img.naturalHeight || rect.height;
+        const sx = natW / rect.width;
+        const sy = natH / rect.height;
         lens.style.backgroundImage = "url(" + img.src + ")";
-        lens.style.backgroundSize = (rect.width * LOUPE_MAG) + "px " + (rect.height * LOUPE_MAG) + "px";
-        lens.style.backgroundPosition = (-(x * LOUPE_MAG - LOUPE_SIZE / 2)) + "px " + (-(y * LOUPE_MAG - LOUPE_SIZE / 2)) + "px";
+        lens.style.backgroundSize = (natW * LOUPE_MAG) + "px " + (natH * LOUPE_MAG) + "px";
+        lens.style.backgroundPosition =
+          (-(x * sx * LOUPE_MAG - LOUPE_SIZE / 2)) + "px " +
+          (-(y * sy * LOUPE_MAG - LOUPE_SIZE / 2)) + "px";
       };
       stage.onmouseleave = () => lens.classList.add("hidden");
     }

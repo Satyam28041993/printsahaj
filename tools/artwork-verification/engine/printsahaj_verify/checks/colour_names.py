@@ -20,6 +20,10 @@ HEADER_WINDOW_CHARS = 400
 
 def _names_from_separations(document: DocumentText) -> list[str]:
     names = [normalise_ink_name(item) for item in document.colorants]
+    for item in document.page_colorants:
+        cleaned = normalise_ink_name(item)
+        if cleaned and cleaned not in names:
+            names.append(cleaned)
     for page in document.pages:
         header = page.text[:HEADER_WINDOW_CHARS]
         for token in header.replace("/", " ").replace(":", " ").split():
@@ -27,6 +31,23 @@ def _names_from_separations(document: DocumentText) -> list[str]:
             if len(cleaned) >= 2 and cleaned not in names:
                 names.append(cleaned)
     return names
+
+
+def plate_name_list(document: DocumentText) -> str:
+    """``1 Cyan, 2 Magenta, …`` from each SEP page, then leftover ink names."""
+    parts: list[str] = []
+    seen: set[str] = set()
+    for index, name in enumerate(document.page_colorants, start=1):
+        cleaned = normalise_ink_name(name)
+        if not cleaned:
+            continue
+        parts.append(f"{index} {cleaned}")
+        seen.add(cleaned)
+    for name in _names_from_separations(document):
+        if name and name not in seen:
+            parts.append(name)
+            seen.add(name)
+    return ", ".join(parts) if parts else "none"
 
 
 def check_colour_names(job: JobSpec, separations: DocumentText | None) -> CheckResult:
@@ -95,5 +116,6 @@ def check_colour_names(job: JobSpec, separations: DocumentText | None) -> CheckR
             "matched_colours": ", ".join(matched) if matched else "none",
             "missing_colours": ", ".join(missing) if missing else "none",
             "found_names": ", ".join(found_names) if found_names else "none",
+            "plate_names": plate_name_list(separations),
         },
     )

@@ -65,6 +65,39 @@ mrp_note (string): short note
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
 
+PLATE_REVIEW_PROMPT = """You review flexo separation plates against one label.
+Image 1 is the client artwork (one label).
+Images after that are separation plates in page order, one ink each.
+
+For process plates (Cyan, Magenta, Yellow, Black, Gold, pantone): look at
+the bowl / product photo, FSSAI mark, logo and printed wording that belong
+on that ink. Say whether the shape and wording match the artwork.
+
+The last plate is often UV / varnish. A hole, white box or cut-out on the
+UV plate is the unvarnished window where batch number and MRP print.
+That window is expected. It is not a missing plate.
+
+Return JSON only:
+plates (array of objects): page (number, 1-based), name (string),
+matter_same (boolean), note (string), uv_cutouts (boolean)
+
+Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
+"""
+
+PLATE_REVIEW_TIMEOUT_SEC = 90
+PLATE_PREVIEW_WIDTH_PX = 720
+
+
+@dataclass(frozen=True)
+class PlateVisionNote:
+    """Gemini note for one separation page."""
+
+    page: int
+    name: str
+    matter_same: bool | None
+    note: str
+    uv_cutouts: bool | None
+
 
 @dataclass(frozen=True)
 class VisionNotes:
@@ -393,17 +426,11 @@ def _vision_body(client_png: bytes, approval_png: bytes) -> bytes:
     ).encode("utf-8")
 
 
-def compare_label_previews(
-    client: Path,
-    approval: Path,
-) -> VisionNotes | None:
-    """Send both previews to Gemini. None when no key is set."""
+def _generate_gemini_json(body: bytes, timeout: int) -> tuple[dict[str, object], str]:
+    """POST generateContent, retrying Flash models on 404."""
     key = read_gemini_api_key()
     if not key:
-        return None
-    client_png = render_preview_png(client, 1)
-    approval_png = render_preview_png(approval, 1)
-    body = _vision_body(client_png, approval_png)
+        raise JobSpecError("No Gemini key")
     available: list[str] = []
     try:
         available = list_gemini_models(key)
@@ -415,7 +442,7 @@ def compare_label_previews(
         for version in GEMINI_API_VERSIONS:
             url = generate_content_url(model, key, version)
             try:
-                raw = _post_gemini(url, body, GEMINI_TIMEOUT_SEC)
+                raw = _post_gemini(url, body, timeout)
             except JobSpecError as error:
                 last_error = error
                 if not is_retryable_gemini_error(error):
@@ -432,8 +459,93 @@ def compare_label_previews(
                 raise JobSpecError(
                     f"Gemini request did not complete: {error}"
                 ) from error
-            payload = _parse_gemini_body(raw)
-            return notes_from_payload(payload, source=f"gemini:{model}")
+            return _parse_gemini_body(raw), model
     if last_error is not None:
         raise last_error
     raise JobSpecError("Gemini did not return a usable model for these pictures")
+
+
+def compare_label_previews(
+    client: Path,
+    approval: Path,
+) -> VisionNotes | None:
+    """Send both previews to Gemini. None when no key is set."""
+    if not read_gemini_api_key():
+        return None
+    client_png = render_preview_png(client, 1)
+    approval_png = render_preview_png(approval, 1)
+    payload, model = _generate_gemini_json(
+        _vision_body(client_png, approval_png),
+        GEMINI_TIMEOUT_SEC,
+    )
+    return notes_from_payload(payload, source=f"gemini:{model}")
+
+
+def _multi_image_body(prompt: str, images: list[bytes]) -> bytes:
+    parts: list[dict[str, object]] = [{"text": prompt}]
+    for png in images:
+        parts.append(
+            {
+                "inlineData": {
+                    "mimeType": "image/png",
+                    "data": base64.b64encode(png).decode("ascii"),
+                }
+            }
+        )
+    return json.dumps(
+        {
+            "contents": [{"parts": parts}],
+            "generationConfig": {
+                "temperature": 0,
+                "responseMimeType": "application/json",
+            },
+        }
+    ).encode("utf-8")
+
+
+def plate_notes_from_payload(payload: dict[str, object]) -> tuple[PlateVisionNote, ...]:
+    """Parse the plates array from a Gemini JSON object."""
+    raw = payload.get("plates")
+    if not isinstance(raw, list):
+        return ()
+    notes: list[PlateVisionNote] = []
+    for index, item in enumerate(raw, start=1):
+        if not isinstance(item, dict):
+            continue
+        page_raw = item.get("page", index)
+        try:
+            page = int(page_raw)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            page = index
+        notes.append(
+            PlateVisionNote(
+                page=page,
+                name=scrub_vision_text(str(item.get("name") or "")),
+                matter_same=_as_bool(item.get("matter_same")),
+                note=scrub_vision_text(str(item.get("note") or "")),
+                uv_cutouts=_as_bool(item.get("uv_cutouts")),
+            )
+        )
+    return tuple(notes)
+
+
+def review_separation_plates(
+    artwork: Path,
+    separations: Path,
+    page_count: int,
+) -> tuple[PlateVisionNote, ...] | None:
+    """Send artwork plus each SEP page to Gemini. None when no key is set."""
+    if not read_gemini_api_key():
+        return None
+    if page_count < 1:
+        raise JobSpecError("Separations file has no pages")
+    images = [render_preview_png(artwork, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)]
+    for page in range(1, page_count + 1):
+        images.append(
+            render_preview_png(separations, page, max_width_px=PLATE_PREVIEW_WIDTH_PX)
+        )
+    payload, _model = _generate_gemini_json(
+        _multi_image_body(PLATE_REVIEW_PROMPT, images),
+        PLATE_REVIEW_TIMEOUT_SEC,
+    )
+    return plate_notes_from_payload(payload)

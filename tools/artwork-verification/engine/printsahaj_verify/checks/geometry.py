@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from printsahaj_verify.constants import CIRCULAR_PITCH_MM, MEASUREMENT_TOLERANCE_MM
-from printsahaj_verify.extract import VendorHeader, measurements_match
+from printsahaj_verify.extract import (
+    VendorHeader,
+    count_label_frames,
+    measurements_match,
+)
 from printsahaj_verify.job_spec import JobSpec
 from printsahaj_verify.models import Certainty, CheckResult, Finding
 
@@ -17,11 +23,24 @@ def _near_whole_teeth(repeat_mm: float) -> tuple[bool, float]:
     return abs(teeth - nearest) <= MEASUREMENT_TOLERANCE_MM, teeth
 
 
+def _same_label_pair(
+    left: tuple[float, float],
+    right: tuple[float, float],
+) -> bool:
+    sheet = sorted(left)
+    other = sorted(right)
+    return measurements_match(sheet[0], other[0]) and measurements_match(
+        sheet[1], other[1]
+    )
+
+
 def check_geometry(
     job: JobSpec,
     header: VendorHeader | None,
+    approval_label_mm: tuple[float, float] | None = None,
+    composite_path: Path | None = None,
 ) -> CheckResult:
-    """Compare job-sheet sizes with the vendor header, and test cylinder teeth."""
+    """Compare sizes with the vendor header, first-approval size, and cylinder teeth."""
     if header is None:
         return CheckResult(
             check_id=CHECK_ID,
@@ -51,8 +70,6 @@ def check_geometry(
 
     findings: list[Finding] = []
     observations: dict[str, str] = {}
-    if header.cylinder_repeat_mm is not None:
-        observations["cylinder_written"] = f"{header.cylinder_repeat_mm:.3f} mm"
     if header.paper_width_mm is not None:
         observations["paper_written"] = f"{header.paper_width_mm:.3f} mm"
     if header.label_width_mm is not None and header.label_height_mm is not None:
@@ -61,6 +78,7 @@ def check_geometry(
         )
     if header.ups_count is not None:
         observations["ups_written"] = str(header.ups_count)
+        observations["ups_source"] = "header"
     if header.ups_across is not None:
         observations["ups_across"] = str(header.ups_across)
     if header.ups_around is not None:
@@ -73,6 +91,11 @@ def check_geometry(
         observations["cylinder_repeat_mm"] = f"{repeat:.3f}"
         whole, teeth = _near_whole_teeth(repeat)
         observations["teeth"] = f"{teeth:.4f}"
+        teeth_shown = str(round(teeth)) if whole else f"{teeth:.4f}"
+        observations["cylinder_written"] = (
+            f"{repeat:.3f} mm / {teeth_shown} teeth "
+            f"({repeat:.3f} ÷ {CIRCULAR_PITCH_MM})"
+        )
         if not whole:
             findings.append(
                 Finding(
@@ -117,6 +140,45 @@ def check_geometry(
                     location="Job sheet label size vs vendor LABEL SIZE",
                 )
             )
+
+    if (
+        approval_label_mm is not None
+        and header.label_width_mm is not None
+        and header.label_height_mm is not None
+    ):
+        observations["approval_label_mm"] = (
+            f"{approval_label_mm[0]} x {approval_label_mm[1]} mm"
+        )
+        vendor_pair = (header.label_width_mm, header.label_height_mm)
+        if _same_label_pair(approval_label_mm, vendor_pair):
+            observations["label_matches_approval"] = "yes"
+        else:
+            observations["label_matches_approval"] = "no"
+            findings.append(
+                Finding(
+                    check_id=CHECK_ID,
+                    summary=(
+                        "Vendor label size does not match the first-approval sheet."
+                    ),
+                    certainty=Certainty.DETERMINISTIC,
+                    expected=f"{approval_label_mm[0]} x {approval_label_mm[1]} mm",
+                    found=f"{header.label_width_mm} x {header.label_height_mm} mm",
+                    location="First-approval label size vs vendor LABEL SIZE",
+                )
+            )
+
+    if (
+        observations.get("ups_written") is None
+        and composite_path is not None
+    ):
+        frames = count_label_frames(
+            composite_path,
+            header.label_width_mm,
+            header.label_height_mm,
+        )
+        if frames is not None:
+            observations["ups_written"] = str(frames)
+            observations["ups_source"] = "punch_frames"
 
     if job.paper_width_mm is not None and header.paper_width_mm is not None:
         observations["paper_width_mm"] = str(header.paper_width_mm)
