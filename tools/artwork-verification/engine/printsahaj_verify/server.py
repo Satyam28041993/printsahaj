@@ -6,7 +6,10 @@ This is the tool, not the PrintSahaj marketing site. Jobs stay on this machine.
 from __future__ import annotations
 
 import json
+import os
 import sys
+import threading
+import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -28,6 +31,27 @@ DESK_HTML = Path(__file__).resolve().parent / "static" / "desk.html"
 WEB_ROOT = Path(__file__).resolve().parents[2] / "app" / "build" / "web"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+OPEN_BROWSER_ENV = "PRINTSAHAJ_OPEN_BROWSER"
+
+
+def bind_error_message(host: str, port: int, error: OSError) -> str:
+    """Explain why the desk could not listen, in language a person can act on."""
+    return (
+        f"Port {port} nahi khula ({error}). "
+        f"Agar tool pehle se chal raha hai to browser mein http://{host}:{port} kholo. "
+        "Nahi to start-tool.bat dobara chalao."
+    )
+
+
+def ready_banner(url: str) -> str:
+    """Lines printed after the desk is listening."""
+    return (
+        "\n========================================\n"
+        "Artwork Verification CHAL RAHA HAI\n"
+        f"Browser: {url}\n"
+        "Is window ko BAND MAT KARNA\n"
+        "========================================\n"
+    )
 
 
 def _json(handler: BaseHTTPRequestHandler, status: int, payload: object) -> None:
@@ -212,6 +236,16 @@ class DeskHandler(BaseHTTPRequestHandler):
 
 def serve(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
     """Start the local desk. Blocks until the process is stopped."""
-    server = ThreadingHTTPServer((host, port), DeskHandler)
-    print(f"Artwork verification tool: http://{host}:{port}", file=sys.stderr)
-    server.serve_forever()
+    try:
+        server = ThreadingHTTPServer((host, port), DeskHandler)
+    except OSError as error:
+        print(bind_error_message(host, port, error), file=sys.stderr)
+        raise SystemExit(1) from error
+    url = f"http://{host}:{port}"
+    print(ready_banner(url), file=sys.stderr)
+    if os.environ.get(OPEN_BROWSER_ENV, "1") != "0":
+        threading.Timer(0.3, lambda: webbrowser.open(url)).start()
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()

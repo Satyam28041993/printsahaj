@@ -51,13 +51,13 @@ export const artworkTool: ArtworkToolPage = {
     "Text that is on the artwork but on no plate — or the other way around",
   ],
   note:
-    "This page is only a door. The tool does not live on the website. A button to 127.0.0.1 will fail until the tool is started on this same computer.",
+    "Chrome ka “This site can’t be reached / refused to connect” isliye aata hai kyunki 127.0.0.1 is computer hai, website nahi. Website tool start nahi karti. Pehle start-artwork-verification.bat chalao, kali window khuli rakho — tabhi woh address khulega.",
   startHeading: "Computer par kaise chalao",
   startSteps: [
-    "Folder tools/artwork-verification kholo",
-    "start-tool.bat par double-click (Windows). Pehli baar Python maang sakta hai — PATH mein add karna",
-    "Do second baad browser khulega: http://127.0.0.1:8765",
-    "Wahan job banao, PDFs daalo, match chalao. Jo window khuli hai use band mat karna",
+    "Python 3.11+ install karo. Install ke time Add python.exe to PATH tick karo, phir computer restart karo",
+    "Repo root par start-artwork-verification.bat double-click (ya tools/artwork-verification/start-tool.bat)",
+    "Kali window khuli rehne do. Server ready hone ke baad browser khulega: http://127.0.0.1:8765",
+    "Wahan job banao, PDFs daalo, match chalao. Window band ki to Chrome phir se refused to connect dikhayega",
   ],
   backLabel: "All tools",
   backHref: "/tools",

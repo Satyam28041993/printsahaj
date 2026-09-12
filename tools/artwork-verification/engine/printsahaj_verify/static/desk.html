@@ -27,7 +27,7 @@
 <body>
   <header>
     <h1>Artwork Verification</h1>
-    <p>Yeh website nahi hai. Yeh tool tumhare computer par chal raha hai.</p>
+    <p>Yeh website nahi hai. Chrome mein 127.0.0.1 kholna kaafi nahi — pehle start-tool.bat chalao.</p>
   </header>
   <main>
     <section id="list-view">
@@ -216,7 +216,14 @@
     };
 
     loadList().catch((err) => {
-      document.getElementById("job-list").innerHTML = '<p class="err">' + err.message + "</p>";
+      document.getElementById("job-list").innerHTML =
+        '<div class="card"><p class="err">Tool ka server nahi mil raha.</p>' +
+        "<p>Chrome ka <strong>This site can’t be reached</strong> isliye aata hai " +
+        "kyunki 127.0.0.1 is computer hai. Website tool start nahi karti.</p>" +
+        "<p><strong>start-tool.bat</strong> (ya repo root par " +
+        "<strong>start-artwork-verification.bat</strong>) par double-click karo. " +
+        "Kali window khuli rehne do. Phir yeh page Reload karo.</p>" +
+        '<p class="muted">' + err.message + "</p></div>";
     });
   </script>
 </body>

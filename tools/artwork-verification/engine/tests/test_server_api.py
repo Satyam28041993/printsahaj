@@ -87,6 +87,7 @@ class ServerApiTests(unittest.TestCase):
             home = response.read().decode("utf-8")
         self.assertIn("Artwork Verification", home)
         self.assertIn("Naya job", home)
+        self.assertIn("start-tool.bat", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))
@@ -96,6 +97,27 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("PASS", json.dumps(report))
         self.assertNotIn("FAIL", json.dumps(report))
         self.assertNotIn("APPROVED", json.dumps(report))
+
+    def test_bind_error_points_at_local_url(self) -> None:
+        from printsahaj_verify.server import bind_error_message, ready_banner
+
+        text = bind_error_message("127.0.0.1", 8765, OSError("Address already in use"))
+        self.assertIn("http://127.0.0.1:8765", text)
+        self.assertIn("start-tool.bat", text)
+        self.assertNotIn("PASS", text)
+        banner = ready_banner("http://127.0.0.1:8765")
+        self.assertIn("CHAL RAHA HAI", banner)
+        self.assertIn("http://127.0.0.1:8765", banner)
+
+    def test_serve_exits_when_port_is_busy(self) -> None:
+        from printsahaj_verify.server import serve
+
+        with patch(
+            "printsahaj_verify.server.ThreadingHTTPServer",
+            side_effect=OSError("Address already in use"),
+        ):
+            with self.assertRaises(SystemExit):
+                serve("127.0.0.1", 8765)
 
 
 if __name__ == "__main__":
