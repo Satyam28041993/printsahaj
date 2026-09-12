@@ -130,11 +130,20 @@
       position: fixed;
       inset: 0;
       background: rgba(22, 18, 12, 0.45);
-      display: flex;
+      display: none;
       align-items: flex-start;
       justify-content: center;
       padding: 48px 16px;
       z-index: 20;
+      pointer-events: none;
+    }
+    .modal-back.is-open {
+      display: flex;
+      pointer-events: auto;
+    }
+    .modal-back[hidden] {
+      display: none !important;
+      pointer-events: none !important;
     }
     .modal {
       background: var(--card);
@@ -190,7 +199,7 @@
       <div id="overall-bar" class="hidden"></div>
     </section>
   </main>
-  <div id="review-modal" class="modal-back hidden"></div>
+  <div id="review-modal" class="modal-back" hidden></div>
   <script>
     const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
     const SLOT_COPY = {
@@ -388,7 +397,8 @@
       if (!rows || !rows.checked) return;
       const skipped = (rows.not_checked || []).map((line) => `<li>${escapeHtml(line)}</li>`).join("");
       const box = document.getElementById("review-modal");
-      box.className = "modal-back";
+      box.className = "modal-back is-open";
+      box.hidden = false;
       box.innerHTML = `<div class="modal">
         <div class="row">
           <strong>${escapeHtml(rows.title)} — review detail</strong>
@@ -407,8 +417,10 @@
 
     function closeReviewDetail() {
       const box = document.getElementById("review-modal");
-      box.className = "modal-back hidden";
+      box.className = "modal-back";
+      box.hidden = true;
       box.innerHTML = "";
+      box.onclick = null;
     }
 
     function bindStage(def, defs, checked) {
