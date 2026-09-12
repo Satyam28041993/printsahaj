@@ -27,11 +27,20 @@ from printsahaj_verify.reporting.terminal import FORBIDDEN_VERDICT_WORDS
 GEMINI_KEY_ENV = "PRINTSAHAJ_GEMINI_API_KEY"
 GEMINI_KEY_FILE_NAME = "gemini-key.txt"
 GEMINI_MODEL_ENV = "PRINTSAHAJ_GEMINI_MODEL"
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_TIMEOUT_SEC = 45
+GEMINI_API_VERSIONS: tuple[str, ...] = ("v1beta", "v1")
 GEMINI_ENDPOINT = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
+    "https://generativelanguage.googleapis.com/{version}/models/"
     "{model}:generateContent"
+)
+GEMINI_MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+GEMINI_MODEL_CANDIDATES: tuple[str, ...] = (
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-flash-latest",
+    "gemini-1.5-flash",
 )
 
 VISION_PROMPT = """You compare two pictures of the same printed label.
@@ -116,24 +125,19 @@ def _get_gemini(url: str, timeout: int) -> bytes:
 
 
 def probe_gemini() -> tuple[bool, str]:
-    """Ask Google whether this key is accepted. Does not send artwork."""
+    """Ask Google whether this key can list models. Does not send artwork."""
     key = read_gemini_api_key()
     if not key:
         return False, "No key in gemini-key.txt"
-    model = gemini_model_name()
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        + urllib.parse.quote(model, safe="")
-        + "?key="
-        + urllib.parse.quote(key)
-    )
     try:
-        _get_gemini(url, GEMINI_PROBE_TIMEOUT_SEC)
-    except urllib.error.HTTPError as error:
-        return False, f"Google did not accept the key (HTTP {error.code})"
-    except urllib.error.URLError:
-        return False, "Could not reach Google from this machine"
-    return True, "Google accepted the key"
+        models = list_gemini_models(key)
+    except JobSpecError as error:
+        return False, str(error)
+    if not models:
+        return True, "Google accepted the key (no Flash model listed yet)"
+    picked = preferred_model_order(models)
+    shown = picked[0] if picked else models[0]
+    return True, f"Google accepted the key (will use {shown})"
 
 
 def gemini_status(force: bool = False) -> dict[str, object]:
@@ -174,6 +178,93 @@ def gemini_model_name() -> str:
     return os.environ.get(GEMINI_MODEL_ENV, DEFAULT_GEMINI_MODEL).strip() or (
         DEFAULT_GEMINI_MODEL
     )
+
+
+def short_model_name(name: str) -> str:
+    """Strip the ``models/`` prefix Google puts on listed model ids."""
+    text = name.strip()
+    if text.startswith("models/"):
+        return text[len("models/") :]
+    return text
+
+
+def generate_content_url(
+    model: str,
+    key: str,
+    version: str = "v1beta",
+) -> str:
+    """POST URL for one model. The key stays in the query, not in logs."""
+    return (
+        GEMINI_ENDPOINT.format(
+            version=version,
+            model=short_model_name(model),
+        )
+        + "?key="
+        + urllib.parse.quote(key)
+    )
+
+
+def is_retryable_gemini_error(error: Exception) -> bool:
+    """True when this model or API version is gone and the next one may work."""
+    text = str(error).upper()
+    return "HTTP 404" in text or "NOT_FOUND" in text
+
+
+def models_from_list_payload(payload: dict[str, object]) -> list[str]:
+    """Ids that accept generateContent, shortest name first."""
+    found: list[str] = []
+    raw = payload.get("models")
+    if not isinstance(raw, list):
+        return found
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        methods = item.get("supportedGenerationMethods") or item.get(
+            "supported_generation_methods"
+        )
+        if isinstance(methods, list) and "generateContent" not in methods:
+            continue
+        name = short_model_name(str(item.get("name") or ""))
+        if name and name not in found:
+            found.append(name)
+    return found
+
+
+def preferred_model_order(available: list[str]) -> list[str]:
+    """Prefer current Flash models, then anything else that can generate."""
+    override = os.environ.get(GEMINI_MODEL_ENV, "").strip()
+    ordered: list[str] = []
+    if override:
+        ordered.append(short_model_name(override))
+    for name in GEMINI_MODEL_CANDIDATES:
+        if name not in ordered:
+            ordered.append(name)
+    for name in available:
+        if name not in ordered and "flash" in name.lower() and "tts" not in name.lower():
+            ordered.append(name)
+    if available:
+        return [name for name in ordered if name in available] or list(available)
+    return ordered
+
+
+def list_gemini_models(key: str) -> list[str]:
+    """Ask Google which models this key can call."""
+    url = GEMINI_MODELS_URL + "?key=" + urllib.parse.quote(key)
+    try:
+        raw = _get_gemini(url, GEMINI_PROBE_TIMEOUT_SEC)
+    except urllib.error.HTTPError as error:
+        raise JobSpecError(
+            f"Gemini model list HTTP {error.code}"
+        ) from error
+    except urllib.error.URLError as error:
+        raise JobSpecError(f"Could not reach Google for model list: {error}") from error
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError as error:
+        raise JobSpecError(f"Gemini model list was not JSON: {error}") from error
+    if not isinstance(payload, dict):
+        raise JobSpecError("Gemini model list was not an object")
+    return models_from_list_payload(payload)
 
 
 def scrub_vision_text(text: str) -> str:
@@ -221,8 +312,15 @@ def _post_gemini(url: str, body: bytes, timeout: int) -> bytes:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.read()
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return response.read()
+    except urllib.error.HTTPError as error:
+        raw = error.read().decode("utf-8", errors="replace")[:240]
+        path = url.split("?", 1)[0]
+        raise JobSpecError(
+            f"Gemini HTTP {error.code} at {path}: {scrub_vision_text(raw)}"
+        ) from error
 
 
 def _parse_gemini_body(raw: bytes) -> dict[str, object]:
@@ -264,33 +362,23 @@ def _parse_gemini_body(raw: bytes) -> dict[str, object]:
     return payload
 
 
-def compare_label_previews(
-    client: Path,
-    approval: Path,
-) -> VisionNotes | None:
-    """Send both previews to Gemini. None when no key is set."""
-    key = read_gemini_api_key()
-    if not key:
-        return None
-    client_png = render_preview_png(client, 1)
-    approval_png = render_preview_png(approval, 1)
-    model = gemini_model_name()
-    url = GEMINI_ENDPOINT.format(model=model) + "?key=" + urllib.parse.quote(key)
-    body = json.dumps(
+def _vision_body(client_png: bytes, approval_png: bytes) -> bytes:
+    """JSON body for a two-image compare. Artwork is the only payload."""
+    return json.dumps(
         {
             "contents": [
                 {
                     "parts": [
                         {"text": VISION_PROMPT},
                         {
-                            "inline_data": {
-                                "mime_type": "image/png",
+                            "inlineData": {
+                                "mimeType": "image/png",
                                 "data": base64.b64encode(client_png).decode("ascii"),
                             }
                         },
                         {
-                            "inline_data": {
-                                "mime_type": "image/png",
+                            "inlineData": {
+                                "mimeType": "image/png",
                                 "data": base64.b64encode(approval_png).decode("ascii"),
                             }
                         },
@@ -303,9 +391,49 @@ def compare_label_previews(
             },
         }
     ).encode("utf-8")
+
+
+def compare_label_previews(
+    client: Path,
+    approval: Path,
+) -> VisionNotes | None:
+    """Send both previews to Gemini. None when no key is set."""
+    key = read_gemini_api_key()
+    if not key:
+        return None
+    client_png = render_preview_png(client, 1)
+    approval_png = render_preview_png(approval, 1)
+    body = _vision_body(client_png, approval_png)
+    available: list[str] = []
     try:
-        raw = _post_gemini(url, body, GEMINI_TIMEOUT_SEC)
-    except urllib.error.URLError as error:
-        raise JobSpecError(f"Gemini request did not complete: {error}") from error
-    payload = _parse_gemini_body(raw)
-    return notes_from_payload(payload, source=f"gemini:{model}")
+        available = list_gemini_models(key)
+    except JobSpecError:
+        available = []
+    models = preferred_model_order(available)
+    last_error: JobSpecError | None = None
+    for model in models:
+        for version in GEMINI_API_VERSIONS:
+            url = generate_content_url(model, key, version)
+            try:
+                raw = _post_gemini(url, body, GEMINI_TIMEOUT_SEC)
+            except JobSpecError as error:
+                last_error = error
+                if not is_retryable_gemini_error(error):
+                    raise
+                continue
+            except urllib.error.HTTPError as error:
+                last_error = JobSpecError(
+                    f"Gemini HTTP {error.code} at {url.split('?', 1)[0]}"
+                )
+                if error.code != 404:
+                    raise last_error from error
+                continue
+            except urllib.error.URLError as error:
+                raise JobSpecError(
+                    f"Gemini request did not complete: {error}"
+                ) from error
+            payload = _parse_gemini_body(raw)
+            return notes_from_payload(payload, source=f"gemini:{model}")
+    if last_error is not None:
+        raise last_error
+    raise JobSpecError("Gemini did not return a usable model for these pictures")

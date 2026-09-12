@@ -38,6 +38,7 @@ def check_label_marks(
     client_is_image: bool,
     approval_is_image: bool,
     notes: VisionNotes | None = None,
+    vision_error: str | None = None,
 ) -> CheckResult:
     """Search PDF text, then Gemini notes, for BATCH and MRP on the label."""
     readable = ""
@@ -65,7 +66,7 @@ def check_label_marks(
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
-            not_run_reason=IMAGE_UNREAD,
+            not_run_reason=vision_error or IMAGE_UNREAD,
             observations={
                 "has_batch": "unread",
                 "has_mrp": "unread",
@@ -86,7 +87,7 @@ def check_label_marks(
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
-            not_run_reason=IMAGE_UNREAD,
+            not_run_reason=vision_error or IMAGE_UNREAD,
             observations={
                 "has_batch": "yes" if pdf_batch else "unread",
                 "has_mrp": "yes" if pdf_mrp else "unread",

@@ -63,6 +63,7 @@ def _artwork_vs_approval_result(
     client_doc: DocumentText | None,
     approval_doc: DocumentText | None,
     notes: VisionNotes | None,
+    vision_error: str | None = None,
 ) -> CheckResult:
     client_is_image = files.client_artwork is not None and not is_pdf(files.client_artwork)
     approval_is_image = files.approval is not None and not is_pdf(files.approval)
@@ -72,16 +73,19 @@ def _artwork_vs_approval_result(
         return CheckResult(
             check_id=ARTWORK_ID,
             title=ARTWORK_TITLE,
-            not_run_reason=IMAGE_TEXT_REASON,
+            not_run_reason=vision_error or IMAGE_TEXT_REASON,
         )
     return check_artwork_vs_approval(client_doc, approval_doc)
 
 
-def _vision_notes(files: JobFiles) -> VisionNotes | None:
+def _vision_notes(files: JobFiles) -> tuple[VisionNotes | None, str | None]:
     """One Gemini call for wording, layout, logo, batch and MRP."""
     if files.client_artwork is None or files.approval is None:
-        return None
-    return compare_label_previews(files.client_artwork, files.approval)
+        return None, None
+    try:
+        return compare_label_previews(files.client_artwork, files.approval), None
+    except (JobSpecError, OSError, TimeoutError, ValueError) as error:
+        return None, str(error)
 
 
 def _plate_count_result(
@@ -251,7 +255,7 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         if path is not None
     ]
     identity = check_job_identity(spec, identity_paths, identity_docs)
-    notes = _vision_notes(files)
+    notes, vision_error = _vision_notes(files)
     client_is_image = (
         files.client_artwork is not None and not is_pdf(files.client_artwork)
     )
@@ -278,10 +282,13 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
     return [
         identity,
         check_approval_sheet(files.approval),
-        _artwork_vs_approval_result(files, client_doc, approval_doc, notes),
+        _artwork_vs_approval_result(
+            files, client_doc, approval_doc, notes, vision_error
+        ),
         check_visual_layout(
             notes,
             files.client_artwork is not None and files.approval is not None,
+            vision_error,
         ),
         check_label_marks(
             client_doc,
@@ -289,6 +296,7 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
             client_is_image,
             approval_is_image,
             notes,
+            vision_error,
         ),
         _plate_count_result(spec, files, header.col_count if header else None),
         check_colour_names(spec, separations_doc),

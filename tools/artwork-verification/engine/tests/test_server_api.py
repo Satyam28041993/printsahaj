@@ -311,6 +311,82 @@ class ServerApiTests(unittest.TestCase):
             urllib.request.urlopen(upload)
         self.assertEqual(caught.exception.code, 400)
 
+    def test_check_returns_review_when_gemini_404s(self) -> None:
+        import urllib.request
+
+        from printsahaj_verify.job_spec import JobSpecError
+        from printsahaj_verify.vision import GEMINI_KEY_ENV
+
+        payload = json.dumps(
+            {"job_id": "G404", "file_name": "ART", "customer": "ACME"}
+        ).encode("utf-8")
+        create = urllib.request.Request(
+            f"{self.base}/api/jobs",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(create):
+            pass
+        png = _red_png()
+        boundary = "----g404png"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="role"\r\n\r\n'
+            "client_artwork\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="label.png"\r\n'
+            "Content-Type: image/png\r\n\r\n"
+        ).encode("utf-8") + png + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        upload = urllib.request.Request(
+            f"{self.base}/api/jobs/G404/files",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with urllib.request.urlopen(upload):
+            pass
+        pdf = _blank_pdf(1)
+        boundary = "----g404pdf"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="role"\r\n\r\n'
+            "approval\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="sheet.pdf"\r\n'
+            "Content-Type: application/pdf\r\n\r\n"
+        ).encode("utf-8") + pdf + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        upload = urllib.request.Request(
+            f"{self.base}/api/jobs/G404/files",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with urllib.request.urlopen(upload):
+            pass
+        check = urllib.request.Request(
+            f"{self.base}/api/jobs/G404/check",
+            data=json.dumps({"stage": "approval"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with patch.dict("os.environ", {GEMINI_KEY_ENV: "test-key"}), patch(
+            "printsahaj_verify.run.compare_label_previews",
+            side_effect=JobSpecError(
+                "Gemini HTTP 404 at https://generativelanguage.googleapis.com/"
+                "v1beta/models/gemini-2.0-flash:generateContent"
+            ),
+        ):
+            with urllib.request.urlopen(check) as response:
+                self.assertEqual(response.status, 200)
+                report = json.loads(response.read().decode("utf-8"))
+        self.assertIn("review", report)
+        approval = next(
+            item for item in report["review"]["stages"] if item["stage_id"] == "approval"
+        )
+        details = " ".join(item["detail"] for item in approval["items"])
+        self.assertIn("404", details)
+        blob = json.dumps(report).upper()
+        self.assertNotIn("PASS", blob)
+        self.assertNotIn("APPROVED", blob)
+        self.assertNotIn("FAIL", blob)
+
     def test_serve_exits_when_port_is_busy(self) -> None:
         from printsahaj_verify.server import serve
 

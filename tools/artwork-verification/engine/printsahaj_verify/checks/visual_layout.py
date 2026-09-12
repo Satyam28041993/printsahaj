@@ -31,6 +31,7 @@ def _flag(present: bool | None) -> str:
 def check_visual_layout(
     notes: VisionNotes | None,
     have_both: bool,
+    vision_error: str | None = None,
 ) -> CheckResult:
     """Compare product-image place and logo place. Advisory when Gemini ran."""
     if not have_both:
@@ -44,7 +45,7 @@ def check_visual_layout(
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
-            not_run_reason=NO_GEMINI,
+            not_run_reason=vision_error or NO_GEMINI,
             observations={"alignment": "unread", "logo": "unread"},
         )
 
