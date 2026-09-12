@@ -207,17 +207,11 @@ class _NewJobPageState extends State<NewJobPage> {
         children: [
           TextField(
             controller: _code,
-            decoration: const InputDecoration(
-              labelText: "Job code",
-              hintText: "CGM2026-27-1326",
-            ),
+            decoration: const InputDecoration(labelText: "Job code"),
           ),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(
-              labelText: "Artwork ka naam",
-              hintText: "DAILY KALONJI 100 ML",
-            ),
+            decoration: const InputDecoration(labelText: "Artwork ka naam"),
           ),
           TextField(
             controller: _customer,
@@ -225,16 +219,12 @@ class _NewJobPageState extends State<NewJobPage> {
           ),
           TextField(
             controller: _declaration,
-            decoration: const InputDecoration(
-              labelText: "Rang line",
-              hintText: "6 COL + VARNISH",
-            ),
+            decoration: const InputDecoration(labelText: "Rang line"),
           ),
           TextField(
             controller: _colours,
             decoration: const InputDecoration(
               labelText: "Rang ke naam (comma se)",
-              hintText: "Yellow, Magenta, Cyan, Black, Gold, P 7483 C",
             ),
           ),
           Row(
@@ -258,13 +248,12 @@ class _NewJobPageState extends State<NewJobPage> {
           ),
           TextField(
             controller: _paper,
-            decoration: const InputDecoration(labelText: "Paper", hintText: "Chromo"),
+            decoration: const InputDecoration(labelText: "Paper"),
           ),
           TextField(
             controller: _mandatory,
             decoration: const InputDecoration(
               labelText: "Zaroori likhai (comma se)",
-              hintText: "DAILY PHARMA",
             ),
           ),
           if (_error != null) ...[

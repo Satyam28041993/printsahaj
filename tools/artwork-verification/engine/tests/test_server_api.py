@@ -88,6 +88,10 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("Artwork Verification", home)
         self.assertIn("Naya job", home)
         self.assertIn("start-tool.bat", home)
+        self.assertNotIn("CGM2026-27-1326", home)
+        self.assertNotIn("DAILY KALONJI", home)
+        self.assertNotIn("6 COL + VARNISH", home)
+        self.assertNotIn("DAILY PHARMA", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))
