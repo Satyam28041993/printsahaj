@@ -121,6 +121,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("First approval", home)
         self.assertIn("preview", home)
         self.assertIn("data-pick=", home)
+        self.assertIn('.get("job")', home)
         self.assertIn("Uploading", home)
         self.assertIn("data-compare", home)
         self.assertIn("viewer-modal", home)

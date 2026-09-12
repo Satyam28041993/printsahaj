@@ -723,7 +723,10 @@
       }
     };
 
-    loadList().catch((err) => {
+    loadList().then(() => {
+      const startJob = new URLSearchParams(location.search).get("job");
+      if (startJob) return openJob(startJob);
+    }).catch((err) => {
       document.getElementById("job-list").innerHTML =
         '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
         '<p class="muted">' + escapeHtml(err.message) + "</p></div>";
