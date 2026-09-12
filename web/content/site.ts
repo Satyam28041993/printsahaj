@@ -45,10 +45,11 @@ export const site: SiteContent = {
   },
   nav: {
     links: [
-      { label: "Product", href: "#product" },
-      { label: "How it works", href: "#how-it-works" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "FAQ", href: "#faq" },
+      { label: "Tools", href: "/tools" },
+      { label: "Product", href: "/#product" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "FAQ", href: "/#faq" },
     ],
     cta: { label: "Get early access", href: "#early-access" },
   },
@@ -61,6 +62,7 @@ export const site: SiteContent = {
   footer: {
     line: "A verification system for India's printing and packaging industry. Built in Vasai, Maharashtra.",
     legal: [
+      { label: "Tools", href: "/tools" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
       { label: "Disclaimer", href: "/disclaimer" },

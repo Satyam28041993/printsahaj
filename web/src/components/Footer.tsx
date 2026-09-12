@@ -81,32 +81,20 @@ export default function Footer() {
           {/* Verification & Products */}
           <div>
             <h4 className="text-slate-900 dark:text-white font-bold text-xs mb-4 tracking-wider uppercase">
-              Verification Engine
+              Tools
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/verification" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
-                  Step 1: Artwork Compliance
+                <Link href="/tools" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
+                  All tools
                 </Link>
               </li>
               <li>
-                <Link href="/verification" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
-                  Step 2: Separation vs Spec PDF
-                </Link>
-              </li>
-              <li>
-                <Link href="/verification" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
-                  Step 3: Press-Side Inspection
-                </Link>
-              </li>
-              <li>
-                <Link href="/verification#pricing" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
-                  Per-Plant Pricing
-                </Link>
-              </li>
-              <li>
-                <Link href="/verification#trial-form" className="hover:text-amber-600 dark:hover:text-amber-400 transition">
-                  Request 14-Day Pilot
+                <Link
+                  href="/tools/artwork-verification"
+                  className="hover:text-amber-600 dark:hover:text-amber-400 transition"
+                >
+                  Artwork Verification
                 </Link>
               </li>
             </ul>
