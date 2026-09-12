@@ -1,0 +1,12 @@
+{
+  "job_id": "CGM2026-27-1326",
+  "file_name": "DAILY KALONJI 100 ML",
+  "customer": "DAILY PHARMA",
+  "date": "17/04/2026",
+  "colour_declaration": "6 COL + VARNISH",
+  "colour_list": ["Yellow", "Magenta", "Cyan", "Black", "Gold", "P 7483 C"],
+  "special_units": ["Varnish"],
+  "paper": "Chromo",
+  "label_size_mm": [114, 76],
+  "print_type": "Flexo"
+}
