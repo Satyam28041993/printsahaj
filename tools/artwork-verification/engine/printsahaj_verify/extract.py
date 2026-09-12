@@ -30,6 +30,13 @@ LABEL_PATTERN = re.compile(
 )
 PLATE_PATTERN = re.compile(r"PLATE\s*:?\s*([0-9]+(?:\.[0-9]+)?)\s*MM", re.IGNORECASE)
 COL_PATTERN = re.compile(r"Col\s*:\s*([0-9]+)", re.IGNORECASE)
+UPS_LABELED_PATTERN = re.compile(
+    r"(?:NO\.?\s*OF\s+)?UPS\s*[:=]?\s*(\d+)",
+    re.IGNORECASE,
+)
+UPS_SUFFIX_PATTERN = re.compile(r"(\d+)\s*UPS\b", re.IGNORECASE)
+ACROSS_PATTERN = re.compile(r"ACROSS\s*[:=]?\s*(\d+)", re.IGNORECASE)
+AROUND_PATTERN = re.compile(r"AROUND\s*[:=]?\s*(\d+)", re.IGNORECASE)
 
 
 @dataclass
@@ -158,15 +165,37 @@ class VendorHeader:
     plate_thickness_mm: float | None
     col_count: int | None
     raw_text: str
+    ups_count: int | None = None
+    ups_across: int | None = None
+    ups_around: int | None = None
+
+
+def _parse_ups(text: str) -> tuple[int | None, int | None, int | None]:
+    """Read ups / across / around when the vendor header writes them."""
+    across = ACROSS_PATTERN.search(text)
+    around = AROUND_PATTERN.search(text)
+    ups_across = int(across.group(1)) if across else None
+    ups_around = int(around.group(1)) if around else None
+    labeled = UPS_LABELED_PATTERN.search(text)
+    suffix = UPS_SUFFIX_PATTERN.search(text)
+    ups_count = None
+    if labeled:
+        ups_count = int(labeled.group(1))
+    elif suffix:
+        ups_count = int(suffix.group(1))
+    elif ups_across is not None and ups_around is not None:
+        ups_count = ups_across * ups_around
+    return ups_count, ups_across, ups_around
 
 
 def parse_vendor_header(text: str) -> VendorHeader:
-    """Read cylinder, paper, label and plate figures from header text."""
+    """Read cylinder, paper, label, plate and ups figures from header text."""
     cly = CLY_PATTERN.search(text)
     paper = PAPER_PATTERN.search(text)
     label = LABEL_PATTERN.search(text)
     plate = PLATE_PATTERN.search(text)
     col = COL_PATTERN.search(text)
+    ups_count, ups_across, ups_around = _parse_ups(text)
     return VendorHeader(
         cylinder_repeat_mm=float(cly.group(1)) if cly else None,
         paper_width_mm=float(paper.group(1)) if paper else None,
@@ -175,6 +204,9 @@ def parse_vendor_header(text: str) -> VendorHeader:
         plate_thickness_mm=float(plate.group(1)) if plate else None,
         col_count=int(col.group(1)) if col else None,
         raw_text=text,
+        ups_count=ups_count,
+        ups_across=ups_across,
+        ups_around=ups_around,
     )
 
 

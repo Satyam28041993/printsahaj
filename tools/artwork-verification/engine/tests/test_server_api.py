@@ -98,6 +98,8 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("Artwork Verification", home)
         self.assertIn("New job", home)
         self.assertIn("Replace", home)
+        self.assertIn("Delete all jobs", home)
+        self.assertIn("See review detail", home)
         self.assertIn("start-tool.bat", home)
         self.assertNotIn("Badlo", home)
         self.assertNotIn("Naya job", home)
@@ -201,6 +203,50 @@ class ServerApiTests(unittest.TestCase):
         self.assertEqual(snap["files"]["client_artwork"], "client_artwork.pdf")
         self.assertEqual(snap["slots"]["client_artwork"]["kind"], "pdf")
         self.assertEqual(snap["slots"]["client_artwork"]["name"], "client_artwork.pdf")
+
+    def test_check_returns_review_and_delete_clears_jobs(self) -> None:
+        import urllib.request
+
+        payload = json.dumps(
+            {"job_id": "REV1", "file_name": "ART", "customer": "ACME"}
+        ).encode("utf-8")
+        create = urllib.request.Request(
+            f"{self.base}/api/jobs",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(create):
+            pass
+        body = json.dumps({"stage": "approval"}).encode("utf-8")
+        check = urllib.request.Request(
+            f"{self.base}/api/jobs/REV1/check",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(check) as response:
+            report = json.loads(response.read().decode("utf-8"))
+        self.assertIn("review", report)
+        self.assertIn("checklist", report)
+        self.assertNotIn("findings", report)
+        approval = next(
+            item for item in report["review"]["stages"] if item["stage_id"] == "approval"
+        )
+        self.assertTrue(approval["checked"])
+        titles = [item["title"] for item in approval["items"]]
+        self.assertTrue(any("alignment" in title.lower() for title in titles))
+        self.assertTrue(any("logo" in title.lower() for title in titles))
+        blob = json.dumps(report).upper()
+        self.assertNotIn("PASS", blob)
+        self.assertNotIn("APPROVED", blob)
+        self.assertNotIn("FAIL", blob)
+
+        delete = urllib.request.Request(f"{self.base}/api/jobs", method="DELETE")
+        with urllib.request.urlopen(delete) as response:
+            removed = json.loads(response.read().decode("utf-8"))
+        self.assertGreaterEqual(removed["removed"], 1)
+        with urllib.request.urlopen(f"{self.base}/api/jobs") as response:
+            listing = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(listing["jobs"], [])
 
     def test_unknown_upload_suffix_is_loud(self) -> None:
         import urllib.error

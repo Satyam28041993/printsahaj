@@ -51,6 +51,22 @@ def check_geometry(
 
     findings: list[Finding] = []
     observations: dict[str, str] = {}
+    if header.cylinder_repeat_mm is not None:
+        observations["cylinder_written"] = f"{header.cylinder_repeat_mm:.3f} mm"
+    if header.paper_width_mm is not None:
+        observations["paper_written"] = f"{header.paper_width_mm:.3f} mm"
+    if header.label_width_mm is not None and header.label_height_mm is not None:
+        observations["label_written"] = (
+            f"{header.label_width_mm} x {header.label_height_mm} mm"
+        )
+    if header.ups_count is not None:
+        observations["ups_written"] = str(header.ups_count)
+    if header.ups_across is not None:
+        observations["ups_across"] = str(header.ups_across)
+    if header.ups_around is not None:
+        observations["ups_around"] = str(header.ups_around)
+    if header.col_count is not None:
+        observations["header_col"] = str(header.col_count)
 
     repeat = header.cylinder_repeat_mm or job.cylinder_repeat_mm
     if repeat is not None:

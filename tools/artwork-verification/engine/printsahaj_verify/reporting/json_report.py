@@ -9,6 +9,7 @@ from printsahaj_verify.files import JobFiles, is_pdf
 from printsahaj_verify.job_spec import JobSpec, job_spec_to_dict
 from printsahaj_verify.models import Certainty, CheckResult
 from printsahaj_verify.reporting.checklist import build_checklist
+from printsahaj_verify.reporting.review import build_review
 from printsahaj_verify.reporting.terminal import NOT_CHECKED_LINES
 from printsahaj_verify.run import file_hashes
 
@@ -79,6 +80,7 @@ def build_report(
             "Barcode ISO grade",
         ],
         "checklist": build_checklist(results, stages_checked or []),
+        "review": build_review(results, stages_checked or []),
         "remarks": remarks,
         "counts": {
             "findings": len(certain),

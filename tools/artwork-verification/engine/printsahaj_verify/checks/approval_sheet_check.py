@@ -54,6 +54,7 @@ def _result_from_sheet(sheet: ApprovalSheet) -> CheckResult:
                 location="First approval PDF",
             )
         )
+    upper = sheet.raw_text.upper()
     observations = {
         "colour_declaration": sheet.colour_declaration or "none",
         "colour_list": ", ".join(sheet.colour_list) if sheet.colour_list else "none",
@@ -64,6 +65,8 @@ def _result_from_sheet(sheet: ApprovalSheet) -> CheckResult:
             else "none"
         ),
         "product_name": sheet.product_name or "none",
+        "has_mrp": "yes" if "MRP" in upper else "no",
+        "has_batch": "yes" if "BATCH" in upper else "no",
     }
     return CheckResult(
         check_id=CHECK_ID,

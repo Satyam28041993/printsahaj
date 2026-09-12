@@ -30,7 +30,8 @@ def write_text_pdf(path: Path, pages: list[str]) -> None:
 class HeaderParseTests(unittest.TestCase):
     def test_kalonji_style_header(self) -> None:
         header = parse_vendor_header(
-            "PLATE : 1.14MM LABEL SIZE : 76.000 X 114MM CLY: 238.125MM "
+            "13 UPS ACROSS : 7 AROUND : 2 PLATE : 1.14MM "
+            "LABEL SIZE : 76.000 X 114MM CLY: 238.125MM "
             "PAPER SIZE : 169MM Col: 6"
         )
         self.assertEqual(header.cylinder_repeat_mm, 238.125)
@@ -38,6 +39,9 @@ class HeaderParseTests(unittest.TestCase):
         self.assertEqual(header.label_width_mm, 76.0)
         self.assertEqual(header.label_height_mm, 114.0)
         self.assertEqual(header.col_count, 6)
+        self.assertEqual(header.ups_count, 13)
+        self.assertEqual(header.ups_across, 7)
+        self.assertEqual(header.ups_around, 2)
         result = check_geometry(kalonji_spec(), header)
         self.assertTrue(result.ran)
         col_findings = [item for item in result.findings if "Col:" in item.summary]

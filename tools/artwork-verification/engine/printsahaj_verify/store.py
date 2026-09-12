@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ from printsahaj_verify.run import JOB_FILE_NAME
 SAFE_CODE = re.compile(r"[A-Za-z0-9._-]+")
 
 DEFAULT_JOBS_ROOT = Path(__file__).resolve().parents[2] / "jobs"
+LAST_REVIEW_FILE = "last_review.json"
 
 
 def jobs_root(root: Path | None = None) -> Path:
@@ -145,6 +147,48 @@ def resolve_slot_file(job_id: str, role: str, root: Path | None = None) -> Path:
     return path
 
 
+def save_last_review(
+    job_id: str, payload: dict[str, Any], root: Path | None = None
+) -> None:
+    """Store the last step review so the desk can show it after a reload."""
+    folder = job_folder(job_id, root)
+    if not (folder / JOB_FILE_NAME).is_file():
+        raise JobSpecError(f"Unknown job: {job_id}")
+    (folder / LAST_REVIEW_FILE).write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def load_last_review(job_id: str, root: Path | None = None) -> dict[str, Any] | None:
+    """Last saved review, or None when this job has not been checked yet."""
+    path = job_folder(job_id, root) / LAST_REVIEW_FILE
+    if not path.is_file():
+        return None
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise JobSpecError("last_review.json must be an object")
+    return raw
+
+
+def delete_job(job_id: str, root: Path | None = None) -> None:
+    """Remove one job folder. Missing jobs raise."""
+    folder = job_folder(job_id, root)
+    if not (folder / JOB_FILE_NAME).is_file():
+        raise FileNotFoundError(f"Unknown job: {job_id}")
+    shutil.rmtree(folder)
+
+
+def delete_all_jobs(root: Path | None = None) -> int:
+    """Remove every job folder. Returns how many were deleted."""
+    removed = 0
+    for folder in list(jobs_root(root).iterdir()):
+        if folder.is_dir() and (folder / JOB_FILE_NAME).is_file():
+            shutil.rmtree(folder)
+            removed += 1
+    return removed
+
+
 def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
     folder = job_folder(job_id, root)
     spec = load_job_spec(folder / JOB_FILE_NAME)
@@ -154,6 +198,7 @@ def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
     from printsahaj_verify.stages import stage_definitions
 
     files = discover_job_files(folder)
+    last_review = load_last_review(job_id, root)
     return {
         "job": job_spec_to_dict(spec),
         "files": files_to_dict(files),
@@ -169,5 +214,6 @@ def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
             for item in stage_definitions()
         ],
         "remarks": load_remarks(folder),
+        "last_review": last_review,
         "folder": str(folder),
     }

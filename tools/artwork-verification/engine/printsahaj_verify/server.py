@@ -22,10 +22,13 @@ from printsahaj_verify.reporting.terminal import format_report
 from printsahaj_verify.run import load_stages_checked, run_job, run_stage
 from printsahaj_verify.store import (
     create_or_update_job,
+    delete_all_jobs,
+    delete_job,
     job_folder,
     job_snapshot,
     list_jobs,
     resolve_slot_file,
+    save_last_review,
     save_upload,
 )
 
@@ -62,7 +65,7 @@ def _json(handler: BaseHTTPRequestHandler, status: int, payload: object) -> None
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(body)))
     handler.send_header("Access-Control-Allow-Origin", "*")
-    handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
     handler.send_header("Access-Control-Allow-Headers", "Content-Type")
     handler.end_headers()
     handler.wfile.write(body)
@@ -150,7 +153,7 @@ class DeskHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
@@ -243,8 +246,15 @@ class DeskHandler(BaseHTTPRequestHandler):
                 report = build_report(
                     spec, results, files, load_remarks(job_folder(job_id)), checked
                 )
-                report["stage"] = stage
-                _json(self, 200, report)
+                slim = {
+                    "stage": stage,
+                    "checklist": report["checklist"],
+                    "review": report["review"],
+                    "counts": report["counts"],
+                    "stages_checked": checked,
+                }
+                save_last_review(job_id, slim)
+                _json(self, 200, slim)
                 return
             if path.startswith("/api/jobs/") and path.endswith("/files"):
                 job_id = path[len("/api/jobs/") : -len("/files")]
@@ -266,6 +276,26 @@ class DeskHandler(BaseHTTPRequestHandler):
                 _json(self, 200, remarks)
                 return
         except (JobSpecError, ValueError, FileNotFoundError, json.JSONDecodeError) as error:
+            _json(self, 400, {"error": str(error)})
+            return
+        _json(self, 404, {"error": f"Unknown path {path}"})
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        parsed = urlparse(self.path)
+        path = unquote(parsed.path)
+        try:
+            if path == "/api/jobs":
+                removed = delete_all_jobs()
+                _json(self, 200, {"removed": removed})
+                return
+            if path.startswith("/api/jobs/"):
+                job_id = path[len("/api/jobs/") :].strip("/")
+                if not job_id or "/" in job_id:
+                    raise JobSpecError("Unknown path")
+                delete_job(job_id)
+                _json(self, 200, {"removed": job_id})
+                return
+        except (JobSpecError, FileNotFoundError) as error:
             _json(self, 400, {"error": str(error)})
             return
         _json(self, 404, {"error": f"Unknown path {path}"})
