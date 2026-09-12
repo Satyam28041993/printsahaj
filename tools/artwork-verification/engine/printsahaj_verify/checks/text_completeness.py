@@ -1,4 +1,4 @@
-"""Check C — text on the approved file versus text on the separations."""
+"""Check C — text on the first-approval file versus text on the separations."""
 
 from __future__ import annotations
 
@@ -52,14 +52,14 @@ def check_text_completeness(
             Finding(
                 check_id=CHECK_ID,
                 summary=(
-                    f"{len(missing_on_plates)} text token(s) are on the approved "
-                    f"file but on no separation page, so they will not print. "
-                    f"Examples: {sample}{extra}."
+                    f"{len(missing_on_plates)} text token(s) are on the "
+                    f"first-approval file but on no separation page, so they "
+                    f"will not print. Examples: {sample}{extra}."
                 ),
                 certainty=Certainty.DETERMINISTIC,
-                expected="approved text present on at least one plate",
+                expected="first-approval wording present on at least one plate",
                 found=f"{len(missing_on_plates)} token(s) missing from plates",
-                location="Approved PDF vs merged separations",
+                location="First-approval PDF vs merged separations",
             )
         )
     if extra_on_plates:
@@ -71,12 +71,12 @@ def check_text_completeness(
                 check_id=CHECK_ID,
                 summary=(
                     f"{len(extra_on_plates)} text token(s) are on a separation "
-                    f"but not on the approved file. Examples: {sample}{extra}."
+                    f"but not on the first-approval file. Examples: {sample}{extra}."
                 ),
                 certainty=Certainty.ADVISORY,
-                expected="separation text also present on the approved file",
+                expected="separation text also present on the first-approval file",
                 found=f"{len(extra_on_plates)} token(s) only on plates",
-                location="Merged separations vs approved PDF",
+                location="Merged separations vs first-approval PDF",
             )
         )
 
@@ -85,7 +85,7 @@ def check_text_completeness(
         title=CHECK_TITLE,
         findings=findings,
         observations={
-            "approved_tokens": str(len(approved_tokens)),
+            "source_tokens": str(len(approved_tokens)),
             "plate_tokens": str(len(plate_tokens)),
             "missing_on_plates": str(len(missing_on_plates)),
             "extra_on_plates": str(len(extra_on_plates)),

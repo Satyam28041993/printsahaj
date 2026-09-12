@@ -120,6 +120,28 @@ class ReviewTests(unittest.TestCase):
         self.assertIn("298.450", by_id["cylinder"]["detail"])
         self.assertIn("13", by_id["ups"]["detail"])
 
+    def test_vendor_wording_findings_do_not_use_verdict_words(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        folder = create_or_update_job(
+            {"job_id": "V1", "file_name": "ART", "customer": "ACME"},
+            root=root,
+        )
+        write_text_pdf(folder / "a.pdf", "HELLO WORLD MRP 10")
+        save_upload("V1", "approval", (folder / "a.pdf").read_bytes(), "a.pdf", root=root)
+        write_text_pdf(folder / "v.pdf", "CGM Col: 1 CLY: 31.750MM PAPER SIZE : 50MM LABEL SIZE : 10 X 10MM 1 UPS")
+        save_upload("V1", "vendor_composite", (folder / "v.pdf").read_bytes(), "v.pdf", root=root)
+        write_text_pdf(folder / "s.pdf", "PLATE ONE")
+        save_upload("V1", "separations", (folder / "s.pdf").read_bytes(), "s.pdf", root=root)
+        run_stage(folder, "approval")
+        _spec, results, _files, checked = run_stage(folder, "vendor")
+        review = build_review(results, checked)
+        from printsahaj_verify.reporting.checklist import build_checklist
+        checklist = build_checklist(results, checked)
+        blob = (str(review) + str(checklist)).upper()
+        self.assertNotIn("APPROVED", blob)
+        self.assertNotIn("PASS", blob)
+        self.assertNotIn("FAIL", blob)
+
     def test_delete_all_jobs_empties_the_root(self) -> None:
         root = Path(tempfile.mkdtemp())
         create_or_update_job(
