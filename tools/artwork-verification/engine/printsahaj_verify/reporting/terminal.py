@@ -21,6 +21,7 @@ NOT_CHECKED_LINES: tuple[str, ...] = (
     "Colour shade / accuracy",
     "Trap and overprint intent",
     "Design / aesthetics",
+    "Print photo text, alignment and logo (automatic)",
 )
 
 

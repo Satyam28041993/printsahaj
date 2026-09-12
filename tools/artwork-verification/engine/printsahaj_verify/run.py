@@ -1,81 +1,80 @@
-"""Run the checks that are ready for a job folder."""
+"""Run every implemented check for a job folder."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import pymupdf
-
-from printsahaj_verify.checks.plate_count import CHECK_ID, CHECK_TITLE, check_plate_count
-from printsahaj_verify.job_spec import JobSpec, JobSpecError, load_job_spec
+from printsahaj_verify.checks.artwork_vs_approval import check_artwork_vs_approval
+from printsahaj_verify.checks.colour_names import check_colour_names
+from printsahaj_verify.checks.geometry import check_geometry
+from printsahaj_verify.checks.headers import check_headers
+from printsahaj_verify.checks.plate_count import CHECK_ID as PLATE_ID
+from printsahaj_verify.checks.plate_count import CHECK_TITLE as PLATE_TITLE
+from printsahaj_verify.checks.plate_count import check_plate_count
+from printsahaj_verify.checks.plate_text_map import check_plate_text_map
+from printsahaj_verify.checks.printout import check_printout
+from printsahaj_verify.checks.text_completeness import check_text_completeness
+from printsahaj_verify.extract import (
+    count_pdf_pages,
+    hash_file,
+    parse_vendor_header,
+    read_document_text,
+)
+from printsahaj_verify.files import JobFiles, discover_job_files
+from printsahaj_verify.job_spec import JobSpec, load_job_spec
 from printsahaj_verify.models import CheckResult
 
 JOB_FILE_NAME = "job.json"
 
-#: File-name fragments that mean "this is not the separations set".
-NOT_SEPARATION_MARKERS: tuple[str, ...] = (
-    "job-sheet",
-    "jobsheet",
-    "job_sheet",
-    "composite",
-    "proof",
-    "approval",
-)
 
-
-def count_pdf_pages(path: Path) -> int:
-    """Return the page count of a PDF. Raises if the file cannot be opened."""
-    try:
-        with pymupdf.open(path) as document:
-            return document.page_count
-    except Exception as error:  # noqa: BLE001 - surface the file problem
-        raise JobSpecError(f"Cannot read PDF {path}: {error}") from error
-
-
-def find_separations_pdf(folder: Path) -> Path | None:
-    """Find the separations PDF, or None if the folder has no PDF.
-
-    Ambiguous sets (several PDFs, none named as separations) raise JobSpecError.
-    """
-    pdfs = sorted(path for path in folder.glob("*.pdf") if path.is_file())
-    if not pdfs:
-        return None
-
-    named = [path for path in pdfs if "separat" in path.name.lower()]
-    if len(named) == 1:
-        return named[0]
-    if len(named) > 1:
-        names = ", ".join(path.name for path in named)
-        raise JobSpecError(f"Several files look like separations: {names}")
-
-    others = [
-        path
-        for path in pdfs
-        if not any(marker in path.name.lower() for marker in NOT_SEPARATION_MARKERS)
-    ]
-    if len(others) == 1:
-        return others[0]
-    if len(others) > 1:
-        names = ", ".join(path.name for path in others)
-        raise JobSpecError(
-            "Several PDFs found. Name the plate file so it includes "
-            f"'separations'. Files: {names}"
+def _plate_count_result(spec: JobSpec, files: JobFiles) -> CheckResult:
+    if files.separations is None:
+        return CheckResult(
+            check_id=PLATE_ID,
+            title=PLATE_TITLE,
+            not_run_reason="Separations PDF not found",
         )
-    return None
+    return check_plate_count(spec, count_pdf_pages(files.separations))
 
 
-def run_job(folder: Path) -> tuple[JobSpec, list[CheckResult]]:
-    """Load the job and run every check that is implemented."""
+def file_hashes(files: JobFiles) -> dict[str, str]:
+    """Fingerprint each uploaded PDF so a later swap is visible."""
+    hashes: dict[str, str] = {}
+    for label, path in (
+        ("client_artwork", files.client_artwork),
+        ("approval", files.approval),
+        ("vendor_composite", files.vendor_composite),
+        ("separations", files.separations),
+    ):
+        if path is not None:
+            hashes[label] = hash_file(path)
+    return hashes
+
+
+def run_job(folder: Path) -> tuple[JobSpec, list[CheckResult], JobFiles]:
+    """Load the job and run every check. Missing files become not-run results."""
     spec = load_job_spec(folder / JOB_FILE_NAME)
-    separations = find_separations_pdf(folder)
+    files = discover_job_files(folder)
 
-    if separations is None:
-        plate_result = CheckResult(
-            check_id=CHECK_ID,
-            title=CHECK_TITLE,
-            not_run_reason=f"Separations PDF not found in {folder}",
-        )
-    else:
-        plate_result = check_plate_count(spec, count_pdf_pages(separations))
+    client_doc = read_document_text(files.client_artwork) if files.client_artwork else None
+    approval_doc = read_document_text(files.approval) if files.approval else None
+    composite_doc = (
+        read_document_text(files.vendor_composite) if files.vendor_composite else None
+    )
+    separations_doc = read_document_text(files.separations) if files.separations else None
 
-    return spec, [plate_result]
+    approved_for_text = approval_doc or client_doc
+    header = parse_vendor_header(composite_doc.full_text) if composite_doc else None
+    vendor_docs = [doc for doc in (composite_doc, separations_doc) if doc is not None]
+
+    results = [
+        check_artwork_vs_approval(client_doc, approval_doc),
+        _plate_count_result(spec, files),
+        check_colour_names(spec, separations_doc),
+        check_geometry(spec, header),
+        check_headers(spec, vendor_docs),
+        check_text_completeness(approved_for_text, separations_doc),
+        check_plate_text_map(spec, separations_doc),
+        check_printout(files.printouts),
+    ]
+    return spec, results, files

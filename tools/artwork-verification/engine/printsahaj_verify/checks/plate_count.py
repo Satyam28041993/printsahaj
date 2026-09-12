@@ -16,6 +16,12 @@ def check_plate_count(job: JobSpec, separation_page_count: int) -> CheckResult:
     special units so a human can see what is likely absent (e.g. varnish).
     It does not say PASS or FAIL.
     """
+    if not job.has_colour_line:
+        return CheckResult(
+            check_id=CHECK_ID,
+            title=CHECK_TITLE,
+            not_run_reason="Colour line not entered on the job yet",
+        )
     if separation_page_count < 0:
         return CheckResult(
             check_id=CHECK_ID,

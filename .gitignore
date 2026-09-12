@@ -55,3 +55,7 @@ tools/**/samples/**/*.tif
 tools/**/samples/**/*.tiff
 tools/**/samples/**/*.jpg
 tools/**/samples/**/*.png
+
+# Live jobs and Flutter build output for the verification tool
+tools/artwork-verification/jobs/
+tools/artwork-verification/app/build/

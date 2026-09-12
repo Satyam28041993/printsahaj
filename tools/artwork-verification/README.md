@@ -1,42 +1,45 @@
 # Artwork Verification
 
-Yeh PrintSahaj **website nahi** hai.
+Yeh PrintSahaj **website nahi** hai. Website par sirf iska **link** hai.
 
-PrintSahaj website par kai tools aayenge. Yeh unme se **pehla tool** hai.
-Website par iska sirf **link** hoga. Tool ka saara kaam is folder mein hai.
+## Kaam ka silsila
+
+1. Client artwork aata hai — naam, code, PDF
+2. First approval wala PDF (jo client ko mail par bheja)
+3. Vendor ke do PDF
+   - poora artwork (kitne label, cylinder, paper, colour)
+   - colour separation
+4. Sab match — report + remark
+5. Print ke baad machine wali photo — abhi aankh se dekho aur remark likho
+   (photo se automatic text/alignment/logo check is version mein nahi chalta)
+
+Kabhi PASS / APPROVED / FAIL nahi likhta.
+
+## Folder
 
 ```
-artwork-verification/
-  engine/    pehla version — computer par chalta hai
-  app/       kal yahan phone app / web app aayegi
-  samples/   test jobs (asli customer files yahan rakhna, git mein nahi)
+engine/    hisab-kitab + local desk
+app/       Flutter screen (web + kal Android APK)
+samples/   test jobs
+jobs/      live jobs (git nahi)
 ```
 
-Kal Flutter se phone app ya web app banani ho to `app/` mein banao.
-Hisab-kitab wala dimaag `engine/` mein rahega — website ke code se mix mat karna.
-
-## Abhi kya chalta hai
-
-Computer par folder do, tool batata hai:
-
-- Job sheet par kitni plates likhi hain
-- Plate file mein kitne pages hain
-- Donon match nahi kiye to dikhata hai
-
-PASS / APPROVED / FAIL nahi likhta. Sirf jo mila, woh likhta hai.
-
-## Kaise chalao
+## Chalana
 
 ```bash
 cd tools/artwork-verification/engine
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m printsahaj_verify ../samples/kalonji
+.venv/bin/python -m printsahaj_verify --serve
 ```
 
-Kalonji folder mein `job.json` hai. Asli PDFs abhi daalni hain.
+Browser: http://127.0.0.1:8765
 
-## Website
+Pehli baar Flutter web build:
 
-PrintSahaj site par Tools → Artwork Verification.
-App banne ke baad wahi button app kholega.
+```bash
+cd ../app
+flutter build web
+```
+
+Phone APK kal: isi `app/` folder se `flutter build apk`.

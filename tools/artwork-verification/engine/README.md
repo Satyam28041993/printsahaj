@@ -1,10 +1,11 @@
-# Engine — pehla version
+# Engine
 
-Computer par chalta hai. Website nahi. Phone app nahi.
+Hisab-kitab yahin hai. Screen Flutter `app/` mein hai.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+.venv/bin/python -m printsahaj_verify --serve
 .venv/bin/python -m printsahaj_verify ../samples/kalonji
 ```
 

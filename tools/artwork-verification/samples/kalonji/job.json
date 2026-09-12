@@ -8,5 +8,6 @@
   "special_units": ["Varnish"],
   "paper": "Chromo",
   "label_size_mm": [114, 76],
-  "print_type": "Flexo"
+  "print_type": "Flexo",
+  "mandatory_texts": ["DAILY PHARMA"]
 }
