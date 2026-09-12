@@ -413,7 +413,7 @@
           ${nextOpen ? `<button type="button" id="next-btn">Go to ${escapeHtml(next.title)}</button>` : `<span class="muted">${next ? "The next step unlocks after this one is checked." : ""}</span>`}
         </div>
         <div class="card"><strong>Review</strong>${renderReviewRows(items)}
-          ${snapshot && snapshot.gemini ? "" : '<p class="muted">Image wording, bowl place, logo place, batch and MRP on a PNG need PRINTSAHAJ_GEMINI_API_KEY on this machine, or compare the two previews side by side.</p>'}
+          ${snapshot && snapshot.gemini ? "" : '<p class="muted">Image wording, bowl place, logo place, batch and MRP on a PNG need a Gemini key. Put it in gemini-key.txt next to start-tool.bat, restart the black window, then Check this step again. Or compare the two previews side by side.</p>'}
         </div>
         ${def.stage_id === "print" ? `<div class="card">
           <label>Remark</label>

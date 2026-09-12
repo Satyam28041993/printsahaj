@@ -123,6 +123,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("data-pick=", home)
         self.assertIn('.get("job")', home)
         self.assertIn("Uploading", home)
+        self.assertIn("gemini-key.txt", home)
         self.assertIn("data-compare", home)
         self.assertIn("viewer-modal", home)
         self.assertIn("Magnifier", home)

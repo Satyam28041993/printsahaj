@@ -25,6 +25,7 @@ yarn-error.log*
 # env
 .env
 .env*.local
+tools/artwork-verification/gemini-key.txt
 
 # vercel
 .vercel

@@ -25,6 +25,7 @@ from printsahaj_verify.job_spec import JobSpecError
 from printsahaj_verify.reporting.terminal import FORBIDDEN_VERDICT_WORDS
 
 GEMINI_KEY_ENV = "PRINTSAHAJ_GEMINI_API_KEY"
+GEMINI_KEY_FILE_NAME = "gemini-key.txt"
 GEMINI_MODEL_ENV = "PRINTSAHAJ_GEMINI_MODEL"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 GEMINI_TIMEOUT_SEC = 45
@@ -73,9 +74,34 @@ class VisionNotes:
     source: str
 
 
+def gemini_key_path() -> Path:
+    """``gemini-key.txt`` sits next to ``start-tool.bat``."""
+    return Path(__file__).resolve().parents[2] / GEMINI_KEY_FILE_NAME
+
+
+def read_gemini_api_key(path: Path | None = None) -> str:
+    """Key from the environment, or the first line of ``gemini-key.txt``.
+
+    The environment variable wins when both are set. Notepad's UTF-8 BOM
+    is stripped. Lines starting with ``#`` are ignored.
+    """
+    env = os.environ.get(GEMINI_KEY_ENV, "").strip()
+    if env:
+        return env
+    target = path or gemini_key_path()
+    if not target.is_file():
+        return ""
+    text = target.read_text(encoding="utf-8-sig")
+    for line in text.splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            return line
+    return ""
+
+
 def gemini_configured() -> bool:
     """True when a Gemini API key is set on this machine."""
-    return bool(os.environ.get(GEMINI_KEY_ENV, "").strip())
+    return bool(read_gemini_api_key())
 
 
 def gemini_model_name() -> str:
@@ -178,7 +204,7 @@ def compare_label_previews(
     approval: Path,
 ) -> VisionNotes | None:
     """Send both previews to Gemini. None when no key is set."""
-    key = os.environ.get(GEMINI_KEY_ENV, "").strip()
+    key = read_gemini_api_key()
     if not key:
         return None
     client_png = render_preview_png(client, 1)

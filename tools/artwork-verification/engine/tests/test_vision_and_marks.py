@@ -106,6 +106,23 @@ class LabelMarkTests(unittest.TestCase):
 
 
 class VisionNoteTests(unittest.TestCase):
+    def test_key_file_is_read_when_env_is_empty(self) -> None:
+        from printsahaj_verify.vision import read_gemini_api_key
+
+        folder = Path(tempfile.mkdtemp())
+        path = folder / "gemini-key.txt"
+        path.write_text("\ufeff# comment\nAIza-test-key-123\n", encoding="utf-8")
+        with patch.dict("os.environ", {GEMINI_KEY_ENV: ""}):
+            self.assertEqual(read_gemini_api_key(path), "AIza-test-key-123")
+
+    def test_env_key_wins_over_file(self) -> None:
+        from printsahaj_verify.vision import read_gemini_api_key
+
+        path = Path(tempfile.mkdtemp()) / "gemini-key.txt"
+        path.write_text("file-key\n", encoding="utf-8")
+        with patch.dict("os.environ", {GEMINI_KEY_ENV: "env-key"}):
+            self.assertEqual(read_gemini_api_key(path), "env-key")
+
     def test_scrub_strips_verdict_words(self) -> None:
         self.assertNotIn("FAIL", scrub_vision_text("this would FAIL a check").upper())
         self.assertNotIn("PASS", scrub_vision_text("PASS").upper())
