@@ -1,4 +1,4 @@
-"""Convenience entry point so the probe can be run from the verifier folder.
+"""Convenience entry point so the probe can be run from the engine folder.
 
     python probe.py ../samples/kalonji
 """

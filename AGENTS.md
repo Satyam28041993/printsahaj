@@ -6,8 +6,12 @@ A verification system for the Indian printing and packaging industry. It compare
 a print job's approved artwork, its plate separation PDFs, and its job
 specification against each other, and reports inconsistencies to a human.
 
-Full product spec lives in `docs/product-spec.md`. Read it before implementing
-any check.
+Full product spec lives in `Artwork-Verification-System-Product-Spec.pdf`
+(plain-text dump: `artwork_spec.txt`). Read it before implementing any check.
+
+The verification **tool** is not the website. Its code lives in
+`tools/artwork-verification/`. The website only links to it. Later tools
+get their own folders the same way.
 
 ## Current phase
 
@@ -73,7 +77,7 @@ These are product decisions, not preferences. Do not override them.
 
 ## Test data
 
-`samples/kalonji/` contains a real job with a known defect:
+`tools/artwork-verification/samples/kalonji/` contains a real job with a known defect:
 approval sheet declares "6 COL + VARNISH" (7 units), separation PDF has 6 pages.
 The varnish plate is missing.
 

@@ -9,8 +9,8 @@ produces a parser that works on nobody's files. So the first thing we do with a
 real job is read it and look.
 
 Usage:
-    python probe.py samples/kalonji
-    python probe.py samples/kalonji/separations.pdf --text-limit 40
+    python probe.py ../samples/kalonji
+    python probe.py ../samples/kalonji/separations.pdf --text-limit 40
 """
 
 from __future__ import annotations

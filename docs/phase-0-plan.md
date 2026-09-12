@@ -18,12 +18,14 @@ three genuine issues, the scope gets reconsidered before anything else is built.
 | `probe.py` — diagnostic reader for job PDFs | Done, tested on a real PDF |
 | `models.py` — Finding, CheckResult, Certainty | Done |
 | `constants.py` — physical constants | Done |
-| Sample job PDFs in `samples/kalonji/` | **Missing — this is the blocker** |
-| Vendor parser | Not started, waiting on the samples |
-| Checks | Not started, waiting on the parser |
-| Reporter | Not started |
+| Sample job PDFs in `tools/artwork-verification/samples/kalonji/` | **Missing — needed for later checks** |
+| Job spec (`job.json`) | Done |
+| Check A — plate count | Done, tested on a stand-in 6-page file |
+| Reporter | Done |
+| Vendor parser | Not started, waiting on the real PDFs |
+| Checks B, F, E, C, D | Not started |
 
-Nothing is checked yet. `probe.py` only reports what is inside a PDF.
+The tool lives in `tools/artwork-verification/`. The website only links to it.
 
 ---
 
@@ -80,16 +82,18 @@ correct. This is an advisory finding, not a deterministic one.
 
 ## Next action
 
-Put the three real PDFs into `samples/kalonji/` — job sheet, separations,
-composite proof — then run, from `verifier/`:
+Put the three real PDFs into `tools/artwork-verification/samples/kalonji/`
+— job sheet, separations, composite proof — then run:
 
-```powershell
-.\.venv\Scripts\python.exe probe.py ..\samples\kalonji
+```bash
+cd tools/artwork-verification/engine
+.venv/bin/python -m printsahaj_verify ../samples/kalonji
+.venv/bin/python probe.py ../samples/kalonji
 ```
 
 The output shows how this vendor writes its headers, where the ink names live,
-and where the geometry can be read from. The job spec model and check A get
-written against that.
+and where the geometry can be read from. Checks B, F and E get written against
+that. Check A already runs from the typed job sheet plus the page count.
 
 Then repeat for roughly 19 more historical jobs. Kalonji builds the parser; the
 rest answer the question Phase 0 actually exists to answer.
