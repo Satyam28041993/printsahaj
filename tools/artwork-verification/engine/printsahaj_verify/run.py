@@ -15,6 +15,7 @@ from printsahaj_verify.checks.artwork_vs_approval import (
 from printsahaj_verify.checks.label_marks import check_label_marks
 from printsahaj_verify.checks.visual_layout import check_visual_layout
 from printsahaj_verify.checks.colour_names import check_colour_names
+from printsahaj_verify.checks.composite_matter import check_composite_matter
 from printsahaj_verify.checks.geometry import check_geometry
 from printsahaj_verify.checks.headers import check_headers
 from printsahaj_verify.checks.job_identity import check_job_identity
@@ -41,9 +42,11 @@ from printsahaj_verify.job_spec import JobSpec, JobSpecError, load_job_spec
 from printsahaj_verify.models import Certainty, CheckResult, Finding
 from printsahaj_verify.stages import STAGE_ORDER, previous_stage
 from printsahaj_verify.vision import (
+    CompositeVisionNotes,
     PlateVisionNote,
     VisionNotes,
     compare_label_previews,
+    review_composite_ups,
     review_separation_plates,
 )
 
@@ -103,7 +106,36 @@ def _plate_vision_notes(
     if artwork is None or files.separations is None or page_count < 1:
         return None, None
     try:
-        return review_separation_plates(artwork, files.separations, page_count), None
+        return (
+            review_separation_plates(
+                artwork,
+                files.separations,
+                page_count,
+                approval=files.approval,
+            ),
+            None,
+        )
+    except (JobSpecError, OSError, TimeoutError, ValueError) as error:
+        return None, str(error)
+
+
+def _composite_vision_notes(
+    files: JobFiles,
+) -> tuple[CompositeVisionNotes | None, str | None]:
+    """Gemini look at every up on the vendor composite."""
+    if files.vendor_composite is None:
+        return None, None
+    if files.client_artwork is None and files.approval is None:
+        return None, None
+    try:
+        return (
+            review_composite_ups(
+                files.client_artwork,
+                files.approval,
+                files.vendor_composite,
+            ),
+            None,
+        )
     except (JobSpecError, OSError, TimeoutError, ValueError) as error:
         return None, str(error)
 
@@ -313,7 +345,21 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
 
     sep_pages = len(separations_doc.pages) if separations_doc else 0
     plate_notes, plate_vision_error = _plate_vision_notes(files, sep_pages)
+    composite_notes, composite_vision_error = _composite_vision_notes(files)
     approval_label = _approval_label_mm(files)
+    geometry = check_geometry(
+        spec,
+        header,
+        approval_label,
+        files.vendor_composite,
+    )
+    counted_ups: int | None = None
+    raw_ups = geometry.observations.get("ups_written")
+    if raw_ups:
+        try:
+            counted_ups = int(raw_ups.split()[0])
+        except ValueError:
+            counted_ups = None
 
     return [
         identity,
@@ -336,11 +382,12 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         ),
         _plate_count_result(spec, files, header.col_count if header else None),
         check_colour_names(spec, separations_doc),
-        check_geometry(
-            spec,
-            header,
-            approval_label,
+        geometry,
+        check_composite_matter(
             files.vendor_composite,
+            counted_ups,
+            composite_notes,
+            composite_vision_error,
         ),
         check_plate_review(separations_doc, plate_notes, plate_vision_error),
         check_headers(spec, vendor_docs),

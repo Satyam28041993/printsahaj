@@ -216,15 +216,13 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
     headers = by_id.get("headers")
     wording = by_id.get("text_completeness")
     plate_look = by_id.get("plate_review")
+    composite_look = by_id.get("composite_matter")
     obs = geometry.observations if geometry else {}
     plate_obs = plates.observations if plates else {}
     pages = plate_obs.get("separation_pages", "?")
     declared = plate_obs.get("declared_units") or obs.get("header_col", "?")
     colour_obs = colours.observations if colours else {}
-    matched = colour_obs.get("matched_colours", "none")
-    plate_names = colour_obs.get("plate_names") or (
-        plate_look.observations.get("plates", "none") if plate_look else "none"
-    )
+    missing = colour_obs.get("missing_colours", "none")
     ups_detail = obs.get("ups_written", "")
     if obs.get("ups_source") == "punch_frames" and ups_detail:
         ups_detail = f"{ups_detail} green punch frames on the composite"
@@ -267,16 +265,40 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             "Label size was not read on the vendor composite.",
             geometry,
         )
-    wording_ok = (
-        "This row asks: do first-approval label words also sit on at least "
-        "one plate, so they will print. No missing words were flagged."
+    colour_ok = (
+        "Declared inks were found on the SEP set. "
+        "Each plate row below is the matter check."
     )
+    if missing and missing != "none":
+        colour_item = _from_check(
+            colours,
+            "sep_colours",
+            "Separation colours",
+            colour_ok,
+        )
+    else:
+        colour_item = _from_check(
+            colours,
+            "sep_colours",
+            "Separation colours",
+            colour_ok,
+        )
+    wording_items: list[dict[str, str]] = []
+    if wording is not None and wording.ran:
+        wording_items.append(
+            _from_check(
+                wording,
+                "wording_on_plates",
+                "Wording on plates vs first approval",
+                "First-approval label words were found on the plate set.",
+            )
+        )
     return [
         _from_check(
             plates,
             "plates",
             "Separation plates",
-            f"Plate count matches: {pages} SEP pages for {declared} units. Names: {plate_names}.",
+            f"{pages} SEP pages for {declared} units.",
         ),
         _mentioned(
             obs,
@@ -300,39 +322,130 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             {"ups_written": ups_detail} if ups_detail else obs,
             "ups_written",
             "ups",
-            "Ups (labels on the composite)",
-            "Ups counted: {value}.",
+            "How many ups",
+            "Counted {value}.",
             "Ups were not read. Look for green punch lines around each label on the composite.",
             geometry,
         ),
+        _composite_matter_item(composite_look, ups_detail),
         label_item,
-        _from_check(
-            colours,
-            "sep_colours",
-            "Separation colours",
-            f"Declared colours were found on the SEP set ({matched}). Plates: {plate_names}.",
-        ),
-        _from_check(
-            plate_look,
-            "plate_matter",
-            "Each separation plate vs artwork",
-            plate_look.observations.get("plates", "Each plate was listed.")
-            if plate_look
-            else "Each plate was listed.",
-        ),
+        colour_item,
+        *_plate_matter_items(plate_look),
         _from_check(
             headers,
             "header_col",
             "Col: on vendor headers",
             f"Col: {obs.get('header_col', 'read')} is consistent on the vendor files.",
         ),
-        _from_check(
-            wording,
-            "wording_on_plates",
-            "Wording on plates vs first approval",
-            wording_ok,
-        ),
+        *wording_items,
     ]
+
+
+def _composite_matter_item(
+    result: CheckResult | None,
+    ups_detail: str,
+) -> dict[str, str]:
+    title = "All ups vs artwork and first approval"
+    if result is None or not result.ran:
+        return _item(
+            "ups_matter",
+            title,
+            STATE_WAIT,
+            result.not_run_reason if result else "Composite matter was not read.",
+        )
+    obs = result.observations
+    count = obs.get("counted_ups") or ups_detail or "?"
+    note = obs.get("note", "")
+    if note == "none":
+        note = ""
+    ok = (
+        obs.get("all_ups_same") == "yes"
+        and obs.get("matches_artwork") != "no"
+        and obs.get("matches_approval") != "no"
+    )
+    if result.findings:
+        certain = [item for item in result.findings if item.certainty is Certainty.DETERMINISTIC]
+        advisory = [item for item in result.findings if item.certainty is Certainty.ADVISORY]
+        hit = (certain or advisory)[0]
+        return _item(
+            "ups_matter",
+            title,
+            STATE_ISSUE if certain else STATE_JUDGE,
+            hit.summary,
+        )
+    if ok:
+        return _item(
+            "ups_matter",
+            title,
+            STATE_CLEAR,
+            note
+            or (
+                f"{count} ups: wording and images look the same on every label, "
+                "and match the client artwork and the first-approval label."
+            ),
+        )
+    return _item(
+        "ups_matter",
+        title,
+        STATE_WAIT,
+        note or "Gemini did not finish reading every up.",
+    )
+
+
+def _plate_matter_items(result: CheckResult | None) -> list[dict[str, str]]:
+    if result is None or not result.ran:
+        return [
+            _item(
+                "plate_matter",
+                "Plate matter vs artwork",
+                STATE_WAIT,
+                result.not_run_reason if result else "Plate matter was not read.",
+            )
+        ]
+    try:
+        count = int(result.observations.get("plate_count") or "0")
+    except ValueError:
+        count = 0
+    if count < 1:
+        return [
+            _item(
+                "plate_matter",
+                "Plate matter vs artwork",
+                STATE_WAIT,
+                "No separation pages to review.",
+            )
+        ]
+    items: list[dict[str, str]] = []
+    for page in range(1, count + 1):
+        name = result.observations.get(f"plate_{page}_name", "unnamed")
+        flag = result.observations.get(f"plate_{page}_same", "unread")
+        note = result.observations.get(f"plate_{page}_note", "")
+        title = f"Plate {page} {name} — text and images"
+        if flag == "match":
+            items.append(
+                _item(
+                    f"plate_{page}",
+                    title,
+                    STATE_CLEAR,
+                    note
+                    or (
+                        "Wording and images on this ink match the client "
+                        "artwork and the first-approval label."
+                    ),
+                )
+            )
+        elif flag == "mismatch":
+            items.append(_item(f"plate_{page}", title, STATE_JUDGE, note or "Matter differs."))
+        else:
+            items.append(
+                _item(
+                    f"plate_{page}",
+                    title,
+                    STATE_WAIT,
+                    note or result.observations.get("vision") or "Matter was not read.",
+                )
+            )
+    return items
 
 
 def _print_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:

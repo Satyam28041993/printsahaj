@@ -40,6 +40,7 @@ STAGE_CHECKS: dict[str, tuple[str, ...]] = {
         "plate_count",
         "colour_names",
         "geometry",
+        "composite_matter",
         "plate_review",
         "headers",
         "text_completeness",

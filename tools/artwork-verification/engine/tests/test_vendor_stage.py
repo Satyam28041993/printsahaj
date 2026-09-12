@@ -10,6 +10,7 @@ import pymupdf
 
 from printsahaj_verify.checks.colour_names import check_colour_names, plate_name_list
 from printsahaj_verify.checks.geometry import check_geometry
+from printsahaj_verify.checks.composite_matter import check_composite_matter
 from printsahaj_verify.checks.plate_review import check_plate_review
 from printsahaj_verify.checks.text_completeness import NO_PLATE_TEXT, check_text_completeness
 from printsahaj_verify.extract import (
@@ -21,7 +22,12 @@ from printsahaj_verify.extract import (
 )
 from printsahaj_verify.probe import page_colorant_from_xref_text
 from printsahaj_verify.reporting.review import build_review
-from printsahaj_verify.vision import PlateVisionNote, plate_notes_from_payload
+from printsahaj_verify.vision import (
+    CompositeVisionNotes,
+    PlateVisionNote,
+    composite_notes_from_payload,
+    plate_notes_from_payload,
+)
 from tests.helpers import kalonji_spec
 from tests.test_stages import BIN_VENDOR_TEXT
 
@@ -147,8 +153,9 @@ class PlateReviewTests(unittest.TestCase):
         )
         result = check_plate_review(document, notes)
         self.assertTrue(result.ran)
-        self.assertIn("Plate 7: UV", result.observations["plates"])
-        self.assertIn("unvarnished", result.observations["plates"])
+        self.assertEqual(result.observations["plate_7_name"], "UV")
+        self.assertEqual(result.observations["plate_1_same"], "match")
+        self.assertIn("unvarnished", result.observations["plate_7_note"])
         self.assertEqual(result.findings, [])
         bad = check_plate_review(
             document,
@@ -226,12 +233,80 @@ class VendorReviewCopyTests(unittest.TestCase):
         )
         vendor = next(item for item in review["stages"] if item["stage_id"] == "vendor")
         by_id = {item["id"]: item for item in vendor["items"]}
-        self.assertIn("1 CYAN", by_id["plates"]["detail"])
-        self.assertIn("7 UV", by_id["sep_colours"]["detail"])
+        self.assertIn("7 SEP pages", by_id["plates"]["detail"])
+        self.assertNotIn("1 CYAN", by_id["plates"]["detail"])
+        self.assertNotIn("1 CYAN", by_id["sep_colours"]["detail"])
         self.assertIn("94 teeth", by_id["cylinder"]["detail"])
         self.assertIn("matches first-approval", by_id["label"]["detail"])
-        self.assertIn("no readable text layer", by_id["wording_on_plates"]["detail"].lower())
-        self.assertIn("Plate 7: UV", by_id["plate_matter"]["detail"])
+        self.assertNotIn("wording_on_plates", by_id)
+        self.assertEqual(by_id["plate_7"]["state"], "wait")
+        self.assertIn("UV", by_id["plate_7"]["title"])
+        self.assertEqual(by_id["ups_matter"]["state"], "wait")
+        titles = [item["title"] for item in vendor["items"]]
+        self.assertEqual(sum(1 for title in titles if "CYAN" in title.upper()), 1)
+        blob = str(review).upper()
+        self.assertNotIn("PASS", blob)
+        self.assertNotIn("APPROVED", blob)
+        self.assertNotIn("FAIL", blob)
+
+    def test_verified_plates_and_ups_show_detail(self) -> None:
+        from printsahaj_verify.models import CheckResult
+
+        look = check_plate_review(
+            DocumentText(
+                path=Path("s.pdf"),
+                pages=_pages(2),
+                page_colorants=["Cyan", "UV"],
+            ),
+            notes=(
+                PlateVisionNote(1, "Cyan", True, "bowl and FSSAI on cyan only", False),
+                PlateVisionNote(2, "UV", True, "windows left for batch and MRP", True),
+            ),
+        )
+        composite = check_composite_matter(
+            Path("v.pdf"),
+            6,
+            CompositeVisionNotes(
+                ups_count=6,
+                all_ups_same=True,
+                matches_artwork=True,
+                matches_approval=True,
+                damaged_up=None,
+                note="All 6 ups match the artwork and the first-approval label.",
+            ),
+        )
+        review = build_review(
+            [
+                CheckResult(
+                    check_id="plate_count",
+                    title="Plate count",
+                    observations={"separation_pages": "2", "declared_units": "2"},
+                ),
+                look,
+                composite,
+            ],
+            ["vendor"],
+        )
+        vendor = next(item for item in review["stages"] if item["stage_id"] == "vendor")
+        by_id = {item["id"]: item for item in vendor["items"]}
+        self.assertEqual(by_id["plate_1"]["state"], "clear")
+        self.assertIn("bowl", by_id["plate_1"]["detail"])
+        self.assertEqual(by_id["plate_2"]["state"], "clear")
+        self.assertIn("windows", by_id["plate_2"]["detail"])
+        self.assertEqual(by_id["ups_matter"]["state"], "clear")
+        self.assertIn("6 ups", by_id["ups_matter"]["detail"])
+        parsed = composite_notes_from_payload(
+            {
+                "ups_count": 6,
+                "all_ups_same": True,
+                "matches_artwork": True,
+                "matches_approval": False,
+                "damaged_up": 3,
+                "note": "up 3 text cropped",
+            }
+        )
+        self.assertEqual(parsed.damaged_up, 3)
+        self.assertFalse(parsed.matches_approval)
         blob = str(review).upper()
         self.assertNotIn("PASS", blob)
         self.assertNotIn("APPROVED", blob)

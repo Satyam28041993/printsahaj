@@ -65,13 +65,12 @@ mrp_note (string): short note
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
 
-PLATE_REVIEW_PROMPT = """You review flexo separation plates against one label.
-Image 1 is the client artwork (one label).
-Images after that are separation plates in page order, one ink each.
+PLATE_REVIEW_PROMPT = """You review flexo separation plates against the label.
+{refs}
 
-For process plates (Cyan, Magenta, Yellow, Black, Gold, pantone): look at
-the bowl / product photo, FSSAI mark, logo and printed wording that belong
-on that ink. Say whether the shape and wording match the artwork.
+For process / spot plates: look at the bowl or product photo, FSSAI mark,
+logo and printed wording that belong on that ink. Say whether the shape
+and wording match the client artwork and the first-approval label.
 
 The last plate is often UV / varnish. A hole, white box or cut-out on the
 UV plate is the unvarnished window where batch number and MRP print.
@@ -84,8 +83,32 @@ matter_same (boolean), note (string), uv_cutouts (boolean)
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
 
+COMPOSITE_REVIEW_PROMPT = """You compare every label on a vendor composite
+(imposition, several ups) with the client artwork and the first-approval label.
+
+{refs}
+
+Count how many labels sit on the composite (green punch / die line around
+each up). For every up, look at printed wording, bowl / product photo,
+logo and FSSAI mark. Say whether all ups match each other, and whether
+they match the artwork and the first-approval label. If one up is damaged,
+cropped or has different text or images, say which up (1-based, left to
+right, top to bottom).
+
+Return JSON only:
+ups_count (number),
+all_ups_same (boolean),
+matches_artwork (boolean),
+matches_approval (boolean),
+damaged_up (number or 0),
+note (string)
+
+Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
+"""
+
 PLATE_REVIEW_TIMEOUT_SEC = 90
 PLATE_PREVIEW_WIDTH_PX = 720
+COMPOSITE_PREVIEW_WIDTH_PX = 1400
 
 
 @dataclass(frozen=True)
@@ -97,6 +120,18 @@ class PlateVisionNote:
     matter_same: bool | None
     note: str
     uv_cutouts: bool | None
+
+
+@dataclass(frozen=True)
+class CompositeVisionNotes:
+    """Gemini note for every up on the vendor composite."""
+
+    ups_count: int | None
+    all_ups_same: bool | None
+    matches_artwork: bool | None
+    matches_approval: bool | None
+    damaged_up: int | None
+    note: str
 
 
 @dataclass(frozen=True)
@@ -533,19 +568,92 @@ def review_separation_plates(
     artwork: Path,
     separations: Path,
     page_count: int,
+    approval: Path | None = None,
 ) -> tuple[PlateVisionNote, ...] | None:
-    """Send artwork plus each SEP page to Gemini. None when no key is set."""
+    """Send artwork, first-approval and each SEP page to Gemini."""
     if not read_gemini_api_key():
         return None
     if page_count < 1:
         raise JobSpecError("Separations file has no pages")
     images = [render_preview_png(artwork, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)]
+    refs = (
+        "Image 1 is the client artwork (one label). "
+        "Images after that are separation plates in page order, one ink each."
+    )
+    if approval is not None:
+        images.append(
+            render_preview_png(approval, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)
+        )
+        refs = (
+            "Image 1 is the client artwork (one label). "
+            "Image 2 is the first-approval sheet — read the LABEL only, "
+            "not the form table. Images after that are separation plates "
+            "in page order, one ink each."
+        )
     for page in range(1, page_count + 1):
         images.append(
             render_preview_png(separations, page, max_width_px=PLATE_PREVIEW_WIDTH_PX)
         )
     payload, _model = _generate_gemini_json(
-        _multi_image_body(PLATE_REVIEW_PROMPT, images),
+        _multi_image_body(PLATE_REVIEW_PROMPT.format(refs=refs), images),
         PLATE_REVIEW_TIMEOUT_SEC,
     )
     return plate_notes_from_payload(payload)
+
+
+def composite_notes_from_payload(payload: dict[str, object]) -> CompositeVisionNotes:
+    """Parse the composite-ups object from a Gemini JSON reply."""
+    damaged_raw = payload.get("damaged_up")
+    damaged: int | None
+    try:
+        damaged = int(damaged_raw) if damaged_raw not in (None, "", 0, "0") else None
+    except (TypeError, ValueError):
+        damaged = None
+    count_raw = payload.get("ups_count")
+    try:
+        ups_count = int(count_raw) if count_raw not in (None, "") else None
+    except (TypeError, ValueError):
+        ups_count = None
+    return CompositeVisionNotes(
+        ups_count=ups_count,
+        all_ups_same=_as_bool(payload.get("all_ups_same")),
+        matches_artwork=_as_bool(payload.get("matches_artwork")),
+        matches_approval=_as_bool(payload.get("matches_approval")),
+        damaged_up=damaged if damaged and damaged > 0 else None,
+        note=scrub_vision_text(str(payload.get("note") or "")),
+    )
+
+
+def review_composite_ups(
+    artwork: Path | None,
+    approval: Path | None,
+    composite: Path,
+) -> CompositeVisionNotes | None:
+    """Send artwork, first-approval and the composite to Gemini."""
+    if not read_gemini_api_key():
+        return None
+    images: list[bytes] = []
+    refs = "The last image is the vendor composite with several labels (ups)."
+    if artwork is not None:
+        images.append(
+            render_preview_png(artwork, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)
+        )
+        refs = "Image 1 is the client artwork. " + refs
+    if approval is not None:
+        images.append(
+            render_preview_png(approval, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)
+        )
+        refs = (
+            "One image is the first-approval sheet — read the LABEL only, "
+            "not the form table. "
+        ) + refs
+    if not images:
+        return None
+    images.append(
+        render_preview_png(composite, 1, max_width_px=COMPOSITE_PREVIEW_WIDTH_PX)
+    )
+    payload, _model = _generate_gemini_json(
+        _multi_image_body(COMPOSITE_REVIEW_PROMPT.format(refs=refs), images),
+        PLATE_REVIEW_TIMEOUT_SEC,
+    )
+    return composite_notes_from_payload(payload)
