@@ -9,7 +9,6 @@ from pathlib import Path
 import pymupdf
 
 from printsahaj_verify.reporting.checklist import STATE_ISSUE
-from printsahaj_verify.reporting.review import STATE_EYE as REVIEW_EYE
 from printsahaj_verify.reporting.review import build_review
 from printsahaj_verify.run import run_job, run_stage
 from printsahaj_verify.store import (
@@ -64,14 +63,23 @@ class ReviewTests(unittest.TestCase):
             {"job_id": "R1", "file_name": "ART", "customer": "ACME"},
             root=root,
         )
+        document = pymupdf.open()
+        page = document.new_page(width=80, height=60)
+        page.draw_rect(page.rect, color=(1, 0, 0), fill=(1, 0, 0))
+        png = page.get_pixmap().tobytes("png")
+        document.close()
+        save_upload("R1", "client_artwork", png, "label.png", root=root)
+        write_text_pdf(folder / "a.pdf", "6 COL LABEL SIZE 50 X 50 MM")
+        save_upload("R1", "approval", (folder / "a.pdf").read_bytes(), "a.pdf", root=root)
         _spec, results, _files, _checked = run_stage(folder, "approval")
         review = build_review(results, ["approval"])
         approval = next(item for item in review["stages"] if item["stage_id"] == "approval")
         by_id = {item["id"]: item for item in approval["items"]}
-        self.assertEqual(by_id["alignment"]["state"], REVIEW_EYE)
-        self.assertEqual(by_id["logo"]["state"], REVIEW_EYE)
-        self.assertIn("eye", by_id["alignment"]["detail"].lower())
-        self.assertTrue(any("Logo" in line or "alignment" in line for line in approval["not_checked"]))
+        self.assertNotIn("same_job", by_id)
+        self.assertEqual(by_id["alignment"]["state"], "wait")
+        self.assertEqual(by_id["logo"]["state"], "wait")
+        self.assertIn("gemini", by_id["alignment"]["detail"].lower())
+        self.assertTrue(any("alignment" in line.lower() for line in approval["not_checked"]))
 
     def test_vendor_header_mentions_become_ticks(self) -> None:
         root = Path(tempfile.mkdtemp())

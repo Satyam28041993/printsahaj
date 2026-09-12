@@ -51,6 +51,7 @@ echo.
 echo Starting the tool. The browser opens after the server is ready.
 echo Do not close this black window.
 echo Close the window when you want to stop the tool.
+echo Optional: set PRINTSAHAJ_GEMINI_API_KEY to read wording on PNG labels.
 echo.
 
 cd /d "%~dp0engine"

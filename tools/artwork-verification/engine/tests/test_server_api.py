@@ -121,6 +121,13 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("First approval", home)
         self.assertIn("preview", home)
         self.assertIn("data-pick=", home)
+        self.assertIn("Uploading", home)
+        self.assertIn("data-compare", home)
+        self.assertIn("viewer-modal", home)
+        self.assertIn("Magnifier", home)
+        self.assertIn("Zoom in", home)
+        self.assertIn("Zoom out", home)
+        self.assertNotIn("Same job on the uploaded files", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))

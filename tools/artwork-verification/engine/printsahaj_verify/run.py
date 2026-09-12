@@ -8,7 +8,12 @@ from printsahaj_verify.approval_sheet import parse_approval_sheet
 from printsahaj_verify.checks.approval_sheet_check import check_approval_sheet
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_ID as ARTWORK_ID
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_TITLE as ARTWORK_TITLE
-from printsahaj_verify.checks.artwork_vs_approval import check_artwork_vs_approval
+from printsahaj_verify.checks.artwork_vs_approval import (
+    check_artwork_vs_approval,
+    result_from_vision_wording,
+)
+from printsahaj_verify.checks.label_marks import check_label_marks
+from printsahaj_verify.checks.visual_layout import check_visual_layout
 from printsahaj_verify.checks.colour_names import check_colour_names
 from printsahaj_verify.checks.geometry import check_geometry
 from printsahaj_verify.checks.headers import check_headers
@@ -34,13 +39,15 @@ from printsahaj_verify.files import JobFiles, discover_job_files, is_pdf
 from printsahaj_verify.job_spec import JobSpec, JobSpecError, load_job_spec
 from printsahaj_verify.models import Certainty, CheckResult, Finding
 from printsahaj_verify.stages import STAGE_ORDER, previous_stage
+from printsahaj_verify.vision import VisionNotes, compare_label_previews
 
 JOB_FILE_NAME = "job.json"
 STAGES_FILE_NAME = "stages.json"
 
 IMAGE_TEXT_REASON = (
-    "File is an image. This tool does not read text from images. "
-    "Compare the preview by eye."
+    "File is an image. Local PDF text extract cannot read pixels. "
+    "Set PRINTSAHAJ_GEMINI_API_KEY on this machine to compare wording, "
+    "or open the two previews side by side."
 )
 
 
@@ -55,16 +62,26 @@ def _artwork_vs_approval_result(
     files: JobFiles,
     client_doc: DocumentText | None,
     approval_doc: DocumentText | None,
+    notes: VisionNotes | None,
 ) -> CheckResult:
     client_is_image = files.client_artwork is not None and not is_pdf(files.client_artwork)
     approval_is_image = files.approval is not None and not is_pdf(files.approval)
     if client_is_image or approval_is_image:
+        if notes is not None and notes.wording_same is not None:
+            return result_from_vision_wording(notes)
         return CheckResult(
             check_id=ARTWORK_ID,
             title=ARTWORK_TITLE,
             not_run_reason=IMAGE_TEXT_REASON,
         )
     return check_artwork_vs_approval(client_doc, approval_doc)
+
+
+def _vision_notes(files: JobFiles) -> VisionNotes | None:
+    """One Gemini call for wording, layout, logo, batch and MRP."""
+    if files.client_artwork is None or files.approval is None:
+        return None
+    return compare_label_previews(files.client_artwork, files.approval)
 
 
 def _plate_count_result(
@@ -234,6 +251,11 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         if path is not None
     ]
     identity = check_job_identity(spec, identity_paths, identity_docs)
+    notes = _vision_notes(files)
+    client_is_image = (
+        files.client_artwork is not None and not is_pdf(files.client_artwork)
+    )
+    approval_is_image = files.approval is not None and not is_pdf(files.approval)
     mixed_jobs = any(
         item.certainty is Certainty.DETERMINISTIC for item in identity.findings
     )
@@ -256,7 +278,18 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
     return [
         identity,
         check_approval_sheet(files.approval),
-        _artwork_vs_approval_result(files, client_doc, approval_doc),
+        _artwork_vs_approval_result(files, client_doc, approval_doc, notes),
+        check_visual_layout(
+            notes,
+            files.client_artwork is not None and files.approval is not None,
+        ),
+        check_label_marks(
+            client_doc,
+            approval_doc,
+            client_is_image,
+            approval_is_image,
+            notes,
+        ),
         _plate_count_result(spec, files, header.col_count if header else None),
         check_colour_names(spec, separations_doc),
         check_geometry(spec, header),

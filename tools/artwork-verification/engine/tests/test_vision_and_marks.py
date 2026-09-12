@@ -1,0 +1,208 @@
+"""Job-code ignore, batch/MRP marks, and optional Gemini notes."""
+
+from __future__ import annotations
+
+import json
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from printsahaj_verify.checks.job_identity import check_job_identity
+from printsahaj_verify.checks.label_marks import NO_BATCH, NO_MRP, check_label_marks
+from printsahaj_verify.checks.visual_layout import check_visual_layout
+from printsahaj_verify.extract import read_document_text
+from printsahaj_verify.job_spec import load_job_spec
+from printsahaj_verify.reporting.review import build_review
+from printsahaj_verify.run import run_job
+from printsahaj_verify.store import create_or_update_job, save_upload
+from printsahaj_verify.vision import (
+    GEMINI_KEY_ENV,
+    VisionNotes,
+    gemini_configured,
+    notes_from_payload,
+    scrub_vision_text,
+)
+from tests.test_stages import BIN_VENDOR_TEXT, write_text_pdf
+
+
+def _notes(**overrides: object) -> VisionNotes:
+    payload = {
+        "wording_same": True,
+        "wording_note": "same wording",
+        "product_centered_both": True,
+        "alignment_note": "bowl in the middle on both",
+        "logo_same_place": True,
+        "logo_note": "logo top left on both",
+        "batch_on_label": False,
+        "batch_note": "blank box",
+        "mrp_on_label": True,
+        "mrp_note": "MRP 199 on both",
+    }
+    payload.update(overrides)
+    return notes_from_payload(payload, source="gemini:test")
+
+
+class JobCodeIgnoreTests(unittest.TestCase):
+    def test_typed_job_code_wins_over_filename_code(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        folder = create_or_update_job(
+            {
+                "job_id": "PGPL-001",
+                "file_name": "BIN FARUQ KALONJI OIL 50ML",
+                "customer": "BIN FARUQ",
+            },
+            root=root,
+        )
+        vendor = folder / "v.pdf"
+        write_text_pdf(vendor, BIN_VENDOR_TEXT)
+        save_upload(
+            "PGPL-001",
+            "vendor_composite",
+            vendor.read_bytes(),
+            "CGM2026-27-9824_BIN FARUQ.pdf",
+            root=root,
+        )
+        spec = load_job_spec(folder / "job.json")
+        from printsahaj_verify.files import discover_job_files
+
+        files = discover_job_files(folder)
+        result = check_job_identity(
+            spec,
+            [path for path in (files.vendor_composite,) if path],
+            [read_document_text(files.vendor_composite)] if files.vendor_composite else [],
+        )
+        self.assertEqual(result.observations["job_code"], "PGPL-001")
+        self.assertEqual(result.observations["file_codes"], "ignored")
+        self.assertIn("CGM2026-27-9824", result.observations["codes"])
+        for finding in result.findings:
+            self.assertNotIn("another job", finding.summary)
+
+
+class LabelMarkTests(unittest.TestCase):
+    def test_pdf_without_batch_or_mrp(self) -> None:
+        path = Path(tempfile.mkdtemp()) / "a.pdf"
+        write_text_pdf(path, "6 COL + VARNISH LABEL SIZE 57 x 95 MM")
+        doc = read_document_text(path)
+        result = check_label_marks(None, doc, False, False)
+        self.assertTrue(result.ran)
+        summaries = [item.summary for item in result.findings]
+        self.assertTrue(any(NO_BATCH in line for line in summaries))
+        self.assertTrue(any(NO_MRP in line for line in summaries))
+
+    def test_image_without_gemini_does_not_invent_a_miss(self) -> None:
+        result = check_label_marks(None, None, True, False)
+        self.assertFalse(result.ran)
+        self.assertEqual(result.observations["has_batch"], "unread")
+        self.assertIn("image", (result.not_run_reason or "").lower())
+
+    def test_gemini_missing_batch_uses_operator_wording(self) -> None:
+        result = check_label_marks(None, None, True, False, notes=_notes())
+        self.assertTrue(result.ran)
+        self.assertEqual(result.observations["has_batch"], "no")
+        self.assertEqual(result.observations["has_mrp"], "yes")
+        self.assertTrue(any(NO_BATCH in item.summary for item in result.findings))
+        self.assertFalse(any(NO_MRP in item.summary for item in result.findings))
+
+
+class VisionNoteTests(unittest.TestCase):
+    def test_scrub_strips_verdict_words(self) -> None:
+        self.assertNotIn("FAIL", scrub_vision_text("this would FAIL a check").upper())
+        self.assertNotIn("PASS", scrub_vision_text("PASS").upper())
+
+    def test_layout_mismatch_is_advisory(self) -> None:
+        notes = _notes(product_centered_both=False, logo_same_place=False)
+        result = check_visual_layout(notes, True)
+        self.assertTrue(result.ran)
+        self.assertEqual(len(result.findings), 2)
+        self.assertEqual(result.observations["alignment"], "mismatch")
+        self.assertEqual(result.observations["logo"], "mismatch")
+
+    def test_no_gemini_is_not_run(self) -> None:
+        result = check_visual_layout(None, True)
+        self.assertFalse(result.ran)
+        self.assertIn("PRINTSAHAJ_GEMINI_API_KEY", result.not_run_reason or "")
+
+    def test_review_uses_gemini_notes(self) -> None:
+        from printsahaj_verify.checks.artwork_vs_approval import result_from_vision_wording
+        from printsahaj_verify.models import CheckResult
+
+        notes = _notes(wording_same=False, batch_on_label=False, mrp_on_label=False)
+        review = build_review(
+            [
+                CheckResult(check_id="approval_sheet", title="Approval sheet"),
+                result_from_vision_wording(notes),
+                check_visual_layout(notes, True),
+                check_label_marks(None, None, True, False, notes=notes),
+            ],
+            ["approval"],
+        )
+        approval = next(item for item in review["stages"] if item["stage_id"] == "approval")
+        by_id = {item["id"]: item for item in approval["items"]}
+        self.assertNotIn("same_job", by_id)
+        self.assertEqual(by_id["wording"]["state"], "judge")
+        self.assertEqual(by_id["batch"]["state"], "issue")
+        self.assertIn(NO_BATCH, by_id["batch"]["detail"])
+        self.assertIn(NO_MRP, by_id["mrp"]["detail"])
+        blob = str(review).upper()
+        self.assertNotIn("PASS", blob)
+        self.assertNotIn("APPROVED", blob)
+        self.assertNotIn("FAIL", blob)
+
+    def test_gemini_http_is_parsed(self) -> None:
+        root = Path(tempfile.mkdtemp())
+        folder = create_or_update_job(
+            {"job_id": "G1", "file_name": "ART", "customer": "ACME"},
+            root=root,
+        )
+        document = __import__("pymupdf").open()
+        page = document.new_page(width=80, height=60)
+        page.draw_rect(page.rect, color=(1, 0, 0), fill=(1, 0, 0))
+        png = page.get_pixmap().tobytes("png")
+        document.close()
+        save_upload("G1", "client_artwork", png, "label.png", root=root)
+        write_text_pdf(folder / "a.pdf", "APPROVAL TEXT 6 COL LABEL SIZE 50 X 50 MM")
+        save_upload("G1", "approval", (folder / "a.pdf").read_bytes(), "a.pdf", root=root)
+        payload = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "text": json.dumps(
+                                    {
+                                        "wording_same": False,
+                                        "wording_note": "net wt differs",
+                                        "product_centered_both": True,
+                                        "alignment_note": "bowl centred",
+                                        "logo_same_place": True,
+                                        "logo_note": "logo ok",
+                                        "batch_on_label": False,
+                                        "batch_note": "blank",
+                                        "mrp_on_label": False,
+                                        "mrp_note": "missing",
+                                    }
+                                )
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        fake = json.dumps(payload).encode("utf-8")
+        with patch.dict("os.environ", {GEMINI_KEY_ENV: "test-key"}):
+            self.assertTrue(gemini_configured())
+            with patch(
+                "printsahaj_verify.vision._post_gemini",
+                return_value=fake,
+            ):
+                _spec, results, _files = run_job(folder)
+        wording = next(item for item in results if item.check_id == "artwork_vs_approval")
+        marks = next(item for item in results if item.check_id == "label_marks")
+        self.assertTrue(wording.ran)
+        self.assertTrue(any("wording" in item.summary.lower() for item in wording.findings))
+        self.assertTrue(any(NO_BATCH in item.summary for item in marks.findings))
+
+
+if __name__ == "__main__":
+    unittest.main()

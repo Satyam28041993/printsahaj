@@ -28,7 +28,13 @@ STAGE_SLOTS: dict[str, tuple[str, ...]] = {
 }
 
 STAGE_CHECKS: dict[str, tuple[str, ...]] = {
-    STAGE_APPROVAL: ("job_identity", "approval_sheet", "artwork_vs_approval"),
+    STAGE_APPROVAL: (
+        "job_identity",
+        "approval_sheet",
+        "artwork_vs_approval",
+        "visual_layout",
+        "label_marks",
+    ),
     STAGE_VENDOR: (
         "job_identity",
         "plate_count",

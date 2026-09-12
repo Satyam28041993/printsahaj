@@ -4,9 +4,46 @@ from __future__ import annotations
 
 from printsahaj_verify.extract import DocumentText
 from printsahaj_verify.models import Certainty, CheckResult, Finding
+from printsahaj_verify.vision import VisionNotes
 
 CHECK_ID = "artwork_vs_approval"
 CHECK_TITLE = "Client artwork vs first approval"
+
+
+def result_from_vision_wording(notes: VisionNotes) -> CheckResult:
+    """Turn Gemini wording notes into a check result. Advisory only."""
+    findings: list[Finding] = []
+    if notes.wording_same is False:
+        findings.append(
+            Finding(
+                check_id=CHECK_ID,
+                summary=(
+                    "Wording on the client artwork and the first approval "
+                    "does not look the same. "
+                    + (notes.wording_note or "Compare the two previews side by side.")
+                ),
+                certainty=Certainty.ADVISORY,
+                expected="same wording on both labels",
+                found=notes.wording_note or "wording differs",
+                location="Client artwork vs first approval preview",
+            )
+        )
+    return CheckResult(
+        check_id=CHECK_ID,
+        title=CHECK_TITLE,
+        findings=findings,
+        observations={
+            "wording": (
+                "match"
+                if notes.wording_same is True
+                else "mismatch"
+                if notes.wording_same is False
+                else "unread"
+            ),
+            "wording_note": notes.wording_note or "none",
+            "source": notes.source,
+        },
+    )
 
 
 def check_artwork_vs_approval(

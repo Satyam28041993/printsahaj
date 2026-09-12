@@ -65,7 +65,34 @@
     .err { color: var(--issue); }
     .muted { color: var(--muted); font-size: 13px; }
     .hidden { display: none; }
-    .preview { max-width: 100%; max-height: 280px; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; }
+    .preview { max-width: 100%; max-height: 280px; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; cursor: zoom-in; }
+    .uploading { color: var(--gold); font-weight: 600; margin: 12px 0 8px; }
+    .compare-pick { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin: 10px 0 8px; cursor: pointer; }
+    .compare-pick input { width: auto; margin: 0; }
+    .viewer-modal { max-width: min(1400px, 100%); }
+    .viewer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .viewer-grid.one { grid-template-columns: 1fr; }
+    .viewer-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .viewer-stage {
+      position: relative;
+      overflow: auto;
+      background: #1a1712;
+      min-height: 360px;
+      max-height: calc(100vh - 220px);
+      border-radius: 10px;
+    }
+    .viewer-img { display: block; transform-origin: top left; }
+    .loupe {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 3px solid #fffdf8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+      pointer-events: none;
+      background-repeat: no-repeat;
+    }
+    .loupe-btn.active { outline: 2px solid var(--gold); }
     .preview-nav { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
@@ -188,6 +215,7 @@
     </section>
   </main>
   <div id="review-modal" class="modal-back" hidden></div>
+  <div id="viewer-modal" class="modal-back" hidden></div>
   <script>
     const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
     const SLOT_COPY = {
@@ -198,11 +226,18 @@
       printout: ["Printout", "Photo after the machine print"],
     };
     const TICK = { issue: "✗", clear: "✓", judge: "!", wait: "—", eye: "◉" };
+    const ZOOM_MIN = 1;
+    const ZOOM_MAX = 8;
+    const ZOOM_STEP = 0.25;
+    const LOUPE_SIZE = 180;
+    const LOUPE_MAG = 2.5;
     let currentId = "";
     let snapshot = null;
     let checklist = null;
     let review = null;
     let activeStage = "approval";
+    const uploadingRoles = new Set();
+    const comparePick = new Set();
 
     function show(id) {
       document.querySelectorAll("main > section").forEach((el) => el.classList.add("hidden"));
@@ -318,7 +353,15 @@
       const copy = SLOT_COPY[role] || [role, ""];
       const have = info && info.name;
       const pages = info && info.pages ? Number(info.pages) : 1;
-      const preview = have ? `
+      const uploading = uploadingRoles.has(role);
+      const checked = comparePick.has(role) ? " checked" : "";
+      const preview = uploading
+        ? `<p class="uploading">Uploading…</p>`
+        : have ? `
+        <label class="compare-pick">
+          <input type="checkbox" data-compare="${role}"${checked} />
+          Compare
+        </label>
         <img class="preview" data-role="${role}" data-page="1" data-pages="${pages}"
           src="${previewUrl(role, 1)}" alt="${copy[0]} preview" />
         <p class="muted">${escapeHtml(info.name)} · ${escapeHtml(info.kind)}${pages > 1 ? " · " + pages + " pages" : ""}</p>
@@ -369,7 +412,9 @@
           </div>
           ${nextOpen ? `<button type="button" id="next-btn">Go to ${escapeHtml(next.title)}</button>` : `<span class="muted">${next ? "The next step unlocks after this one is checked." : ""}</span>`}
         </div>
-        <div class="card"><strong>Review</strong>${renderReviewRows(items)}</div>
+        <div class="card"><strong>Review</strong>${renderReviewRows(items)}
+          ${snapshot && snapshot.gemini ? "" : '<p class="muted">Image wording, bowl place, logo place, batch and MRP on a PNG need PRINTSAHAJ_GEMINI_API_KEY on this machine, or compare the two previews side by side.</p>'}
+        </div>
         ${def.stage_id === "print" ? `<div class="card">
           <label>Remark</label>
           <input id="remark-by" placeholder="Name" />
@@ -429,6 +474,25 @@
       document.querySelectorAll("[data-preview-role]").forEach((btn) => {
         btn.onclick = () => shiftPreview(btn.getAttribute("data-preview-role"), Number(btn.getAttribute("data-delta")));
       });
+      document.querySelectorAll("input[data-compare]").forEach((box) => {
+        box.onchange = () => {
+          const role = box.getAttribute("data-compare");
+          if (box.checked) comparePick.add(role);
+          else comparePick.delete(role);
+        };
+      });
+      document.querySelectorAll("img.preview").forEach((img) => {
+        img.onclick = () => {
+          const role = img.getAttribute("data-role");
+          const selected = [...document.querySelectorAll("input[data-compare]:checked")]
+            .map((el) => el.getAttribute("data-compare"));
+          if (selected.length >= 2 && selected.includes(role)) {
+            openViewer(selected);
+          } else {
+            openViewer([role]);
+          }
+        };
+      });
       const checkBtn = document.getElementById("check-btn");
       if (checkBtn) checkBtn.onclick = () => checkStage(def.stage_id, checkBtn);
       const detailBtn = document.getElementById("detail-btn");
@@ -470,6 +534,8 @@
     async function upload(role, file) {
       if (!file) return;
       document.getElementById("job-err").textContent = "";
+      uploadingRoles.add(role);
+      renderJob();
       try {
         const body = new FormData();
         body.append("role", role);
@@ -478,10 +544,124 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
-        renderJob();
       } catch (err) {
         document.getElementById("job-err").textContent = err.message;
+      } finally {
+        uploadingRoles.delete(role);
+        renderJob();
       }
+    }
+
+    function viewerPane(role) {
+      const info = (snapshot.slots || {})[role] || {};
+      const copy = (SLOT_COPY[role] || [role])[0];
+      const pages = info.pages ? Number(info.pages) : 1;
+      const page = 1;
+      return `<div class="viewer-pane" data-viewer-role="${role}">
+        <div class="viewer-toolbar">
+          <strong>${escapeHtml(copy)}</strong>
+          <button type="button" class="ghost" data-zoom="${role}" data-zoom-delta="-1">Zoom out</button>
+          <span class="muted" data-zoom-label="${role}">100%</span>
+          <button type="button" class="ghost" data-zoom="${role}" data-zoom-delta="1">Zoom in</button>
+          <button type="button" class="ghost loupe-btn" data-loupe="${role}" title="Magnifying glass">🔍 Magnifier</button>
+          ${pages > 1 ? `<button type="button" class="ghost" data-viewer-page="${role}" data-delta="-1">Prev</button>
+            <span class="muted" data-viewer-page-label="${role}">Page 1 / ${pages}</span>
+            <button type="button" class="ghost" data-viewer-page="${role}" data-delta="1">Next</button>` : ""}
+        </div>
+        <div class="viewer-stage" data-stage="${role}">
+          <img class="viewer-img" data-viewer-img="${role}" data-page="${page}" data-pages="${pages}"
+            src="${previewUrl(role, page)}" alt="${escapeHtml(copy)} full preview" />
+          <div class="loupe hidden" data-loupe-lens="${role}"></div>
+        </div>
+      </div>`;
+    }
+
+    function openViewer(roles) {
+      const box = document.getElementById("viewer-modal");
+      const many = roles.length > 1;
+      box.className = "modal-back is-open";
+      box.hidden = false;
+      box.innerHTML = `<div class="modal viewer-modal">
+        <div class="row">
+          <strong>${many ? "Compare" : "Full preview"}</strong>
+          <button type="button" class="ghost" id="close-viewer">Close</button>
+        </div>
+        <p class="muted">${many ? "Both files, side by side. Zoom or use the magnifying glass." : "Zoom in or out, or use the magnifying glass."}</p>
+        <div class="viewer-grid${many ? "" : " one"}">${roles.map(viewerPane).join("")}</div>
+      </div>`;
+      document.getElementById("close-viewer").onclick = closeViewer;
+      box.onclick = (event) => { if (event.target === box) closeViewer(); };
+      roles.forEach(bindViewerPane);
+    }
+
+    function closeViewer() {
+      const box = document.getElementById("viewer-modal");
+      box.className = "modal-back";
+      box.hidden = true;
+      box.innerHTML = "";
+      box.onclick = null;
+    }
+
+    function bindViewerPane(role) {
+      let scale = 1;
+      const img = document.querySelector('[data-viewer-img="' + role + '"]');
+      const label = document.querySelector('[data-zoom-label="' + role + '"]');
+      const applyZoom = () => {
+        img.style.zoom = String(scale);
+        if (label) label.textContent = Math.round(scale * 100) + "%";
+      };
+      document.querySelectorAll('[data-zoom="' + role + '"]').forEach((btn) => {
+        btn.onclick = () => {
+          const delta = Number(btn.getAttribute("data-zoom-delta"));
+          scale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale + delta * ZOOM_STEP * 4));
+          applyZoom();
+        };
+      });
+      img.addEventListener("wheel", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        scale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP)));
+        applyZoom();
+      }, { passive: false });
+      document.querySelectorAll('[data-viewer-page="' + role + '"]').forEach((btn) => {
+        btn.onclick = () => {
+          const max = Number(img.getAttribute("data-pages") || "1");
+          let page = Number(img.getAttribute("data-page") || "1") + Number(btn.getAttribute("data-delta"));
+          if (page < 1) page = max;
+          if (page > max) page = 1;
+          img.setAttribute("data-page", String(page));
+          img.src = previewUrl(role, page);
+          const pageLabel = document.querySelector('[data-viewer-page-label="' + role + '"]');
+          if (pageLabel) pageLabel.textContent = "Page " + page + " / " + max;
+        };
+      });
+      const stage = document.querySelector('[data-stage="' + role + '"]');
+      const lens = document.querySelector('[data-loupe-lens="' + role + '"]');
+      const loupeBtn = document.querySelector('[data-loupe="' + role + '"]');
+      let loupeOn = false;
+      loupeBtn.onclick = () => {
+        loupeOn = !loupeOn;
+        loupeBtn.classList.toggle("active", loupeOn);
+        if (!loupeOn) lens.classList.add("hidden");
+      };
+      stage.onmousemove = (event) => {
+        if (!loupeOn) return;
+        const rect = img.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) {
+          lens.classList.add("hidden");
+          return;
+        }
+        lens.classList.remove("hidden");
+        const stageRect = stage.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        lens.style.left = (event.clientX - stageRect.left - LOUPE_SIZE / 2 + stage.scrollLeft) + "px";
+        lens.style.top = (event.clientY - stageRect.top - LOUPE_SIZE / 2 + stage.scrollTop) + "px";
+        lens.style.backgroundImage = "url(" + img.src + ")";
+        lens.style.backgroundSize = (rect.width * LOUPE_MAG) + "px " + (rect.height * LOUPE_MAG) + "px";
+        lens.style.backgroundPosition = (-(x * LOUPE_MAG - LOUPE_SIZE / 2)) + "px " + (-(y * LOUPE_MAG - LOUPE_SIZE / 2)) + "px";
+      };
+      stage.onmouseleave = () => lens.classList.add("hidden");
     }
 
     async function checkStage(stage, button) {

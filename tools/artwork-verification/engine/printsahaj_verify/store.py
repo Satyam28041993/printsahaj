@@ -199,8 +199,11 @@ def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
 
     files = discover_job_files(folder)
     last_review = load_last_review(job_id, root)
+    from printsahaj_verify.vision import gemini_configured
+
     return {
         "job": job_spec_to_dict(spec),
+        "gemini": gemini_configured(),
         "files": files_to_dict(files),
         "slots": slots_to_dict(files),
         "stages_checked": load_stages_checked(folder),

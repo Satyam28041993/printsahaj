@@ -20,6 +20,7 @@ from printsahaj_verify.remarks import add_remark, load_remarks
 from printsahaj_verify.reporting.json_report import build_report
 from printsahaj_verify.reporting.terminal import format_report
 from printsahaj_verify.run import load_stages_checked, run_job, run_stage
+from printsahaj_verify.vision import gemini_configured
 from printsahaj_verify.store import (
     create_or_update_job,
     delete_all_jobs,
@@ -164,7 +165,15 @@ class DeskHandler(BaseHTTPRequestHandler):
         parts = [item for item in path.split("/") if item]
         try:
             if path == "/api/health":
-                _json(self, 200, {"ok": True, "tool": "artwork-verification"})
+                _json(
+                    self,
+                    200,
+                    {
+                        "ok": True,
+                        "tool": "artwork-verification",
+                        "gemini": gemini_configured(),
+                    },
+                )
                 return
             if path == "/api/jobs":
                 _json(self, 200, {"jobs": list_jobs()})

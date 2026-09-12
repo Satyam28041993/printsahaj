@@ -63,7 +63,11 @@ def check_job_identity(
     paths: list[Path],
     documents: list[DocumentText],
 ) -> CheckResult:
-    """Flag when a file belongs to another CGM job or another product."""
+    """Flag a product-name mismatch. File job codes are ignored.
+
+    The job code the operator typed is the source of truth. Codes found
+    in filenames or PDF headers are recorded as observations only.
+    """
     findings: list[Finding] = []
     codes: dict[str, str] = {}
     for path in paths:
@@ -72,21 +76,6 @@ def check_job_identity(
     for document in documents:
         for code in job_codes_in_text(document.full_text):
             codes.setdefault(code, document.path.name)
-
-    job_code = job.job_id.strip().upper()
-    foreign = {code: name for code, name in codes.items() if code != job_code}
-    if foreign:
-        shown = ", ".join(f"{code} ({name})" for code, name in sorted(foreign.items()))
-        findings.append(
-            Finding(
-                check_id=CHECK_ID,
-                summary=f"A file belongs to another job: {shown}. This job is {job.job_id}.",
-                certainty=Certainty.DETERMINISTIC,
-                expected=job.job_id,
-                found=shown,
-                location="Filename / vendor header",
-            )
-        )
 
     job_tokens = _tokens(f"{job.file_name} {job.customer} {job.job_id}")
     file_tokens: set[str] = set()
@@ -138,5 +127,6 @@ def check_job_identity(
         observations={
             "codes": ", ".join(sorted(codes)) if codes else "none",
             "job_code": job.job_id,
+            "file_codes": "ignored",
         },
     )

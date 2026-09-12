@@ -22,8 +22,8 @@ EYE_DETAIL = "Not checked automatically. Compare the two previews by eye."
 
 APPROVAL_NOT_CHECKED = (
     "Colour shade / accuracy",
-    "Logo and image alignment (automatic)",
-    "MRP and batch values (only whether the words were read)",
+    "Exact millimetre alignment of every element",
+    "MRP and batch printed values (only whether they appear on the label)",
     "Trap, overprint and aesthetics",
 )
 
@@ -102,20 +102,60 @@ def _mentioned(
     return _item(item_id, title, STATE_ISSUE, missing)
 
 
+def _layout_item(
+    result: CheckResult | None,
+    key: str,
+    item_id: str,
+    title: str,
+    ok_detail: str,
+) -> dict[str, str]:
+    if result is None:
+        return _item(item_id, title, STATE_WAIT, "Check did not run")
+    obs = result.observations
+    flag = obs.get(key, "unread")
+    note = obs.get(f"{key}_note", "")
+    if flag == "match":
+        return _item(item_id, title, STATE_CLEAR, note or ok_detail)
+    if flag == "mismatch":
+        needle = "logo" if key == "logo" else "product image"
+        hits = [item for item in result.findings if needle in item.summary.lower()]
+        detail = hits[0].summary if hits else (note or "Place does not look the same.")
+        return _item(item_id, title, STATE_JUDGE, detail)
+    if not result.ran:
+        return _item(item_id, title, STATE_WAIT, result.not_run_reason or EYE_DETAIL)
+    return _item(item_id, title, STATE_WAIT, EYE_DETAIL)
+
+
+def _mark_item(
+    result: CheckResult | None,
+    key: str,
+    item_id: str,
+    title: str,
+    missing: str,
+    seen: str,
+) -> dict[str, str]:
+    if result is None:
+        return _item(item_id, title, STATE_WAIT, "Check did not run")
+    flag = result.observations.get(key, "unread")
+    if flag == "no":
+        hits = [item for item in result.findings if missing.lower() in item.summary.lower()]
+        return _item(item_id, title, STATE_ISSUE, hits[0].summary if hits else missing)
+    if flag == "yes":
+        note = result.observations.get(f"{key.replace('has_', '')}_note", "")
+        return _item(item_id, title, STATE_CLEAR, note or seen)
+    if not result.ran:
+        return _item(item_id, title, STATE_WAIT, result.not_run_reason or EYE_DETAIL)
+    return _item(item_id, title, STATE_WAIT, EYE_DETAIL)
+
+
 def _approval_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
-    identity = by_id.get("job_identity")
     sheet = by_id.get("approval_sheet")
     artwork = by_id.get("artwork_vs_approval")
+    layout = by_id.get("visual_layout")
+    marks = by_id.get("label_marks")
     obs = sheet.observations if sheet else {}
     colour = obs.get("colour_declaration", "none")
-    label = obs.get("label_mm", "none")
-    items = [
-        _from_check(
-            identity,
-            "same_job",
-            "Same job on the uploaded files",
-            "No other job code or product mismatch was flagged.",
-        ),
+    return [
         _from_check(
             sheet,
             "colour_line",
@@ -135,54 +175,42 @@ def _approval_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             artwork,
             "wording",
             "Wording on client artwork vs first approval",
-            "No wording difference was flagged between the two PDFs.",
+            "No wording difference was flagged between the two files.",
         ),
-        _item("alignment", "Image alignment", STATE_EYE, EYE_DETAIL),
-        _item("logo", "Logo", STATE_EYE, EYE_DETAIL),
+        _layout_item(
+            layout,
+            "alignment",
+            "alignment",
+            "Image alignment",
+            "The main product photo sits in the same middle place on both labels.",
+        ),
+        _layout_item(
+            layout,
+            "logo",
+            "logo",
+            "Logo",
+            "The logo sits in the same place on both labels.",
+        ),
+        _mark_item(
+            marks,
+            "has_batch",
+            "batch",
+            "Batch number",
+            "No batch number written on label",
+            "The word BATCH was read. The printed value was not verified.",
+        ),
+        _mark_item(
+            marks,
+            "has_mrp",
+            "mrp",
+            "MRP",
+            "No MRP written on label",
+            "The word MRP was read. The printed value was not verified.",
+        ),
     ]
-    if sheet and sheet.ran and obs.get("has_batch") == "yes":
-        items.append(
-            _item(
-                "batch",
-                "Batch number",
-                STATE_WAIT,
-                "The word BATCH was read on the approval sheet. "
-                "The printed value was not verified.",
-            )
-        )
-    else:
-        items.append(
-            _item(
-                "batch",
-                "Batch number",
-                STATE_EYE,
-                "Batch number was not verified. Compare the two previews by eye.",
-            )
-        )
-    if sheet and sheet.ran and obs.get("has_mrp") == "yes":
-        items.append(
-            _item(
-                "mrp",
-                "MRP",
-                STATE_WAIT,
-                "The word MRP was read on the approval sheet. "
-                "The printed value was not verified.",
-            )
-        )
-    else:
-        items.append(
-            _item(
-                "mrp",
-                "MRP",
-                STATE_EYE,
-                "MRP was not verified. Compare the two previews by eye.",
-            )
-        )
-    return items
 
 
 def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
-    identity = by_id.get("job_identity")
     plates = by_id.get("plate_count")
     colours = by_id.get("colour_names")
     geometry = by_id.get("geometry")
@@ -202,12 +230,6 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             else f"across {obs['ups_across']} × around {obs['ups_around']}"
         )
     return [
-        _from_check(
-            identity,
-            "same_job",
-            "Same job on vendor files",
-            "Vendor files match this job code.",
-        ),
         _from_check(
             plates,
             "plates",
