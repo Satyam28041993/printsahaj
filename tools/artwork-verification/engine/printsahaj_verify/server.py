@@ -39,9 +39,9 @@ OPEN_BROWSER_ENV = "PRINTSAHAJ_OPEN_BROWSER"
 def bind_error_message(host: str, port: int, error: OSError) -> str:
     """Explain why the desk could not listen, in language a person can act on."""
     return (
-        f"Port {port} nahi khula ({error}). "
-        f"Agar tool pehle se chal raha hai to browser mein http://{host}:{port} kholo. "
-        "Nahi to start-tool.bat dobara chalao."
+        f"Port {port} did not open ({error}). "
+        f"If the tool is already running, open http://{host}:{port} in the browser. "
+        "Otherwise run start-tool.bat again."
     )
 
 
@@ -49,9 +49,9 @@ def ready_banner(url: str) -> str:
     """Lines printed after the desk is listening."""
     return (
         "\n========================================\n"
-        "Artwork Verification CHAL RAHA HAI\n"
+        "Artwork Verification is running\n"
         f"Browser: {url}\n"
-        "Is window ko BAND MAT KARNA\n"
+        "Do not close this window\n"
         "========================================\n"
     )
 

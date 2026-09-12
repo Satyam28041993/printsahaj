@@ -1,30 +1,30 @@
 # Artwork Verification app
 
-Yeh PrintSahaj website nahi hai. Yeh tool ki screen hai.
+This is not the PrintSahaj website. This is the tool screen.
 
 - Computer / browser — Flutter web
-- Phone — isi folder se Android APK
+- Phone — Android APK from this folder
 
-Hisab-kitab `../engine/` mein hai. App usse baat karti hai.
+The checks live in `../engine/`. The app talks to that engine.
 
-## Chalana
+## Run
 
-Pehle engine:
+Start the engine first:
 
 ```bash
 cd ../engine
 .venv/bin/python -m printsahaj_verify --serve
 ```
 
-Phir app:
+Then the app:
 
 ```bash
 flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8765
 ```
 
-Ya web build engine ke saath:
+Or a web build served with the engine:
 
 ```bash
 flutter build web
-# engine --serve us build ko http://127.0.0.1:8765 par khol dega
+# engine --serve will open that build at http://127.0.0.1:8765
 ```

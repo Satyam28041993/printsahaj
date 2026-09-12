@@ -67,7 +67,7 @@ class _JobListPageState extends State<JobListPage> {
           final jobs = snapshot.data!;
           if (jobs.isEmpty) {
             return const Center(
-              child: Text("Abhi koi job nahi. Naya job banao."),
+              child: Text("No jobs yet. Create a new job."),
             );
           }
           return ListView.separated(
@@ -101,7 +101,7 @@ class _JobListPageState extends State<JobListPage> {
           );
           _reload();
         },
-        label: const Text("Naya job"),
+        label: const Text("New job"),
         icon: const Icon(Icons.add),
       ),
     );
@@ -201,7 +201,7 @@ class _NewJobPageState extends State<NewJobPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Naya job")),
+      appBar: AppBar(title: const Text("New job")),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -211,7 +211,7 @@ class _NewJobPageState extends State<NewJobPage> {
           ),
           TextField(
             controller: _name,
-            decoration: const InputDecoration(labelText: "Artwork ka naam"),
+            decoration: const InputDecoration(labelText: "Artwork name"),
           ),
           TextField(
             controller: _customer,
@@ -219,12 +219,12 @@ class _NewJobPageState extends State<NewJobPage> {
           ),
           TextField(
             controller: _declaration,
-            decoration: const InputDecoration(labelText: "Rang line"),
+            decoration: const InputDecoration(labelText: "Colour line"),
           ),
           TextField(
             controller: _colours,
             decoration: const InputDecoration(
-              labelText: "Rang ke naam (comma se)",
+              labelText: "Colour names (comma separated)",
             ),
           ),
           Row(
@@ -253,7 +253,7 @@ class _NewJobPageState extends State<NewJobPage> {
           TextField(
             controller: _mandatory,
             decoration: const InputDecoration(
-              labelText: "Zaroori likhai (comma se)",
+              labelText: "Mandatory wording (comma separated)",
             ),
           ),
           if (_error != null) ...[
@@ -263,7 +263,7 @@ class _NewJobPageState extends State<NewJobPage> {
           const SizedBox(height: 20),
           FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? "Saving…" : "Job banao"),
+            child: Text(_saving ? "Saving…" : "Create job"),
           ),
         ],
       ),
@@ -289,11 +289,11 @@ class _JobPageState extends State<JobPage> {
   final _by = TextEditingController();
 
   static const _slots = <(String, String, String)>[
-    ("client_artwork", "1. Client artwork", "PDF ya image — jo client ne bheja"),
-    ("approval", "2. First approval", "PDF ya image — jo client ko approval ke liye bheja"),
-    ("vendor_composite", "3. Vendor artwork", "PDF ya image — ups, cylinder, paper, colour"),
-    ("separations", "4. Colour separation", "PDF ya image — har rang / plate"),
-    ("printout", "5. Printout photo", "PDF ya image — machine par jo print hua"),
+    ("client_artwork", "1. Client artwork", "PDF or image from the client"),
+    ("approval", "2. First approval", "PDF or image sent to the client for approval"),
+    ("vendor_composite", "3. Vendor artwork", "PDF or image — ups, cylinder, paper, colour"),
+    ("separations", "4. Colour separation", "PDF or image — one page per colour / plate"),
+    ("printout", "5. Printout photo", "PDF or image of the machine print"),
   ];
 
   @override
@@ -401,7 +401,7 @@ class _JobPageState extends State<JobPage> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            "Yeh website nahi hai. Yeh verification tool hai.",
+            "This is not the website. This is the verification tool.",
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 12),
@@ -420,18 +420,18 @@ class _JobPageState extends State<JobPage> {
                       subtitle: Text(present ? files[slot.$1].toString() : slot.$3),
                       trailing: TextButton(
                         onPressed: _busy ? null : () => _pick(slot.$1),
-                        child: Text(present ? "Badlo" : "Upload"),
+                        child: Text(present ? "Replace" : "Upload"),
                       ),
                     ),
                     if (present)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                         child: Image.network(
-                          "${apiBase()}/api/jobs/${Uri.encodeComponent(widget.jobId)}/files/${slot.$1}/preview?page=1",
+                          "${apiBase()}/api/jobs/${Uri.encodeComponent(widget.jobId)}/files/${slot.$1}/preview?page=1&v=${DateTime.now().millisecondsSinceEpoch}",
                           height: 180,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stack) => Text(
-                            "Preview nahi khula. File phir se upload karo.",
+                            "Preview did not open. Upload the file again.",
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
@@ -445,7 +445,7 @@ class _JobPageState extends State<JobPage> {
           FilledButton.icon(
             onPressed: _busy ? null : _run,
             icon: const Icon(Icons.rule),
-            label: const Text("Sab match karo — report nikalo"),
+            label: const Text("Check files — show the report"),
           ),
           if (_busy) const Padding(
             padding: EdgeInsets.all(16),
@@ -457,18 +457,18 @@ class _JobPageState extends State<JobPage> {
             const SizedBox(height: 16),
             TextField(
               controller: _by,
-              decoration: const InputDecoration(labelText: "Remark kisne likha"),
+              decoration: const InputDecoration(labelText: "Remark by"),
             ),
             TextField(
               controller: _remark,
               decoration: const InputDecoration(
                 labelText: "Remark",
-                hintText: "Jo theek laga / jo galat laga — yahan likho",
+                hintText: "What looks right or wrong",
               ),
               maxLines: 3,
             ),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: _saveRemark, child: const Text("Remark save karo")),
+            OutlinedButton(onPressed: _saveRemark, child: const Text("Save remark")),
           ],
         ],
       ),
@@ -494,13 +494,13 @@ class _ReportView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "${counts["findings"]} certain  ·  ${counts["flags"]} judge karo  ·  "
-          "${counts["checks_not_run"]} checks nahi chale",
+          "${counts["findings"]} certain  ·  ${counts["flags"]} advisory  ·  "
+          "${counts["checks_not_run"]} checks not run",
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
         const Text(
-          "Yeh report PASS / APPROVED / FAIL nahi kehti. Faisla tumhara hai.",
+          "This report does not say PASS / APPROVED / FAIL. The decision is yours.",
         ),
         _Block(
           title: "Certain findings",
@@ -508,7 +508,7 @@ class _ReportView extends StatelessWidget {
           items: findings,
         ),
         _Block(
-          title: "Judge karo (flags)",
+          title: "Advisory flags",
           color: const Color(0xFF0369A1),
           items: flags,
         ),
@@ -518,7 +518,7 @@ class _ReportView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Jo check nahi chala", style: Theme.of(context).textTheme.titleSmall),
+                Text("Checks that did not run", style: Theme.of(context).textTheme.titleSmall),
                 ...checks
                     .where((item) => item is Map && item["ran"] == false)
                     .map(
@@ -537,7 +537,7 @@ class _ReportView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Jo yeh tool check hi nahi karta", style: Theme.of(context).textTheme.titleSmall),
+                Text("What this tool does not check", style: Theme.of(context).textTheme.titleSmall),
                 ...notChecked.map((item) => Text("• $item")),
               ],
             ),
@@ -620,7 +620,7 @@ class _ErrorPane extends StatelessWidget {
           children: [
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            FilledButton(onPressed: onRetry, child: const Text("Dobara try")),
+            FilledButton(onPressed: onRetry, child: const Text("Try again")),
           ],
         ),
       ),

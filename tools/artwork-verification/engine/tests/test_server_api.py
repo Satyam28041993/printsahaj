@@ -96,8 +96,13 @@ class ServerApiTests(unittest.TestCase):
         with urllib.request.urlopen(self.base + "/") as response:
             home = response.read().decode("utf-8")
         self.assertIn("Artwork Verification", home)
-        self.assertIn("Naya job", home)
+        self.assertIn("New job", home)
+        self.assertIn("Replace", home)
         self.assertIn("start-tool.bat", home)
+        self.assertNotIn("Badlo", home)
+        self.assertNotIn("Naya job", home)
+        self.assertNotIn("multi-files", home)
+        self.assertNotIn("Choose Files", home)
         self.assertNotIn("CGM2026-27-1326", home)
         self.assertNotIn("DAILY KALONJI", home)
         self.assertNotIn("6 COL + VARNISH", home)
@@ -105,6 +110,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("accept=", home)
         self.assertIn("First approval", home)
         self.assertIn("preview", home)
+        self.assertIn("data-pick=", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))
@@ -123,7 +129,7 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("start-tool.bat", text)
         self.assertNotIn("PASS", text)
         banner = ready_banner("http://127.0.0.1:8765")
-        self.assertIn("CHAL RAHA HAI", banner)
+        self.assertIn("is running", banner)
         self.assertIn("http://127.0.0.1:8765", banner)
 
     def test_png_upload_keeps_extension_and_has_preview(self) -> None:
@@ -171,6 +177,30 @@ class ServerApiTests(unittest.TestCase):
             preview = response.read()
         self.assertTrue(preview.startswith(b"\x89PNG"))
         self.assertIn("image/png", response.headers.get("Content-Type", ""))
+
+        pdf = _blank_pdf(1)
+        boundary = "----replaceboundary"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="role"\r\n\r\n'
+            "client_artwork\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="other.pdf"\r\n'
+            "Content-Type: application/pdf\r\n\r\n"
+        ).encode("utf-8") + pdf + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        replace = urllib.request.Request(
+            f"{self.base}/api/jobs/IMG1/files",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with urllib.request.urlopen(replace) as response:
+            saved = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(saved["saved"], "client_artwork.pdf")
+        with urllib.request.urlopen(f"{self.base}/api/jobs/IMG1") as response:
+            snap = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(snap["files"]["client_artwork"], "client_artwork.pdf")
+        self.assertEqual(snap["slots"]["client_artwork"]["kind"], "pdf")
+        self.assertEqual(snap["slots"]["client_artwork"]["name"], "client_artwork.pdf")
 
     def test_unknown_upload_suffix_is_loud(self) -> None:
         import urllib.error

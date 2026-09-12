@@ -19,15 +19,15 @@ def check_approval_sheet(path: Path | None) -> CheckResult:
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
-            not_run_reason="First approval file nahi hai",
+            not_run_reason="First approval file is missing",
         )
     if not is_pdf(path):
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
             not_run_reason=(
-                "First approval ek image hai. Colour line PDF se padhi jati hai. "
-                "Preview aankh se dekho."
+                "First approval is an image. The colour line is read from a PDF. "
+                "Compare the preview by eye."
             ),
         )
     try:
@@ -47,7 +47,7 @@ def _result_from_sheet(sheet: ApprovalSheet) -> CheckResult:
         findings.append(
             Finding(
                 check_id=CHECK_ID,
-                summary="Approval sheet par colour line (jaise 5 COL + UV) nahi padhi.",
+                summary="No colour line (for example 5 COL + UV) could be read on the approval sheet.",
                 certainty=Certainty.DETERMINISTIC,
                 expected="N COL + special units",
                 found="no colour line",

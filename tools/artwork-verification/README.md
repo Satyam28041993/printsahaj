@@ -1,17 +1,17 @@
 # Artwork Verification
 
-Yeh PrintSahaj website nahi hai. Website is tool ko **start nahi** karti.
+This is not the PrintSahaj website. The website does **not** start this tool.
 
-Chrome mein `http://127.0.0.1:8765` kholna kaafi nahi. Woh address tabhi chalta hai jab is computer par Python server chal raha ho. Uske bina Chrome likhega: **This site can’t be reached / refused to connect**.
+Opening `http://127.0.0.1:8765` in Chrome is not enough. That address only works while the Python server is running on this computer. Otherwise Chrome shows: **This site can’t be reached / refused to connect**.
 
-## Windows par chalana
+## Windows
 
-1. Python 3.11+ install karo — install ke time **Add python.exe to PATH** tick karo. Phir computer restart karo.
-2. Repo root par `start-artwork-verification.bat` double-click, **ya** `tools\artwork-verification\start-tool.bat` double-click
-3. Kali window **kholi rehne do**
-4. Server ready hone ke baad browser khulega — `http://127.0.0.1:8765`
+1. Install Python 3.11+ — tick **Add python.exe to PATH** during install, then restart the computer.
+2. Double-click `start-artwork-verification.bat` at the repo root, **or** `tools\artwork-verification\start-tool.bat`
+3. Leave the black window **open**
+4. The browser opens after the server is ready — `http://127.0.0.1:8765`
 
-Agar Chrome phir bhi "can't be reached" bole: bat file nahi chali, window band ho gayi, ya Python PATH mein nahi hai. Kali window padho — wahan error likha hoga.
+If Chrome still says "can't be reached": the bat file did not start, the window was closed, or Python is not on PATH. Read the black window — the error is there.
 
 ## Linux / Mac
 
@@ -20,4 +20,4 @@ chmod +x start-tool.sh
 ./start-tool.sh
 ```
 
-Phir browser mein http://127.0.0.1:8765
+Then open http://127.0.0.1:8765

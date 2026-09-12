@@ -16,9 +16,9 @@ STAGE_TITLES: dict[str, str] = {
 }
 
 STAGE_HINTS: dict[str, str] = {
-    STAGE_APPROVAL: "Client artwork aur first-approval sheet. Colour / plate yahin likhe hote hain.",
-    STAGE_VENDOR: "Vendor composite (kitne label, cylinder, paper) aur SEP separations (kitne plate).",
-    STAGE_PRINT: "Machine print ke baad photo. Automatic grade nahi — aankh se dekho.",
+    STAGE_APPROVAL: "Client artwork and the first-approval sheet, where colours and plates are written.",
+    STAGE_VENDOR: "Vendor composite (ups, cylinder, paper) and SEP separations (one page per plate).",
+    STAGE_PRINT: "Photo after the machine print. No automatic grade — compare by eye.",
 }
 
 STAGE_SLOTS: dict[str, tuple[str, ...]] = {

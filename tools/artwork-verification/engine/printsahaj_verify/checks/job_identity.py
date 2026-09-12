@@ -80,7 +80,7 @@ def check_job_identity(
         findings.append(
             Finding(
                 check_id=CHECK_ID,
-                summary=f"File kisi aur job ki hai: {shown}. Yeh job {job.job_id} hai.",
+                summary=f"A file belongs to another job: {shown}. This job is {job.job_id}.",
                 certainty=Certainty.DETERMINISTIC,
                 expected=job.job_id,
                 found=shown,
@@ -102,8 +102,8 @@ def check_job_identity(
             Finding(
                 check_id=CHECK_ID,
                 summary=(
-                    "Product naam files aur job sheet par match nahi karta. "
-                    "Galat job mein file pad sakti hai."
+                    "Product names on the files and the job sheet do not match. "
+                    "A file from another job may have been uploaded."
                 ),
                 certainty=Certainty.DETERMINISTIC,
                 expected=" / ".join(sorted(job_tokens)[:6]),
@@ -121,8 +121,8 @@ def check_job_identity(
                 Finding(
                     check_id=CHECK_ID,
                     summary=(
-                        f"{docs_with_text[0].path.name} aur "
-                        f"{docs_with_text[1].path.name} alag product dikhte hain."
+                        f"{docs_with_text[0].path.name} and "
+                        f"{docs_with_text[1].path.name} look like different products."
                     ),
                     certainty=Certainty.DETERMINISTIC,
                     expected="same product on both files",

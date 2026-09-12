@@ -15,10 +15,10 @@ STATE_JUDGE = "judge"
 STATE_WAIT = "wait"
 
 OVERALL_LABELS: dict[str, str] = {
-    STATE_CLEAR: "Koi issue nahi",
-    STATE_ISSUE: "Issue hai",
-    STATE_JUDGE: "Judge karo",
-    STATE_WAIT: "Abhi poora nahi",
+    STATE_CLEAR: "No issues found",
+    STATE_ISSUE: "Issue found",
+    STATE_JUDGE: "Needs a look",
+    STATE_WAIT: "Not finished yet",
 }
 
 
@@ -35,7 +35,7 @@ def _state_for(result: CheckResult) -> str:
 
 def _detail(result: CheckResult) -> str:
     if not result.ran:
-        return result.not_run_reason or "Check nahi chala"
+        return result.not_run_reason or "Check did not run"
     certain = [item for item in result.findings if item.certainty is Certainty.DETERMINISTIC]
     advisory = [item for item in result.findings if item.certainty is Certainty.ADVISORY]
     if certain:
@@ -46,7 +46,7 @@ def _detail(result: CheckResult) -> str:
         item = advisory[0]
         extra = f" (+{len(advisory) - 1})" if len(advisory) > 1 else ""
         return f"{item.summary}{extra}"
-    return "Theek — is check mein kuch nahi mila"
+    return "Nothing flagged on this check"
 
 
 def build_checklist(

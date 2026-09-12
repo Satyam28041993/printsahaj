@@ -94,7 +94,7 @@ def _plate_count_result(
         return CheckResult(
             check_id=PLATE_ID,
             title=PLATE_TITLE,
-            not_run_reason="Colour line nahi hai, vendor Col: bhi nahi padha",
+            not_run_reason="No colour line on the job, and Col: was not read from the vendor header",
         )
     if pages == header_col:
         return CheckResult(
@@ -114,7 +114,7 @@ def _plate_count_result(
                 check_id=PLATE_ID,
                 summary=(
                     f"Vendor Col: {header_col}, SEP pages {pages}. "
-                    "Plate count match nahi karta."
+                    "Plate count does not match."
                 ),
                 certainty=Certainty.DETERMINISTIC,
                 expected=f"Col: {header_col}",
@@ -242,12 +242,12 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         text_result = CheckResult(
             check_id=TEXT_ID,
             title=TEXT_TITLE,
-            not_run_reason="Alag jobs mix hain. Wording compare skip.",
+            not_run_reason="Different jobs are mixed. Wording compare skipped.",
         )
         plate_text = CheckResult(
             check_id=PLATE_TEXT_ID,
             title=PLATE_TEXT_TITLE,
-            not_run_reason="Alag jobs mix hain. Text map skip.",
+            not_run_reason="Different jobs are mixed. Text map skipped.",
         )
     else:
         text_result = check_text_completeness(approved_for_text, separations_doc)
@@ -286,7 +286,7 @@ def run_stage(
     already = load_stages_checked(folder)
     if previous is not None and previous not in already:
         raise JobSpecError(
-            f"Pehle {previous} step check karo. Yeh step uske baad aata hai."
+            f"Check the {previous} step first. This step comes after it."
         )
     spec, results, files = run_job(folder)
     checked = save_stage_checked(folder, stage_id)

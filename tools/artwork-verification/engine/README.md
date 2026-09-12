@@ -1,6 +1,6 @@
 # Engine
 
-Hisab-kitab yahin hai. Screen Flutter `app/` mein hai.
+The checks live here. The screen is the Flutter `app/` or `static/desk.html`.
 
 ```bash
 python3 -m venv .venv
@@ -9,7 +9,7 @@ python3 -m venv .venv
 .venv/bin/python -m printsahaj_verify ../samples/kalonji
 ```
 
-Purana probe (file ke andar kya hai, check nahi):
+Older probe (what is in the file, no check):
 
 ```bash
 .venv/bin/python probe.py ../samples/kalonji

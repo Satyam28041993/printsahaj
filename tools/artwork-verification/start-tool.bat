@@ -7,9 +7,9 @@ echo.
 echo ========================================
 echo  Artwork Verification
 echo.
-echo  Chrome mein 127.0.0.1 kholna kaafi nahi.
-echo  Pehle YE window chalni chahiye.
-echo  Website yeh tool start nahi karti.
+echo  Opening 127.0.0.1 in Chrome is not enough.
+echo  This window must stay open first.
+echo  The website does not start this tool.
 echo ========================================
 echo.
 
@@ -18,45 +18,45 @@ set "REQ=%~dp0engine\requirements.txt"
 
 call :find_python
 if errorlevel 1 (
-  echo Python nahi mila.
+  echo Python was not found.
   echo.
-  echo 1. https://www.python.org/downloads/ se Python 3.11+ install karo
-  echo 2. Install ke time "Add python.exe to PATH" tick karo
-  echo 3. Computer restart karo
-  echo 4. Phir is file par double-click karo
+  echo 1. Install Python 3.11+ from https://www.python.org/downloads/
+  echo 2. Tick "Add python.exe to PATH" during install
+  echo 3. Restart the computer
+  echo 4. Double-click this file again
   echo.
   pause
   exit /b 1
 )
 
 if not exist "%VPY%" (
-  echo Pehli baar setup ho raha hai. 1-2 minute lag sakte hain...
+  echo First-time setup. This can take a minute or two...
   %PYCMD% -m venv "%~dp0engine\.venv"
   if errorlevel 1 (
-    echo venv nahi bana. Python 3.11+ chahiye.
+    echo Could not create the virtualenv. Python 3.11+ is required.
     pause
     exit /b 1
   )
 )
 
-echo Packages check ho rahe hain...
+echo Checking packages...
 "%VPY%" -m pip install -q -r "%REQ%"
 if errorlevel 1 (
-  echo Packages install nahi hue.
+  echo Packages did not install.
   pause
   exit /b 1
 )
 
 echo.
-echo Tool start ho raha hai. Server ready hone ke baad browser khulega.
-echo Is kali window ko BAND MAT KARNA.
-echo Band karne ke liye window close karo.
+echo Starting the tool. The browser opens after the server is ready.
+echo Do not close this black window.
+echo Close the window when you want to stop the tool.
 echo.
 
 cd /d "%~dp0engine"
 "%VPY%" -m printsahaj_verify --serve
 echo.
-echo Tool band ho gaya.
+echo The tool has stopped.
 pause
 exit /b %ERRORLEVEL%
 

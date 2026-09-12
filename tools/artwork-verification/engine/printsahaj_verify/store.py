@@ -104,8 +104,8 @@ def save_upload(
     suffix = Path(filename).suffix.lower()
     if suffix not in UPLOAD_SUFFIXES:
         raise JobSpecError(
-            "PDF, PNG, JPG ya WebP chahiye. "
-            f"Yeh file nahi chali: {suffix or 'no extension'}"
+            "Upload a PDF, PNG, JPG or WebP. "
+            f"This file was not accepted: {suffix or 'no extension'}"
         )
     if role == "printout":
         target_dir = folder / PRINTOUT_DIR_NAME

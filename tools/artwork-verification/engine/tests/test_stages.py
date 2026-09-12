@@ -126,7 +126,7 @@ class MixedJobTests(unittest.TestCase):
         self.assertTrue(identity.findings)
         checklist = build_checklist(results, ["approval"])
         self.assertEqual(checklist["overall"], STATE_ISSUE)
-        self.assertEqual(checklist["overall_label"], "Issue hai")
+        self.assertEqual(checklist["overall_label"], "Issue found")
         blob = str(checklist).upper()
         self.assertNotIn("PASS", blob)
         self.assertNotIn("APPROVED", blob)

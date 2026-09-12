@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -110,35 +110,43 @@
     .overall span { display: block; font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; color: #cfc6b6; margin-top: 4px; }
     .job-card { cursor: pointer; }
     .job-card:hover { border-color: var(--gold); }
+    .pick-wrap { position: relative; }
+    .file-pick {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="kicker">PrintSahaj</div>
     <h1>Artwork Verification</h1>
-    <p>Pehle approval, phir vendor plates, phir print. Ek saath nahi. Yeh website nahi hai — pehle start-tool.bat.</p>
+    <p>First approval, then vendor plates, then print — not all at once. This is not the website. Start with start-tool.bat.</p>
   </header>
   <main>
     <section id="list-view">
       <div class="row">
         <strong>Jobs</strong>
-        <button type="button" id="new-btn">Naya job</button>
+        <button type="button" id="new-btn">New job</button>
       </div>
       <div id="job-list"></div>
     </section>
 
     <section id="new-view" class="hidden">
       <button type="button" class="ghost" id="back-list">← Jobs</button>
-      <h2>Naya job</h2>
-      <p class="muted">Job code aap daalo. Colour line first-approval sheet se padhi jayegi.</p>
+      <h2>New job</h2>
+      <p class="muted">Enter the job code. The colour line is read from the first-approval sheet.</p>
       <label>Job code</label>
       <input id="job_id" autocomplete="off" />
-      <label>Artwork ka naam</label>
+      <label>Artwork name</label>
       <input id="file_name" autocomplete="off" />
       <label>Customer</label>
       <input id="customer" autocomplete="off" />
       <p id="new-err" class="err"></p>
-      <button type="button" id="save-job">Job banao</button>
+      <button type="button" id="save-job">Create job</button>
     </section>
 
     <section id="job-view" class="hidden">
@@ -154,13 +162,13 @@
   <script>
     const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
     const SLOT_COPY = {
-      client_artwork: ["Client artwork", "PNG / PDF — jo client ne bheja"],
-      approval: ["First approval", "Label for approval — rang aur plate yahin likhe hote hain"],
-      vendor_composite: ["Vendor composite", "CGM… PDF — kitne label, cylinder, paper, Col:"],
-      separations: ["Separations", "SEP… PDF — har plate ek page"],
-      printout: ["Printout", "Machine print ke baad photo"],
+      client_artwork: ["Client artwork", "PNG or PDF from the client"],
+      approval: ["First approval", "Label-for-approval sheet with colours and plates written on it"],
+      vendor_composite: ["Vendor composite", "CGM PDF — ups, cylinder, paper, Col:"],
+      separations: ["Separations", "SEP PDF — one page per plate"],
+      printout: ["Printout", "Photo after the machine print"],
     };
-    const MARK = { issue: "Galat", clear: "Theek", judge: "Dekho", wait: "—" };
+    const MARK = { issue: "Wrong", clear: "OK", judge: "Look", wait: "—" };
     let currentId = "";
     let snapshot = null;
     let checklist = null;
@@ -178,17 +186,9 @@
       return data;
     }
 
-    function guessRole(name) {
-      const n = name.toLowerCase();
-      if (n.startsWith("sep") || n.includes("separat")) return "separations";
-      if (n.includes("approval")) return "approval";
-      if (/cgm\d{4}/i.test(n)) return "vendor_composite";
-      if (/\.(png|jpe?g|webp)$/.test(n)) return "client_artwork";
-      return null;
-    }
-
     function previewUrl(role, page) {
-      return "/api/jobs/" + encodeURIComponent(currentId) + "/files/" + encodeURIComponent(role) + "/preview?page=" + page;
+      return "/api/jobs/" + encodeURIComponent(currentId) + "/files/" +
+        encodeURIComponent(role) + "/preview?page=" + page + "&v=" + Date.now();
     }
 
     function stageLocked(stageId, defs, checked) {
@@ -202,13 +202,13 @@
       const data = await j("/api/jobs");
       const box = document.getElementById("job-list");
       if (!data.jobs.length) {
-        box.innerHTML = '<p class="muted">Abhi koi job nahi.</p>';
+        box.innerHTML = '<p class="muted">No jobs yet.</p>';
         return;
       }
       box.innerHTML = data.jobs.map((job) => (
         `<div class="card job-card" data-open="${job.job_id}"><div class="row">
           <div><strong>${job.job_id}</strong><div class="muted">${job.file_name} · ${job.customer || ""}</div></div>
-          <span class="muted">Kholo</span>
+          <span class="muted">Open</span>
         </div></div>`
       )).join("");
       box.querySelectorAll("[data-open]").forEach((el) => {
@@ -235,7 +235,7 @@
         const on = def.stage_id === activeStage ? " active" : "";
         const lock = locked ? " locked" : "";
         return `<button type="button" class="step${on}${lock}" data-stage="${def.stage_id}">
-          ${def.title}<small>${locked ? "Pehle pichla step" : def.hint}</small>
+          ${def.title}<small>${locked ? "Check the previous step first" : def.hint}</small>
         </button>`;
       }).join("");
       stepper.querySelectorAll("[data-stage]").forEach((btn) => {
@@ -263,16 +263,17 @@
           src="${previewUrl(role, 1)}" alt="${copy[0]} preview" />
         <p class="muted">${info.name} · ${info.kind}${pages > 1 ? " · " + pages + " pages" : ""}</p>
         ${pages > 1 ? `<div class="preview-nav">
-          <button type="button" class="ghost" data-preview-role="${role}" data-delta="-1">Pehle</button>
+          <button type="button" class="ghost" data-preview-role="${role}" data-delta="-1">Prev</button>
           <span class="muted" data-page-label="${role}">Page 1 / ${pages}</span>
-          <button type="button" class="ghost" data-preview-role="${role}" data-delta="1">Aage</button>
+          <button type="button" class="ghost" data-preview-role="${role}" data-delta="1">Next</button>
         </div>` : ""}` : `<p class="muted">${copy[1]}</p>`;
       return `<div class="card">
         <div class="row">
           <div><strong>${copy[0]}</strong></div>
-          <label class="btn ghost">${have ? "Badlo" : "Upload"}
-            <input type="file" accept="${FILE_ACCEPT}" data-role="${role}" hidden />
-          </label>
+          <div class="pick-wrap">
+            <input class="file-pick" type="file" accept="${FILE_ACCEPT}" data-role="${role}" />
+            <button type="button" class="ghost" data-pick="${role}">${have ? "Replace" : "Upload"}</button>
+          </div>
         </div>
         ${preview}
       </div>`;
@@ -285,42 +286,39 @@
         <div class="check-row">
           <div class="mark ${item.state}">${MARK[item.state] || item.state}</div>
           <div><strong>${item.title}</strong><div class="muted">${item.detail}</div></div>
-        </div>`).join("") : '<p class="muted">Is step ko check karo — lambi report nahi, chhoti list.</p>';
+        </div>`).join("") : '<p class="muted">Check this step for a short list — not a long report.</p>';
       return `
         <div class="grid">${def.slots.map(slotCard).join("")}</div>
-        <div class="card">
-          <label>Ya files yahan drop karo — naam se slot soch lenge (SEP, approval, CGM…)</label>
-          <input id="multi-files" type="file" accept="${FILE_ACCEPT}" multiple />
-        </div>
         <div class="row" style="margin:16px 0">
-          <button type="button" id="check-btn">Is step ko check karo</button>
-          <span class="muted">Phir agla step khulega.</span>
+          <button type="button" id="check-btn">Check this step</button>
+          <span class="muted">The next step unlocks after this one is checked.</span>
         </div>
         <div class="card"><strong>Checklist</strong>${list}</div>
         ${def.stage_id === "print" ? `<div class="card">
           <label>Remark</label>
-          <input id="remark-by" placeholder="Naam" />
-          <textarea id="remark-text" rows="3" placeholder="Jo theek / jo galat"></textarea>
-          <button type="button" class="ghost" id="save-remark">Remark save karo</button>
+          <input id="remark-by" placeholder="Name" />
+          <textarea id="remark-text" rows="3" placeholder="What looks right or wrong"></textarea>
+          <button type="button" class="ghost" id="save-remark">Save remark</button>
         </div>` : ""}
       `;
     }
 
     function bindStage(def) {
-      document.querySelectorAll("input[type=file][data-role]").forEach((input) => {
-        input.onchange = () => upload(input.getAttribute("data-role"), input.files[0]);
+      document.querySelectorAll("[data-pick]").forEach((btn) => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          const role = btn.getAttribute("data-pick");
+          const input = document.querySelector('input.file-pick[data-role="' + role + '"]');
+          if (input) input.click();
+        };
       });
-      const multi = document.getElementById("multi-files");
-      if (multi) multi.onchange = async () => {
-        for (const file of multi.files) {
-          const role = guessRole(file.name);
-          if (!role) {
-            document.getElementById("job-err").textContent = file.name + " ka slot nahi samajh aaya. Upload button se choose karo.";
-            continue;
-          }
-          await upload(role, file);
-        }
-      };
+      document.querySelectorAll("input.file-pick[data-role]").forEach((input) => {
+        input.onchange = () => {
+          const file = input.files && input.files[0];
+          input.value = "";
+          upload(input.getAttribute("data-role"), file);
+        };
+      });
       document.querySelectorAll("[data-preview-role]").forEach((btn) => {
         btn.onclick = () => shiftPreview(btn.getAttribute("data-preview-role"), Number(btn.getAttribute("data-delta")));
       });
@@ -355,17 +353,19 @@
 
     async function upload(role, file) {
       if (!file) return;
-      const body = new FormData();
-      body.append("role", role);
-      body.append("file", file, file.name);
-      const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body });
-      const data = await res.json();
-      if (data.error) {
-        document.getElementById("job-err").textContent = data.error;
-        return;
+      document.getElementById("job-err").textContent = "";
+      try {
+        const body = new FormData();
+        body.append("role", role);
+        body.append("file", file, file.name);
+        const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
+        renderJob();
+      } catch (err) {
+        document.getElementById("job-err").textContent = err.message;
       }
-      snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
-      renderJob();
     }
 
     async function checkStage(stage) {
@@ -393,7 +393,7 @@
       }
       bar.className = "overall";
       bar.innerHTML = checklist.overall_label +
-        '<span>Yeh tool faisla nahi leta. Aakhri signature aapka.</span>';
+        '<span>This tool does not decide. The last signature is yours.</span>';
     }
 
     document.getElementById("new-btn").onclick = () => { document.getElementById("new-err").textContent = ""; show("new-view"); };
@@ -417,7 +417,7 @@
 
     loadList().catch((err) => {
       document.getElementById("job-list").innerHTML =
-        '<div class="card"><p class="err">Tool ka server nahi mil raha. start-tool.bat chalao.</p>' +
+        '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
         '<p class="muted">' + err.message + "</p></div>";
     });
   </script>

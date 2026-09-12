@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -75,6 +76,26 @@ class UploadDiscoveryTests(unittest.TestCase):
         artwork = next(item for item in results if item.check_id == "artwork_vs_approval")
         self.assertFalse(artwork.ran)
         self.assertIn("image", artwork.not_run_reason.lower())
+
+    def test_replace_png_with_pdf_clears_old_suffix(self) -> None:
+        folder = create_or_update_job(
+            {"job_id": "P5", "file_name": "ART", "customer": "ACME"},
+            root=self.root,
+        )
+        first = save_upload("P5", "client_artwork", _red_png(), "art.png", root=self.root)
+        self.assertEqual(first.name, "client_artwork.png")
+        document = pymupdf.open()
+        document.new_page()
+        buffer = io.BytesIO()
+        document.save(buffer)
+        document.close()
+        replaced = save_upload(
+            "P5", "client_artwork", buffer.getvalue(), "other.pdf", root=self.root
+        )
+        self.assertEqual(replaced.name, "client_artwork.pdf")
+        files = discover_job_files(folder)
+        self.assertEqual(files.client_artwork, replaced)
+        self.assertFalse((folder / "client_artwork.png").is_file())
 
     def test_bad_suffix_is_loud(self) -> None:
         create_or_update_job(
