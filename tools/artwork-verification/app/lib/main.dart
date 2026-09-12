@@ -289,11 +289,11 @@ class _JobPageState extends State<JobPage> {
   final _by = TextEditingController();
 
   static const _slots = <(String, String, String)>[
-    ("client_artwork", "1. Client artwork", "Client ne jo artwork bheja"),
-    ("approval", "2. First approval PDF", "Jo PDF client ko approval ke liye bheja"),
-    ("vendor_composite", "3. Vendor artwork PDF", "Ek plate par kitne label, cylinder, paper, colour"),
-    ("separations", "4. Colour separation PDF", "Har rang / plate ka page"),
-    ("printout", "5. Printout photo", "Machine par jo print hua"),
+    ("client_artwork", "1. Client artwork", "PDF ya image — jo client ne bheja"),
+    ("approval", "2. First approval", "PDF ya image — jo client ko approval ke liye bheja"),
+    ("vendor_composite", "3. Vendor artwork", "PDF ya image — ups, cylinder, paper, colour"),
+    ("separations", "4. Colour separation", "PDF ya image — har rang / plate"),
+    ("printout", "5. Printout photo", "PDF ya image — machine par jo print hua"),
   ];
 
   @override
@@ -326,8 +326,8 @@ class _JobPageState extends State<JobPage> {
   Future<void> _pick(String role) async {
     final result = await FilePicker.platform.pickFiles(
       withData: true,
-      type: role == "printout" ? FileType.image : FileType.custom,
-      allowedExtensions: role == "printout" ? null : const ["pdf"],
+      type: FileType.custom,
+      allowedExtensions: const ["pdf", "png", "jpg", "jpeg", "webp"],
     );
     if (result == null || result.files.isEmpty) {
       return;
@@ -410,12 +410,33 @@ class _JobPageState extends State<JobPage> {
           ..._slots.map((slot) {
             final present = files[slot.$1] != null;
             return Card(
-              child: ListTile(
-                title: Text(slot.$2),
-                subtitle: Text(present ? files[slot.$1].toString() : slot.$3),
-                trailing: TextButton(
-                  onPressed: _busy ? null : () => _pick(slot.$1),
-                  child: Text(present ? "Badlo" : "Upload"),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ListTile(
+                      title: Text(slot.$2),
+                      subtitle: Text(present ? files[slot.$1].toString() : slot.$3),
+                      trailing: TextButton(
+                        onPressed: _busy ? null : () => _pick(slot.$1),
+                        child: Text(present ? "Badlo" : "Upload"),
+                      ),
+                    ),
+                    if (present)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: Image.network(
+                          "${apiBase()}/api/jobs/${Uri.encodeComponent(widget.jobId)}/files/${slot.$1}/preview?page=1",
+                          height: 180,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stack) => Text(
+                            "Preview nahi khula. File phir se upload karo.",
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             );

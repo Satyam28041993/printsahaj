@@ -20,6 +20,11 @@ MM_PER_POINT: float = MM_PER_INCH / POINTS_PER_INCH
 # micrometre is well below anything the trade can measure.
 MEASUREMENT_TOLERANCE_MM: float = 0.001
 
+# Desk preview: render the first page (or the image) no wider than this.
+PREVIEW_MAX_WIDTH_PX: int = 900
+# Tiny pages would otherwise be scaled up into huge pixmaps.
+PREVIEW_MAX_ZOOM: float = 4.0
+
 
 def points_to_mm(points: float) -> float:
     """Convert a PDF user-space measurement in points to millimetres."""

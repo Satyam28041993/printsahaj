@@ -12,8 +12,9 @@ import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
+from printsahaj_verify.extract import render_preview_png
 from printsahaj_verify.job_spec import JobSpecError
 from printsahaj_verify.remarks import add_remark, load_remarks
 from printsahaj_verify.reporting.json_report import build_report
@@ -24,6 +25,7 @@ from printsahaj_verify.store import (
     job_folder,
     job_snapshot,
     list_jobs,
+    resolve_slot_file,
     save_upload,
 )
 
@@ -66,6 +68,25 @@ def _json(handler: BaseHTTPRequestHandler, status: int, payload: object) -> None
     handler.wfile.write(body)
 
 
+def _bytes(handler: BaseHTTPRequestHandler, data: bytes, content_type: str) -> None:
+    handler.send_response(200)
+    handler.send_header("Content-Type", content_type)
+    handler.send_header("Content-Length", str(len(data)))
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.end_headers()
+    handler.wfile.write(data)
+
+
+SUFFIX_TYPES = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+}
+
+
 def _read_json(handler: BaseHTTPRequestHandler) -> dict:
     length = int(handler.headers.get("Content-Length", "0"))
     raw = handler.rfile.read(length) if length else b"{}"
@@ -91,8 +112,11 @@ def _parse_multipart(handler: BaseHTTPRequestHandler) -> tuple[dict[str, str], t
             continue
         header_blob, _, body = part.partition(b"\r\n\r\n")
         headers = header_blob.decode("utf-8", errors="replace")
-        body = body.rstrip(b"\r\n")
-        if body.endswith(b"--"):
+        if body.endswith(b"--\r\n"):
+            body = body[:-4]
+        elif body.endswith(b"--"):
+            body = body[:-2]
+        if body.endswith(b"\r\n"):
             body = body[:-2]
         disposition = ""
         for line in headers.split("\r\n"):
@@ -133,6 +157,8 @@ class DeskHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+        query = parse_qs(parsed.query)
+        parts = [item for item in path.split("/") if item]
         try:
             if path == "/api/health":
                 _json(self, 200, {"ok": True, "tool": "artwork-verification"})
@@ -140,6 +166,29 @@ class DeskHandler(BaseHTTPRequestHandler):
             if path == "/api/jobs":
                 _json(self, 200, {"jobs": list_jobs()})
                 return
+            if (
+                len(parts) >= 5
+                and parts[0] == "api"
+                and parts[1] == "jobs"
+                and parts[3] == "files"
+            ):
+                job_id = parts[2]
+                role = parts[4]
+                target = resolve_slot_file(job_id, role)
+                if len(parts) == 6 and parts[5] == "preview":
+                    page_raw = query.get("page", ["1"])[0]
+                    try:
+                        page = int(page_raw)
+                    except ValueError as error:
+                        raise JobSpecError("preview page must be a number") from error
+                    _bytes(self, render_preview_png(target, page), "image/png")
+                    return
+                if len(parts) == 5:
+                    content_type = SUFFIX_TYPES.get(
+                        target.suffix.lower(), "application/octet-stream"
+                    )
+                    _bytes(self, target.read_bytes(), content_type)
+                    return
             if path.startswith("/api/jobs/") and path.endswith("/report"):
                 job_id = path[len("/api/jobs/") : -len("/report")]
                 folder = job_folder(job_id)

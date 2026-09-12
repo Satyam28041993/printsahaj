@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from printsahaj_verify.files import JobFiles
+from pathlib import Path
+
+from printsahaj_verify.extract import preview_page_count
+from printsahaj_verify.files import JobFiles, is_pdf
 from printsahaj_verify.job_spec import JobSpec, job_spec_to_dict
 from printsahaj_verify.models import Certainty, CheckResult
 from printsahaj_verify.reporting.terminal import NOT_CHECKED_LINES
@@ -17,6 +20,28 @@ def files_to_dict(files: JobFiles) -> dict[str, object]:
         "separations": files.separations.name if files.separations else None,
         "printouts": [path.name for path in files.printouts],
         "printout": ", ".join(path.name for path in files.printouts) or None,
+    }
+
+
+def _slot_info(path: Path | None) -> dict[str, object] | None:
+    if path is None:
+        return None
+    return {
+        "name": path.name,
+        "kind": "pdf" if is_pdf(path) else "image",
+        "pages": preview_page_count(path),
+        "suffix": path.suffix.lower(),
+    }
+
+
+def slots_to_dict(files: JobFiles) -> dict[str, object]:
+    """Per-slot name, kind and page count so the desk can show a preview."""
+    return {
+        "client_artwork": _slot_info(files.client_artwork),
+        "approval": _slot_info(files.approval),
+        "vendor_composite": _slot_info(files.vendor_composite),
+        "separations": _slot_info(files.separations),
+        "printout": _slot_info(files.printouts[-1] if files.printouts else None),
     }
 
 

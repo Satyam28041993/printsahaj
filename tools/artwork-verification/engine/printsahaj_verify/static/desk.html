@@ -22,6 +22,9 @@
     .muted { color: var(--muted); font-size: 13px; }
     pre { white-space: pre-wrap; font-size: 13px; }
     .hidden { display: none; }
+    .preview-wrap { margin-top: 12px; }
+    .preview { max-width: 100%; max-height: 380px; border: 1px solid var(--line); border-radius: 8px; background: #fff; display: block; }
+    .preview-nav { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -78,12 +81,13 @@
     </section>
   </main>
   <script>
+    const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
     const SLOTS = [
-      ["client_artwork", "1. Client artwork", "Client ne jo artwork bheja"],
-      ["approval", "2. First approval PDF", "Jo PDF client ko approval ke liye bheja"],
-      ["vendor_composite", "3. Vendor artwork PDF", "Ek plate par kitne label, cylinder, paper, colour"],
-      ["separations", "4. Colour separation PDF", "Har rang / plate ka page"],
-      ["printout", "5. Printout photo", "Machine par jo print hua"],
+      ["client_artwork", "1. Client artwork", "PDF ya image — jo client ne bheja"],
+      ["approval", "2. First approval", "PDF ya image — jo client ko approval ke liye bheja"],
+      ["vendor_composite", "3. Vendor artwork", "PDF ya image — ups, cylinder, paper, colour"],
+      ["separations", "4. Colour separation", "PDF ya image — har rang / plate"],
+      ["printout", "5. Printout photo", "PDF ya image — machine par jo print hua"],
     ];
     let currentId = "";
 
@@ -121,20 +125,54 @@
       currentId = id;
       const data = await j("/api/jobs/" + encodeURIComponent(id));
       document.getElementById("job-title").textContent = id + "  ·  " + (data.job.file_name || "");
-      const files = data.files || {};
+      const slots = data.slots || {};
       document.getElementById("slots").innerHTML = SLOTS.map(([role, title, hint]) => {
-        const have = files[role];
+        const info = slots[role];
+        const have = info && info.name;
+        const pages = info && info.pages ? Number(info.pages) : 1;
+        const preview = have ? (
+          `<div class="preview-wrap">
+            <img class="preview" data-role="${role}" data-page="1" data-pages="${pages}"
+              src="${previewUrl(id, role, 1)}" alt="${title} preview" />
+            <p class="muted">${info.name} · ${info.kind}${pages > 1 ? " · " + pages + " pages" : ""}</p>
+            ${pages > 1 ? `<div class="preview-nav">
+              <button type="button" class="ghost" data-preview-role="${role}" data-delta="-1">Pehle</button>
+              <span class="muted" data-page-label="${role}">Page 1 / ${pages}</span>
+              <button type="button" class="ghost" data-preview-role="${role}" data-delta="1">Aage</button>
+            </div>` : ""}
+          </div>`
+        ) : "";
         return `<div class="card"><div class="row">
           <div><strong>${title}</strong><div class="muted">${have || hint}</div></div>
           <label class="btn">${have ? "Badlo" : "Upload"}
-            <input type="file" data-role="${role}" hidden />
+            <input type="file" accept="${FILE_ACCEPT}" data-role="${role}" hidden />
           </label>
-        </div></div>`;
+        </div>${preview}</div>`;
       }).join("");
       document.querySelectorAll("input[type=file]").forEach((input) => {
         input.onchange = () => upload(input.getAttribute("data-role"), input.files[0]);
       });
+      document.querySelectorAll("[data-preview-role]").forEach((btn) => {
+        btn.onclick = () => shiftPreview(btn.getAttribute("data-preview-role"), Number(btn.getAttribute("data-delta")));
+      });
       show("job-view");
+    }
+
+    function previewUrl(id, role, page) {
+      return "/api/jobs/" + encodeURIComponent(id) + "/files/" + encodeURIComponent(role) + "/preview?page=" + page;
+    }
+
+    function shiftPreview(role, delta) {
+      const img = document.querySelector('img.preview[data-role="' + role + '"]');
+      if (!img) return;
+      const max = Number(img.getAttribute("data-pages") || "1");
+      let page = Number(img.getAttribute("data-page") || "1") + delta;
+      if (page < 1) page = max;
+      if (page > max) page = 1;
+      img.setAttribute("data-page", String(page));
+      img.src = previewUrl(currentId, role, page);
+      const label = document.querySelector('[data-page-label="' + role + '"]');
+      if (label) label.textContent = "Page " + page + " / " + max;
     }
 
     async function upload(role, file) {

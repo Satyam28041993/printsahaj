@@ -17,6 +17,16 @@ from printsahaj_verify.server import DeskHandler
 from printsahaj_verify import store
 
 
+def _red_png() -> bytes:
+    document = pymupdf.open()
+    page = document.new_page(width=80, height=60)
+    page.draw_rect(page.rect, color=(1, 0, 0), fill=(1, 0, 0))
+    pixmap = page.get_pixmap()
+    data = pixmap.tobytes("png")
+    document.close()
+    return data
+
+
 def _blank_pdf(pages: int) -> bytes:
     document = pymupdf.open()
     for _ in range(pages):
@@ -92,6 +102,9 @@ class ServerApiTests(unittest.TestCase):
         self.assertNotIn("DAILY KALONJI", home)
         self.assertNotIn("6 COL + VARNISH", home)
         self.assertNotIn("DAILY PHARMA", home)
+        self.assertIn("accept=", home)
+        self.assertIn("PDF ya image", home)
+        self.assertIn("preview", home)
 
         with urllib.request.urlopen(f"{self.base}/api/jobs/JOB1/report") as response:
             report = json.loads(response.read().decode("utf-8"))
@@ -112,6 +125,86 @@ class ServerApiTests(unittest.TestCase):
         banner = ready_banner("http://127.0.0.1:8765")
         self.assertIn("CHAL RAHA HAI", banner)
         self.assertIn("http://127.0.0.1:8765", banner)
+
+    def test_png_upload_keeps_extension_and_has_preview(self) -> None:
+        import urllib.request
+
+        payload = json.dumps(
+            {"job_id": "IMG1", "file_name": "ART", "customer": "ACME"}
+        ).encode("utf-8")
+        create = urllib.request.Request(
+            f"{self.base}/api/jobs",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(create) as response:
+            json.loads(response.read().decode("utf-8"))
+
+        png = _red_png()
+        boundary = "----pngboundary"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="role"\r\n\r\n'
+            "client_artwork\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="label.png"\r\n'
+            "Content-Type: image/png\r\n\r\n"
+        ).encode("utf-8") + png + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        upload = urllib.request.Request(
+            f"{self.base}/api/jobs/IMG1/files",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with urllib.request.urlopen(upload) as response:
+            saved = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(saved["saved"], "client_artwork.png")
+
+        with urllib.request.urlopen(f"{self.base}/api/jobs/IMG1") as response:
+            snap = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(snap["files"]["client_artwork"], "client_artwork.png")
+        self.assertEqual(snap["slots"]["client_artwork"]["kind"], "image")
+        self.assertNotIn("APPROVED", json.dumps(snap))
+
+        with urllib.request.urlopen(
+            f"{self.base}/api/jobs/IMG1/files/client_artwork/preview?page=1"
+        ) as response:
+            preview = response.read()
+        self.assertTrue(preview.startswith(b"\x89PNG"))
+        self.assertIn("image/png", response.headers.get("Content-Type", ""))
+
+    def test_unknown_upload_suffix_is_loud(self) -> None:
+        import urllib.error
+        import urllib.request
+
+        payload = json.dumps(
+            {"job_id": "BAD1", "file_name": "ART", "customer": "ACME"}
+        ).encode("utf-8")
+        create = urllib.request.Request(
+            f"{self.base}/api/jobs",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(create):
+            pass
+        boundary = "----badboundary"
+        body = (
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="role"\r\n\r\n'
+            "client_artwork\r\n"
+            f"--{boundary}\r\n"
+            'Content-Disposition: form-data; name="file"; filename="virus.exe"\r\n'
+            "Content-Type: application/octet-stream\r\n\r\n"
+            "xx\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
+        upload = urllib.request.Request(
+            f"{self.base}/api/jobs/BAD1/files",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+        )
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(upload)
+        self.assertEqual(caught.exception.code, 400)
 
     def test_serve_exits_when_port_is_busy(self) -> None:
         from printsahaj_verify.server import serve

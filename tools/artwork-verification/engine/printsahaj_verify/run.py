@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from printsahaj_verify.checks.artwork_vs_approval import CHECK_ID as ARTWORK_ID
+from printsahaj_verify.checks.artwork_vs_approval import CHECK_TITLE as ARTWORK_TITLE
 from printsahaj_verify.checks.artwork_vs_approval import check_artwork_vs_approval
 from printsahaj_verify.checks.colour_names import check_colour_names
 from printsahaj_verify.checks.geometry import check_geometry
@@ -15,16 +17,45 @@ from printsahaj_verify.checks.plate_text_map import check_plate_text_map
 from printsahaj_verify.checks.printout import check_printout
 from printsahaj_verify.checks.text_completeness import check_text_completeness
 from printsahaj_verify.extract import (
+    DocumentText,
     count_pdf_pages,
     hash_file,
     parse_vendor_header,
     read_document_text,
 )
-from printsahaj_verify.files import JobFiles, discover_job_files
+from printsahaj_verify.files import JobFiles, discover_job_files, is_pdf
 from printsahaj_verify.job_spec import JobSpec, load_job_spec
 from printsahaj_verify.models import CheckResult
 
 JOB_FILE_NAME = "job.json"
+
+IMAGE_TEXT_REASON = (
+    "File is an image. This tool does not read text from images. "
+    "Compare the preview by eye."
+)
+
+
+def _pdf_text(path: Path | None) -> DocumentText | None:
+    """Extract text only from PDFs. Images stay out of wording checks."""
+    if path is None or not is_pdf(path):
+        return None
+    return read_document_text(path)
+
+
+def _artwork_vs_approval_result(
+    files: JobFiles,
+    client_doc: DocumentText | None,
+    approval_doc: DocumentText | None,
+) -> CheckResult:
+    client_is_image = files.client_artwork is not None and not is_pdf(files.client_artwork)
+    approval_is_image = files.approval is not None and not is_pdf(files.approval)
+    if client_is_image or approval_is_image:
+        return CheckResult(
+            check_id=ARTWORK_ID,
+            title=ARTWORK_TITLE,
+            not_run_reason=IMAGE_TEXT_REASON,
+        )
+    return check_artwork_vs_approval(client_doc, approval_doc)
 
 
 def _plate_count_result(spec: JobSpec, files: JobFiles) -> CheckResult:
@@ -33,6 +64,15 @@ def _plate_count_result(spec: JobSpec, files: JobFiles) -> CheckResult:
             check_id=PLATE_ID,
             title=PLATE_TITLE,
             not_run_reason="Separations PDF not found",
+        )
+    if not is_pdf(files.separations):
+        return CheckResult(
+            check_id=PLATE_ID,
+            title=PLATE_TITLE,
+            not_run_reason=(
+                "Separations is an image. Plate count needs a PDF "
+                "(one page per plate)."
+            ),
         )
     return check_plate_count(spec, count_pdf_pages(files.separations))
 
@@ -56,19 +96,17 @@ def run_job(folder: Path) -> tuple[JobSpec, list[CheckResult], JobFiles]:
     spec = load_job_spec(folder / JOB_FILE_NAME)
     files = discover_job_files(folder)
 
-    client_doc = read_document_text(files.client_artwork) if files.client_artwork else None
-    approval_doc = read_document_text(files.approval) if files.approval else None
-    composite_doc = (
-        read_document_text(files.vendor_composite) if files.vendor_composite else None
-    )
-    separations_doc = read_document_text(files.separations) if files.separations else None
+    client_doc = _pdf_text(files.client_artwork)
+    approval_doc = _pdf_text(files.approval)
+    composite_doc = _pdf_text(files.vendor_composite)
+    separations_doc = _pdf_text(files.separations)
 
     approved_for_text = approval_doc or client_doc
     header = parse_vendor_header(composite_doc.full_text) if composite_doc else None
     vendor_docs = [doc for doc in (composite_doc, separations_doc) if doc is not None]
 
     results = [
-        check_artwork_vs_approval(client_doc, approval_doc),
+        _artwork_vs_approval_result(files, client_doc, approval_doc),
         _plate_count_result(spec, files),
         check_colour_names(spec, separations_doc),
         check_geometry(spec, header),

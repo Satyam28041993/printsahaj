@@ -8,7 +8,12 @@ from pathlib import Path
 
 import pymupdf
 
-from printsahaj_verify.constants import MEASUREMENT_TOLERANCE_MM, points_to_mm
+from printsahaj_verify.constants import (
+    MEASUREMENT_TOLERANCE_MM,
+    PREVIEW_MAX_WIDTH_PX,
+    PREVIEW_MAX_ZOOM,
+    points_to_mm,
+)
 from printsahaj_verify.job_spec import JobSpecError
 from printsahaj_verify.probe import read_colorants, read_spans
 
@@ -104,6 +109,42 @@ def count_pdf_pages(path: Path) -> int:
             return document.page_count
     except Exception as error:  # noqa: BLE001
         raise JobSpecError(f"Cannot read PDF {path}: {error}") from error
+
+
+def preview_page_count(path: Path) -> int:
+    """Page count for a PDF or image. Images count as one page."""
+    try:
+        with pymupdf.open(path) as document:
+            return document.page_count
+    except Exception as error:  # noqa: BLE001
+        raise JobSpecError(f"Cannot open for preview {path}: {error}") from error
+
+
+def render_preview_png(path: Path, page_number: int = 1) -> bytes:
+    """Rasterise one PDF page or an image to PNG for the desk preview.
+
+    ``page_number`` is 1-based. This is a picture for a human, not a grade.
+    """
+    try:
+        with pymupdf.open(path) as document:
+            if document.page_count < 1:
+                raise JobSpecError(f"File has no pages: {path}")
+            index = page_number - 1
+            if index < 0 or index >= document.page_count:
+                raise JobSpecError(
+                    f"Preview page {page_number} is outside 1–{document.page_count}"
+                )
+            page = document[index]
+            width = page.rect.width
+            if width <= 0:
+                raise JobSpecError(f"Page has no width: {path}")
+            zoom = min(PREVIEW_MAX_WIDTH_PX / width, PREVIEW_MAX_ZOOM)
+            pixmap = page.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom), alpha=False)
+            return pixmap.tobytes("png")
+    except JobSpecError:
+        raise
+    except Exception as error:  # noqa: BLE001
+        raise JobSpecError(f"Cannot render preview {path}: {error}") from error
 
 
 @dataclass(frozen=True)

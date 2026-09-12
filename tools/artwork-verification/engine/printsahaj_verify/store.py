@@ -8,24 +8,17 @@ from pathlib import Path
 from typing import Any
 
 from printsahaj_verify.files import (
-    APPROVAL_NAME,
-    CLIENT_ARTWORK_NAME,
     PRINTOUT_DIR_NAME,
-    SEPARATIONS_NAME,
-    VENDOR_COMPOSITE_NAME,
+    ROLE_STEMS,
+    UPLOAD_SUFFIXES,
+    find_role_file,
+    role_candidate_names,
 )
 from printsahaj_verify.job_spec import JobSpecError, job_spec_to_dict, load_job_spec
 from printsahaj_verify.remarks import load_remarks
 from printsahaj_verify.run import JOB_FILE_NAME
 
 SAFE_CODE = re.compile(r"[A-Za-z0-9._-]+")
-
-FILE_ROLES: dict[str, str] = {
-    "client_artwork": CLIENT_ARTWORK_NAME,
-    "approval": APPROVAL_NAME,
-    "vendor_composite": VENDOR_COMPOSITE_NAME,
-    "separations": SEPARATIONS_NAME,
-}
 
 DEFAULT_JOBS_ROOT = Path(__file__).resolve().parents[2] / "jobs"
 
@@ -55,10 +48,7 @@ def list_jobs(root: Path | None = None) -> list[dict[str, Any]]:
         if not folder.is_dir() or not (folder / JOB_FILE_NAME).is_file():
             continue
         spec = load_job_spec(folder / JOB_FILE_NAME)
-        files = {
-            role: (folder / name).is_file()
-            for role, name in FILE_ROLES.items()
-        }
+        files = {role: find_role_file(folder, role) is not None for role in ROLE_STEMS}
         printouts = folder / PRINTOUT_DIR_NAME
         files["printout"] = printouts.is_dir() and any(printouts.iterdir())
         items.append(
@@ -95,36 +85,77 @@ def create_or_update_job(payload: dict[str, Any], root: Path | None = None) -> P
     return folder
 
 
-def save_upload(job_id: str, role: str, data: bytes, filename: str, root: Path | None = None) -> Path:
-    """Store one uploaded file under the job folder."""
+def _clear_role_files(folder: Path, role: str) -> None:
+    for name in role_candidate_names(role):
+        path = folder / name
+        if path.is_file():
+            path.unlink()
+
+
+def save_upload(
+    job_id: str, role: str, data: bytes, filename: str, root: Path | None = None
+) -> Path:
+    """Store one uploaded PDF or image under the job folder."""
     folder = job_folder(job_id, root)
     if not (folder / JOB_FILE_NAME).is_file():
         raise JobSpecError(f"Unknown job: {job_id}")
+    if not data:
+        raise JobSpecError("Uploaded file is empty")
+    suffix = Path(filename).suffix.lower()
+    if suffix not in UPLOAD_SUFFIXES:
+        raise JobSpecError(
+            "PDF, PNG, JPG ya WebP chahiye. "
+            f"Yeh file nahi chali: {suffix or 'no extension'}"
+        )
     if role == "printout":
         target_dir = folder / PRINTOUT_DIR_NAME
         target_dir.mkdir(exist_ok=True)
-        suffix = Path(filename).suffix.lower() or ".jpg"
         stamp = len(list(target_dir.iterdir())) + 1
         target = target_dir / f"printout_{stamp}{suffix}"
         target.write_bytes(data)
         return target
-    if role not in FILE_ROLES:
+    if role not in ROLE_STEMS:
         raise JobSpecError(f"Unknown file role: {role}")
-    target = folder / FILE_ROLES[role]
+    _clear_role_files(folder, role)
+    target = folder / f"{role}{suffix}"
     target.write_bytes(data)
     return target
+
+
+def resolve_slot_file(job_id: str, role: str, root: Path | None = None) -> Path:
+    """Return the on-disk file for one upload slot. Missing files raise."""
+    from printsahaj_verify.files import discover_job_files
+
+    files = discover_job_files(job_folder(job_id, root))
+    if role == "printout":
+        if not files.printouts:
+            raise FileNotFoundError("No printout uploaded")
+        return files.printouts[-1]
+    mapping = {
+        "client_artwork": files.client_artwork,
+        "approval": files.approval,
+        "vendor_composite": files.vendor_composite,
+        "separations": files.separations,
+    }
+    if role not in mapping:
+        raise JobSpecError(f"Unknown file role: {role}")
+    path = mapping[role]
+    if path is None:
+        raise FileNotFoundError(f"No file uploaded for {role}")
+    return path
 
 
 def job_snapshot(job_id: str, root: Path | None = None) -> dict[str, Any]:
     folder = job_folder(job_id, root)
     spec = load_job_spec(folder / JOB_FILE_NAME)
     from printsahaj_verify.files import discover_job_files
-    from printsahaj_verify.reporting.json_report import files_to_dict
+    from printsahaj_verify.reporting.json_report import files_to_dict, slots_to_dict
 
     files = discover_job_files(folder)
     return {
         "job": job_spec_to_dict(spec),
         "files": files_to_dict(files),
+        "slots": slots_to_dict(files),
         "remarks": load_remarks(folder),
         "folder": str(folder),
     }

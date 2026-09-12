@@ -18,6 +18,34 @@ SEPARATIONS_NAME = "separations.pdf"
 PRINTOUT_DIR_NAME = "printouts"
 
 IMAGE_SUFFIXES: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff")
+#: Suffixes the desk will store. TIFF stays discoverable for older print photos.
+UPLOAD_SUFFIXES: tuple[str, ...] = (".pdf", ".png", ".jpg", ".jpeg", ".webp")
+ROLE_STEMS: tuple[str, ...] = (
+    "client_artwork",
+    "approval",
+    "vendor_composite",
+    "separations",
+)
+
+
+def is_pdf(path: Path) -> bool:
+    """True when the file is a PDF by suffix. Images are not treated as PDFs."""
+    return path.suffix.lower() == ".pdf"
+
+
+def role_candidate_names(stem: str) -> tuple[str, ...]:
+    """Preferred on-disk names for one upload slot, PDF first then images."""
+    return tuple(f"{stem}{suffix}" for suffix in UPLOAD_SUFFIXES)
+
+
+def find_role_file(folder: Path, stem: str) -> Path | None:
+    """Return the stored file for a role, or None if that slot is empty."""
+    return _first_existing(folder, role_candidate_names(stem))
+
+
+def is_named_role_file(path: Path) -> bool:
+    """True when the filename is a reserved job-slot name."""
+    return path.stem.lower() in ROLE_STEMS
 
 
 @dataclass(frozen=True)
@@ -54,12 +82,18 @@ def _hinted_pdf(folder: Path, hints: tuple[str, ...], exclude: set[Path]) -> Pat
 
 def discover_job_files(folder: Path) -> JobFiles:
     """Find each role. Ambiguous names raise. Missing roles stay None."""
-    client = _first_existing(folder, (CLIENT_ARTWORK_NAME, "artwork.pdf"))
-    approval = _first_existing(folder, (APPROVAL_NAME, "job-sheet.pdf", "job_sheet.pdf"))
-    composite = _first_existing(
-        folder, (VENDOR_COMPOSITE_NAME, "composite.pdf", "vendor_artwork.pdf")
+    client = find_role_file(folder, "client_artwork") or _first_existing(
+        folder, ("artwork.pdf",)
     )
-    separations = _first_existing(folder, (SEPARATIONS_NAME, "separation.pdf"))
+    approval = find_role_file(folder, "approval") or _first_existing(
+        folder, ("job-sheet.pdf", "job_sheet.pdf")
+    )
+    composite = find_role_file(folder, "vendor_composite") or _first_existing(
+        folder, ("composite.pdf", "vendor_artwork.pdf")
+    )
+    separations = find_role_file(folder, "separations") or _first_existing(
+        folder, ("separation.pdf",)
+    )
 
     taken = {path for path in (client, approval, composite, separations) if path}
 
@@ -106,7 +140,9 @@ def discover_job_files(folder: Path) -> JobFiles:
     printouts.extend(
         path
         for path in sorted(folder.iterdir())
-        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+        if path.is_file()
+        and path.suffix.lower() in IMAGE_SUFFIXES
+        and not is_named_role_file(path)
     )
 
     return JobFiles(
