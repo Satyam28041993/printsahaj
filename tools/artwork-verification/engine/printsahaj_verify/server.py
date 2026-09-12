@@ -275,7 +275,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                 )
                 _json(self, 200, remarks)
                 return
-        except (JobSpecError, ValueError, FileNotFoundError, json.JSONDecodeError) as error:
+        except (JobSpecError, ValueError, FileNotFoundError, json.JSONDecodeError, RuntimeError) as error:
             _json(self, 400, {"error": str(error)})
             return
         _json(self, 404, {"error": f"Unknown path {path}"})
