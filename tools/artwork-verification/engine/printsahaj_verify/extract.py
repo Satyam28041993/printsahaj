@@ -9,6 +9,12 @@ from pathlib import Path
 import pymupdf
 
 from printsahaj_verify.constants import (
+    CODING_PANEL_MIN_WHITE_FRAC,
+    CODING_PANEL_RENDER_ZOOM,
+    CODING_PANEL_RIGHT_FRAC,
+    CODING_PANEL_SAMPLE_STEP,
+    CODING_PANEL_UPPER_FRAC,
+    CODING_PANEL_WHITE_MIN,
     MEASUREMENT_TOLERANCE_MM,
     PREVIEW_MAX_WIDTH_PX,
     PREVIEW_MAX_ZOOM,
@@ -278,22 +284,31 @@ def _near_label_mm(
     )
 
 
-def count_label_frames(
+@dataclass(frozen=True)
+class LabelFrame:
+    """One punch / die rectangle around an up, in page points."""
+
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+
+
+def list_label_frames(
     path: Path,
     label_width_mm: float | None,
     label_height_mm: float | None,
-) -> int | None:
-    """Count green punch-line frames around each up on a vendor composite.
+) -> list[LabelFrame]:
+    """Green punch-line frames around each up, unique by centre.
 
-    Each label on the imposition has a green punch / die line. That count is
-    the number of ups. None when no such frames could be read.
+    Empty when no such frames could be read.
     """
     try:
         with pymupdf.open(path) as document:
             if document.page_count < 1:
-                return None
+                return []
             page = document[0]
-            centers: list[tuple[float, float]] = []
+            found: list[LabelFrame] = []
             for drawing in page.get_drawings():
                 if not (
                     _is_punch_green(drawing.get("color"))
@@ -309,20 +324,164 @@ def count_label_frames(
                     width_mm, height_mm, label_width_mm, label_height_mm
                 ):
                     continue
-                centers.append(
-                    (points_to_mm((rect.x0 + rect.x1) / 2), points_to_mm((rect.y0 + rect.y1) / 2))
-                )
+                found.append(LabelFrame(rect.x0, rect.y0, rect.x1, rect.y1))
     except Exception as error:  # noqa: BLE001
         raise JobSpecError(f"Cannot read punch frames {path}: {error}") from error
-    if not centers:
-        return None
-    unique: list[tuple[float, float]] = []
+    unique: list[LabelFrame] = []
     gap = PUNCH_SIZE_TOLERANCE_MM
-    for x_mm, y_mm in centers:
-        if any(abs(x_mm - ox) <= gap and abs(y_mm - oy) <= gap for ox, oy in unique):
+    for frame in found:
+        x_mm = points_to_mm((frame.x0 + frame.x1) / 2)
+        y_mm = points_to_mm((frame.y0 + frame.y1) / 2)
+        if any(
+            abs(x_mm - points_to_mm((other.x0 + other.x1) / 2)) <= gap
+            and abs(y_mm - points_to_mm((other.y0 + other.y1) / 2)) <= gap
+            for other in unique
+        ):
             continue
-        unique.append((x_mm, y_mm))
-    return len(unique) if unique else None
+        unique.append(frame)
+    return unique
+
+
+def count_label_frames(
+    path: Path,
+    label_width_mm: float | None,
+    label_height_mm: float | None,
+) -> int | None:
+    """Count green punch-line frames around each up on a vendor composite.
+
+    Each label on the imposition has a green punch / die line. That count is
+    the number of ups. None when no such frames could be read.
+    """
+    frames = list_label_frames(path, label_width_mm, label_height_mm)
+    return len(frames) if frames else None
+
+
+def render_clip_png(
+    path: Path,
+    page_number: int,
+    frame: LabelFrame,
+    max_width_px: int | None = None,
+) -> bytes:
+    """Rasterise one up (or other clip) for a close-up compare."""
+    cap, max_zoom = clamp_preview_width(max_width_px)
+    try:
+        with pymupdf.open(path) as document:
+            if document.page_count < 1:
+                raise JobSpecError(f"File has no pages: {path}")
+            index = page_number - 1
+            if index < 0 or index >= document.page_count:
+                raise JobSpecError(
+                    f"Preview page {page_number} is outside 1–{document.page_count}"
+                )
+            page = document[index]
+            clip = pymupdf.Rect(frame.x0, frame.y0, frame.x1, frame.y1)
+            width = clip.width
+            if width <= 0:
+                raise JobSpecError(f"Clip has no width: {path}")
+            zoom = min(cap / width, max_zoom)
+            pixmap = page.get_pixmap(
+                matrix=pymupdf.Matrix(zoom, zoom),
+                clip=clip,
+                alpha=False,
+            )
+            return pixmap.tobytes("png")
+    except JobSpecError:
+        raise
+    except Exception as error:  # noqa: BLE001
+        raise JobSpecError(f"Cannot render clip {path}: {error}") from error
+
+
+def _white_fraction(
+    pixmap: object,
+    x0: int,
+    y0: int,
+    x1: int,
+    y1: int,
+) -> float:
+    """Share of near-white pixels in a pixmap rectangle."""
+    samples = getattr(pixmap, "samples", None)
+    width = int(getattr(pixmap, "width", 0))
+    height = int(getattr(pixmap, "height", 0))
+    channels = int(getattr(pixmap, "n", 3))
+    if not samples or width < 1 or height < 1:
+        return 0.0
+    x0 = max(0, min(width, x0))
+    x1 = max(0, min(width, x1))
+    y0 = max(0, min(height, y0))
+    y1 = max(0, min(height, y1))
+    if x1 <= x0 or y1 <= y0:
+        return 0.0
+    step = CODING_PANEL_SAMPLE_STEP
+    white = 0
+    total = 0
+    for row in range(y0, y1, step):
+        base = row * width * channels
+        for col in range(x0, x1, step):
+            index = base + col * channels
+            red = samples[index]
+            green = samples[index + 1]
+            blue = samples[index + 2]
+            total += 1
+            if (
+                red >= CODING_PANEL_WHITE_MIN
+                and green >= CODING_PANEL_WHITE_MIN
+                and blue >= CODING_PANEL_WHITE_MIN
+            ):
+                white += 1
+    return white / total if total else 0.0
+
+
+def coding_panel_in_pixmap(pixmap: object) -> bool:
+    """True when the right (or top) coding area is a large white rectangle."""
+    width = int(getattr(pixmap, "width", 0))
+    height = int(getattr(pixmap, "height", 0))
+    if width < 8 or height < 8:
+        return False
+    if width >= height:
+        x0 = int(width * (1.0 - CODING_PANEL_RIGHT_FRAC))
+        y1 = int(height * CODING_PANEL_UPPER_FRAC)
+        fraction = _white_fraction(pixmap, x0, 0, width, y1)
+    else:
+        y1 = int(height * CODING_PANEL_RIGHT_FRAC)
+        x0 = int(width * (1.0 - CODING_PANEL_UPPER_FRAC))
+        fraction = _white_fraction(pixmap, x0, 0, width, y1)
+    return fraction >= CODING_PANEL_MIN_WHITE_FRAC
+
+
+def coding_panel_on_file(
+    path: Path,
+    label_width_mm: float | None = None,
+    label_height_mm: float | None = None,
+) -> bool | None:
+    """True when a white Batch / Pkd / M.R.P. coding panel is visible.
+
+    On a composite, every punch-framed up must show the panel. On a single
+    label (artwork or first-approval), the coding corner of the page is read.
+    """
+    try:
+        with pymupdf.open(path) as document:
+            if document.page_count < 1:
+                return None
+            page = document[0]
+            frames = list_label_frames(path, label_width_mm, label_height_mm)
+            zoom = pymupdf.Matrix(CODING_PANEL_RENDER_ZOOM, CODING_PANEL_RENDER_ZOOM)
+            if frames:
+                return all(
+                    coding_panel_in_pixmap(
+                        page.get_pixmap(
+                            matrix=zoom,
+                            clip=pymupdf.Rect(frame.x0, frame.y0, frame.x1, frame.y1),
+                            alpha=False,
+                        )
+                    )
+                    for frame in frames
+                )
+            pixmap = page.get_pixmap(matrix=zoom, alpha=False)
+            return coding_panel_in_pixmap(pixmap)
+    except JobSpecError:
+        raise
+    except Exception as error:  # noqa: BLE001
+        raise JobSpecError(f"Cannot read coding panel {path}: {error}") from error
 
 
 def page_size_mm(path: Path) -> tuple[float, float]:

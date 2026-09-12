@@ -34,6 +34,18 @@ PUNCH_GREEN_MIN_G: float = 0.45
 PUNCH_GREEN_RATIO: float = 1.25
 PUNCH_MIN_AREA_MM2: float = 800.0
 
+# White Batch / Pkd / M.R.P. coding panel on a label. Values are left blank
+# on purpose so the press can ink-jet them later. The panel itself is a
+# large near-white rectangle on the right of a landscape label (or the top
+# of a portrait label). Gemini sometimes calls that empty box "missing".
+CODING_PANEL_WHITE_MIN: int = 240
+CODING_PANEL_RIGHT_FRAC: float = 0.38
+CODING_PANEL_UPPER_FRAC: float = 0.62
+CODING_PANEL_MIN_WHITE_FRAC: float = 0.08
+CODING_PANEL_SAMPLE_STEP: int = 2
+CODING_PANEL_RENDER_ZOOM: float = 1.5
+CODING_PANEL_CLOSEUP_WIDTH_PX: int = 1000
+
 
 def points_to_mm(points: float) -> float:
     """Convert a PDF user-space measurement in points to millimetres."""

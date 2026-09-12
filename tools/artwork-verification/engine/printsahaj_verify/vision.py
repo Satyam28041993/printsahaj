@@ -20,7 +20,8 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from printsahaj_verify.extract import render_preview_png
+from printsahaj_verify.constants import CODING_PANEL_CLOSEUP_WIDTH_PX
+from printsahaj_verify.extract import list_label_frames, render_clip_png, render_preview_png
 from printsahaj_verify.job_spec import JobSpecError
 from printsahaj_verify.reporting.terminal import FORBIDDEN_VERDICT_WORDS
 
@@ -68,17 +69,37 @@ Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 PLATE_REVIEW_PROMPT = """You review flexo separation plates against the label.
 {refs}
 
-For process / spot plates: look at the bowl or product photo, FSSAI mark,
-logo and printed wording that belong on that ink. Say whether the shape
-and wording match the client artwork and the first-approval label.
+For EACH plate, name the printed TEXT that sits on that ink, separately
+from images. This is a prepress plate check, not an art description.
 
-The last plate is often UV / varnish. A hole, white box or cut-out on the
-UV plate is the unvarnished window where batch number and MRP print.
-That window is expected. It is not a missing plate.
+Process C / M / Y plates usually carry only tonal values of the photo
+(bowl, glow, leaf). If there is little or no readable sentence on that
+ink, write text_on_plate as "no body copy". Do not list gold brand words
+as if they sit on cyan.
+
+Black usually carries ingredients, nutritional facts, usage, storage,
+manufacturer address, FSSAI number, website and phone.
+
+Spot gold / special usually carries the brand name, product name, claim
+badges, the words Batch No. / Pkd. / M.R.P. (labels only), volume and
+Product of India.
+
+Spot green often carries only a leaf / watermark — say if no sentence
+sits on it.
+
+The last plate is often UV / varnish. No type sits on varnish. A hole,
+white box or cut-out is the unvarnished coding window where batch number
+and MRP are coded later. That window is expected.
 
 Return JSON only:
 plates (array of objects): page (number, 1-based), name (string),
-matter_same (boolean), note (string), uv_cutouts (boolean)
+matter_same (boolean),
+text_on_plate (string): words / phrases actually visible on THIS ink,
+or "no body copy" / "no type",
+text_not_on_plate (string): important words that belong on other inks,
+images_note (string): bowl, logo, FSSAI, glow on this ink,
+note (string): one-line summary,
+uv_cutouts (boolean)
 
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
@@ -95,6 +116,16 @@ they match the artwork and the first-approval label. If one up is damaged,
 cropped or has different text or images, say which up (1-based, left to
 right, top to bottom).
 
+A white empty rectangle beside the words Batch No., Pkd. and M.R.P. is
+the coding window. Those values are left blank on purpose so the press
+can ink-jet them later. That white panel is design intent. Do not say
+the composite is missing the white box if a close-up of an up shows that
+white panel. Only flag it if the area is filled with ink where the
+artwork has white.
+
+Read Batch / Pkd / M.R.P. from the close-up images when they are present,
+not from the small full-sheet view.
+
 Return JSON only:
 ups_count (number),
 all_ups_same (boolean),
@@ -105,6 +136,26 @@ note (string)
 
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
+
+MISSING_CODING_PANEL_RE = re.compile(
+    r"(?:white\s+)?(?:batch(?:[\s/-]+coding)?|coding)\s+"
+    r"(?:box|panel|window|knock-?out).{0,160}"
+    r"(?:missing|absent|gone|not\s+(?:present|found|visible|there))"
+    r"|"
+    r"(?:missing|absent|gone|not\s+(?:present|found|visible)).{0,80}"
+    r"(?:white\s+)?(?:batch(?:[\s/-]+coding)?|coding)\s+"
+    r"(?:box|panel|window|knock-?out)",
+    re.IGNORECASE | re.DOTALL,
+)
+OTHER_COMPOSITE_DEFECT_RE = re.compile(
+    r"\b(?:cropped|torn|missing (?:logo|bowl|fssai|word)|text differs|"
+    r"different text|bowl missing|logo missing)\b",
+    re.IGNORECASE,
+)
+CODING_PANEL_PRESENT_NOTE = (
+    "The white Batch / Pkd / M.R.P. coding panel is present on every up. "
+    "Blank values in that panel are the coding window, not a missing box."
+)
 
 PLATE_REVIEW_TIMEOUT_SEC = 90
 PLATE_PREVIEW_WIDTH_PX = 720
@@ -120,6 +171,9 @@ class PlateVisionNote:
     matter_same: bool | None
     note: str
     uv_cutouts: bool | None
+    text_on_plate: str = ""
+    text_not_on_plate: str = ""
+    images_note: str = ""
 
 
 @dataclass(frozen=True)
@@ -559,6 +613,11 @@ def plate_notes_from_payload(payload: dict[str, object]) -> tuple[PlateVisionNot
                 matter_same=_as_bool(item.get("matter_same")),
                 note=scrub_vision_text(str(item.get("note") or "")),
                 uv_cutouts=_as_bool(item.get("uv_cutouts")),
+                text_on_plate=scrub_vision_text(str(item.get("text_on_plate") or "")),
+                text_not_on_plate=scrub_vision_text(
+                    str(item.get("text_not_on_plate") or "")
+                ),
+                images_note=scrub_vision_text(str(item.get("images_note") or "")),
             )
         )
     return tuple(notes)
@@ -633,7 +692,10 @@ def review_composite_ups(
     if not read_gemini_api_key():
         return None
     images: list[bytes] = []
-    refs = "The last image is the vendor composite with several labels (ups)."
+    refs = (
+        "One later image is the vendor composite with several labels (ups). "
+        "Close-ups of individual ups may follow that sheet."
+    )
     if artwork is not None:
         images.append(
             render_preview_png(artwork, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)
@@ -652,8 +714,70 @@ def review_composite_ups(
     images.append(
         render_preview_png(composite, 1, max_width_px=COMPOSITE_PREVIEW_WIDTH_PX)
     )
+    frames = list_label_frames(composite, None, None)
+    if frames:
+        images.append(
+            render_clip_png(
+                composite,
+                1,
+                frames[0],
+                max_width_px=CODING_PANEL_CLOSEUP_WIDTH_PX,
+            )
+        )
+        refs += (
+            " After the full composite, the next image is a close-up of the "
+            "first up. "
+        )
+        if len(frames) > 1:
+            images.append(
+                render_clip_png(
+                    composite,
+                    1,
+                    frames[-1],
+                    max_width_px=CODING_PANEL_CLOSEUP_WIDTH_PX,
+                )
+            )
+            refs += "The last image is a close-up of the last up. "
+        refs += "Read the Batch / Pkd / M.R.P. coding panel from the close-ups."
     payload, _model = _generate_gemini_json(
         _multi_image_body(COMPOSITE_REVIEW_PROMPT.format(refs=refs), images),
         PLATE_REVIEW_TIMEOUT_SEC,
     )
     return composite_notes_from_payload(payload)
+
+
+def claims_missing_coding_panel(note: str) -> bool:
+    """True when a note says the white Batch / Pkd / MRP box is gone."""
+    return bool(MISSING_CODING_PANEL_RE.search(note or ""))
+
+
+def correct_composite_notes(
+    notes: CompositeVisionNotes,
+    panel_on_composite: bool | None,
+    panel_on_refs: bool | None = None,
+) -> CompositeVisionNotes:
+    """Drop a false 'missing white coding panel' claim when the panel is on the ups.
+
+    Blank Batch / Pkd / M.R.P. values are design intent. A local pixmap
+    check of each up is the source of truth for whether the white panel
+    itself is present.
+    """
+    if panel_on_composite is not True:
+        return notes
+    if not claims_missing_coding_panel(notes.note):
+        return notes
+    if panel_on_refs is False:
+        return notes
+    if notes.damaged_up or notes.all_ups_same is False:
+        return notes
+    if OTHER_COMPOSITE_DEFECT_RE.search(notes.note or ""):
+        return notes
+    count = f"{notes.ups_count} ups match each other. " if notes.ups_count else ""
+    return CompositeVisionNotes(
+        ups_count=notes.ups_count,
+        all_ups_same=True if notes.all_ups_same is not False else notes.all_ups_same,
+        matches_artwork=True,
+        matches_approval=True,
+        damaged_up=None,
+        note=count + CODING_PANEL_PRESENT_NOTE,
+    )

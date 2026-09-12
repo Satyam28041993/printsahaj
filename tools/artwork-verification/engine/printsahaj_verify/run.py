@@ -32,6 +32,7 @@ from printsahaj_verify.checks.text_completeness import CHECK_TITLE as TEXT_TITLE
 from printsahaj_verify.checks.text_completeness import check_text_completeness
 from printsahaj_verify.extract import (
     DocumentText,
+    coding_panel_on_file,
     count_pdf_pages,
     hash_file,
     parse_vendor_header,
@@ -46,6 +47,7 @@ from printsahaj_verify.vision import (
     PlateVisionNote,
     VisionNotes,
     compare_label_previews,
+    correct_composite_notes,
     review_composite_ups,
     review_separation_plates,
 )
@@ -138,6 +140,36 @@ def _composite_vision_notes(
         )
     except (JobSpecError, OSError, TimeoutError, ValueError) as error:
         return None, str(error)
+
+
+def _coding_panel_flags(
+    files: JobFiles,
+    header: object,
+) -> tuple[bool | None, bool | None]:
+    """Local pixmap read of the white Batch / Pkd / MRP coding panel."""
+    label_w = getattr(header, "label_width_mm", None) if header else None
+    label_h = getattr(header, "label_height_mm", None) if header else None
+    panel_composite: bool | None = None
+    if files.vendor_composite is not None:
+        panel_composite = coding_panel_on_file(
+            files.vendor_composite,
+            label_w,
+            label_h,
+        )
+    seen: list[bool] = []
+    for path in (files.client_artwork, files.approval):
+        if path is None:
+            continue
+        flag = coding_panel_on_file(path)
+        if flag is not None:
+            seen.append(flag)
+    if True in seen:
+        panel_refs: bool | None = True
+    elif seen and all(item is False for item in seen):
+        panel_refs = False
+    else:
+        panel_refs = None
+    return panel_composite, panel_refs
 
 
 def _approval_label_mm(files: JobFiles) -> tuple[float, float] | None:
@@ -346,6 +378,13 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
     sep_pages = len(separations_doc.pages) if separations_doc else 0
     plate_notes, plate_vision_error = _plate_vision_notes(files, sep_pages)
     composite_notes, composite_vision_error = _composite_vision_notes(files)
+    panel_composite, panel_refs = _coding_panel_flags(files, header)
+    if composite_notes is not None:
+        composite_notes = correct_composite_notes(
+            composite_notes,
+            panel_composite,
+            panel_refs,
+        )
     approval_label = _approval_label_mm(files)
     geometry = check_geometry(
         spec,
@@ -388,6 +427,7 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
             counted_ups,
             composite_notes,
             composite_vision_error,
+            panel_composite,
         ),
         check_plate_review(separations_doc, plate_notes, plate_vision_error),
         check_headers(spec, vendor_docs),

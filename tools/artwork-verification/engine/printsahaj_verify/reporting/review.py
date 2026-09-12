@@ -30,6 +30,7 @@ APPROVAL_NOT_CHECKED = (
 VENDOR_NOT_CHECKED = (
     "Colour shade on each plate",
     "Trap and overprint intent",
+    "Printed Batch / Pkd / MRP values (the white coding panel is left blank on purpose)",
 )
 
 PRINT_NOT_CHECKED = (
@@ -421,13 +422,14 @@ def _plate_matter_items(result: CheckResult | None) -> list[dict[str, str]]:
         flag = result.observations.get(f"plate_{page}_same", "unread")
         note = result.observations.get(f"plate_{page}_note", "")
         title = f"Plate {page} {name} — text and images"
+        detail = _plate_text_detail(result.observations, page, note)
         if flag == "match":
             items.append(
                 _item(
                     f"plate_{page}",
                     title,
                     STATE_CLEAR,
-                    note
+                    detail
                     or (
                         "Wording and images on this ink match the client "
                         "artwork and the first-approval label."
@@ -435,17 +437,40 @@ def _plate_matter_items(result: CheckResult | None) -> list[dict[str, str]]:
                 )
             )
         elif flag == "mismatch":
-            items.append(_item(f"plate_{page}", title, STATE_JUDGE, note or "Matter differs."))
+            items.append(
+                _item(f"plate_{page}", title, STATE_JUDGE, detail or "Matter differs.")
+            )
         else:
             items.append(
                 _item(
                     f"plate_{page}",
                     title,
                     STATE_WAIT,
-                    note or result.observations.get("vision") or "Matter was not read.",
+                    detail or result.observations.get("vision") or "Matter was not read.",
                 )
             )
     return items
+
+
+def _plate_text_detail(
+    observations: dict[str, str],
+    page: int,
+    note: str,
+) -> str:
+    """Show text on this ink first, then images, then the short note."""
+    parts: list[str] = []
+    text_on = observations.get(f"plate_{page}_text", "")
+    text_not = observations.get(f"plate_{page}_text_not", "")
+    images = observations.get(f"plate_{page}_images", "")
+    if text_on:
+        parts.append(f"Text on this ink: {text_on}")
+    if text_not:
+        parts.append(f"Not on this ink: {text_not}")
+    if images:
+        parts.append(f"Images: {images}")
+    if note and note not in " ".join(parts):
+        parts.append(note)
+    return "\n".join(parts)
 
 
 def _print_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:

@@ -81,6 +81,12 @@ def check_plate_review(
             else "unread"
         )
         observations[f"plate_{page}_same"] = flag
+        if note.text_on_plate:
+            observations[f"plate_{page}_text"] = note.text_on_plate
+        if note.text_not_on_plate:
+            observations[f"plate_{page}_text_not"] = note.text_not_on_plate
+        if note.images_note:
+            observations[f"plate_{page}_images"] = note.images_note
         detail = note.note or name
         if note.uv_cutouts is True:
             observations[f"plate_{page}_uv"] = "unvarnished window"

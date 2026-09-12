@@ -22,6 +22,7 @@ def check_composite_matter(
     counted_ups: int | None,
     notes: CompositeVisionNotes | None = None,
     vision_error: str | None = None,
+    coding_panel: bool | None = None,
 ) -> CheckResult:
     """Say whether every up matches the artwork and first-approval label."""
     if composite is None:
@@ -34,6 +35,9 @@ def check_composite_matter(
     observations: dict[str, str] = {
         "counted_ups": str(counted_ups) if counted_ups is not None else "none",
         "verified": "yes" if notes else "no",
+        "coding_panel": (
+            "yes" if coding_panel is True else "no" if coding_panel is False else "unread"
+        ),
     }
     if notes is None:
         return CheckResult(
