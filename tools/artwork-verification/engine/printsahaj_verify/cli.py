@@ -24,17 +24,33 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "job_folder",
         type=Path,
+        nargs="?",
         help="Folder with job.json and, when present, the job PDFs",
     )
+    parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Start the local desk (API + Flutter web build)",
+    )
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args(argv)
 
+    if args.serve:
+        from printsahaj_verify.server import serve
+
+        serve(args.host, args.port)
+        return 0
+
     folder = args.job_folder
+    if folder is None:
+        parser.error("job folder is required unless --serve is set")
     if not folder.is_dir():
         print(f"Not a folder: {folder}", file=sys.stderr)
         return 1
 
     try:
-        job, results = run_job(folder)
+        job, results, _files = run_job(folder)
     except JobSpecError as error:
         print(f"Job file problem: {error}", file=sys.stderr)
         return 2

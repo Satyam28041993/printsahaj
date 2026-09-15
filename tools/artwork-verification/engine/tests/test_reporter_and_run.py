@@ -68,23 +68,24 @@ class KalonjiRegressionTests(unittest.TestCase):
             encoding="utf-8",
         )
         write_blank_pdf(folder / "separations.pdf", 6)
-        job, results = run_job(folder)
+        job, results, _files = run_job(folder)
+        plate = next(item for item in results if item.check_id == "plate_count")
         self.assertEqual(job.declared_units, 7)
-        self.assertEqual(len(results), 1)
-        self.assertTrue(results[0].ran)
-        self.assertEqual(len(results[0].findings), 1)
+        self.assertTrue(plate.ran)
+        self.assertEqual(len(plate.findings), 1)
         report = format_report(job, results)
         self.assertIn("Varnish", report)
-        self.assertIn("6", results[0].findings[0].found or "")
+        self.assertIn("6", plate.findings[0].found or "")
         for word in FORBIDDEN_VERDICT_WORDS:
             self.assertNotIn(word, report)
 
     def test_missing_pdf_is_stated_not_skipped(self) -> None:
         folder = KALONJI_JOB.parent
-        job, results = run_job(folder)
+        job, results, _files = run_job(folder)
+        plate = next(item for item in results if item.check_id == "plate_count")
         self.assertEqual(job.job_id, "CGM2026-27-1326")
-        self.assertFalse(results[0].ran)
-        self.assertIn("not found", (results[0].not_run_reason or "").lower())
+        self.assertFalse(plate.ran)
+        self.assertIn("not found", (plate.not_run_reason or "").lower())
 
     def test_ambiguous_pdfs_are_loud(self) -> None:
         folder = Path(tempfile.mkdtemp())

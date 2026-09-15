@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrintSahaj · Artwork Verification</title>
+  <style>
+    :root {
+      --paper: #f3efe6;
+      --ink: #16120c;
+      --muted: #6d6458;
+      --line: #ddd4c6;
+      --gold: #9a7b2f;
+      --card: #fffdf8;
+      --issue: #8f2d1f;
+      --clear: #2c6a4a;
+      --judge: #8a5a12;
+      --wait: #8a8378;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    header {
+      padding: 28px 32px 20px;
+      border-bottom: 1px solid var(--line);
+      background: #faf7f0;
+    }
+    header p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+    h1 { margin: 0; font-size: 28px; letter-spacing: -0.03em; font-weight: 600; }
+    .kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+    main { max-width: 980px; margin: 0 auto; padding: 28px 24px 48px; }
+    button, .btn {
+      background: var(--ink);
+      color: #f7f1e6;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.ghost, .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      margin: 6px 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: 15px "Segoe UI", system-ui, sans-serif;
+      background: #fff;
+    }
+    label { font-size: 12px; color: var(--muted); letter-spacing: 0.04em; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin: 12px 0;
+    }
+    .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .err { color: var(--issue); }
+    .muted { color: var(--muted); font-size: 13px; }
+    .review-row .muted { white-space: pre-wrap; }
+    .hidden { display: none; }
+    .preview { max-width: 100%; max-height: 280px; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; cursor: zoom-in; }
+    .uploading { color: var(--gold); font-weight: 600; margin: 12px 0 8px; }
+    .compare-pick { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin: 10px 0 8px; cursor: pointer; }
+    .compare-pick input { width: auto; margin: 0; }
+    .viewer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .viewer-grid.one { grid-template-columns: 1fr; }
+    .viewer-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .viewer-stage {
+      position: relative;
+      overflow: auto;
+      background: #1a1712;
+      min-height: 0;
+      height: calc(100vh - 150px);
+      border-radius: 10px;
+    }
+    .viewer-img { display: block; transform-origin: top left; }
+    .loupe {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      border: 3px solid #fffdf8;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+      pointer-events: none;
+      background-repeat: no-repeat;
+    }
+    .loupe-btn.active { outline: 2px solid var(--gold); }
+    .preview-nav { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .stepper { display: flex; gap: 8px; margin: 8px 0 24px; }
+    .step {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      cursor: pointer;
+      text-align: left;
+    }
+    .step.active { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+    .step.locked { opacity: 0.5; cursor: not-allowed; }
+    .step small { display: block; color: var(--muted); margin-top: 4px; }
+    .review-row {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      align-items: start;
+    }
+    .tick {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .tick.clear { background: #e4f3ea; color: var(--clear); }
+    .tick.issue { background: #f8e6e3; color: var(--issue); }
+    .tick.judge { background: #f7eedc; color: var(--judge); }
+    .tick.wait, .tick.eye { background: #eeeae3; color: var(--wait); }
+    .job-card { cursor: pointer; }
+    .job-card:hover { border-color: var(--gold); }
+    .pick-wrap { position: relative; }
+    .file-pick {
+      position: absolute;
+      width: 0;
+      height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modal-back {
+      position: fixed;
+      inset: 0;
+      background: rgba(22, 18, 12, 0.45);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .modal-back.is-open {
+      display: flex;
+      pointer-events: auto;
+    }
+    .modal-back[hidden] {
+      display: none !important;
+      pointer-events: none !important;
+    }
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      max-width: 640px;
+      width: 100%;
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+      padding: 22px 24px 28px;
+    }
+    .modal-back.viewer-open {
+      padding: 8px;
+      align-items: stretch;
+    }
+    .modal.viewer-modal {
+      max-width: calc(100vw - 16px);
+      width: calc(100vw - 16px);
+      max-height: calc(100vh - 16px);
+      height: calc(100vh - 16px);
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal.viewer-modal .viewer-grid { flex: 1; min-height: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="kicker">PrintSahaj</div>
+    <h1>Artwork Verification</h1>
+    <p>First approval, then vendor plates, then print. This is not the website. Start with start-tool.bat.</p>
+  </header>
+  <main>
+    <section id="list-view">
+      <div class="row">
+        <strong>Jobs</strong>
+        <div>
+          <button type="button" class="ghost" id="clear-btn">Delete all jobs</button>
+          <button type="button" id="new-btn">New job</button>
+        </div>
+      </div>
+      <p id="list-err" class="err"></p>
+      <div id="job-list"></div>
+    </section>
+
+    <section id="new-view" class="hidden">
+      <button type="button" class="ghost" id="back-list">← Jobs</button>
+      <h2>New job</h2>
+      <p class="muted">Enter the job code. The colour line is read from the first-approval sheet.</p>
+      <label>Job code</label>
+      <input id="job_id" autocomplete="off" />
+      <label>Artwork name</label>
+      <input id="file_name" autocomplete="off" />
+      <label>Customer</label>
+      <input id="customer" autocomplete="off" />
+      <p id="new-err" class="err"></p>
+      <button type="button" id="save-job">Create job</button>
+    </section>
+
+    <section id="job-view" class="hidden">
+      <button type="button" class="ghost" id="back-jobs">← Jobs</button>
+      <h2 id="job-title"></h2>
+      <p id="job-hint" class="muted"></p>
+      <div class="stepper" id="stepper"></div>
+      <p id="job-err" class="err"></p>
+      <div id="stage-panel"></div>
+    </section>
+  </main>
+  <div id="review-modal" class="modal-back" hidden></div>
+  <div id="viewer-modal" class="modal-back" hidden></div>
+  <script>
+    const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
+    const SLOT_COPY = {
+      client_artwork: ["Client artwork", "PNG or PDF from the client"],
+      approval: ["First approval", "Label-for-approval sheet with colours and plates written on it"],
+      vendor_composite: ["Vendor composite", "CGM PDF — ups, cylinder, paper, Col:"],
+      separations: ["Separations", "SEP PDF — one page per plate"],
+      printout: ["Printout", "Photo after the machine print"],
+    };
+    const TICK = { issue: "✗", clear: "✓", judge: "!", wait: "—", eye: "◉" };
+    const ZOOM_MIN = 0.25;
+    const ZOOM_MAX = 8;
+    const ZOOM_STEP = 0.25;
+    const LOUPE_SIZE = 280;
+    const LOUPE_MAG = 3;
+    const VIEWER_WIDTH = 2800;
+    let currentId = "";
+    let snapshot = null;
+    let checklist = null;
+    let review = null;
+    let activeStage = "approval";
+    const uploadingRoles = new Set();
+    const comparePick = new Set();
+
+    function show(id) {
+      document.querySelectorAll("main > section").forEach((el) => el.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function j(path, opts) {
+      const res = await fetch(path, opts);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    }
+
+    function previewUrl(role, page, width) {
+      return "/api/jobs/" + encodeURIComponent(currentId) + "/files/" +
+        encodeURIComponent(role) + "/preview?page=" + page +
+        (width ? "&width=" + width : "") + "&v=" + Date.now();
+    }
+
+    function stageLocked(stageId, defs, checked) {
+      const order = defs.map((d) => d.stage_id);
+      const idx = order.indexOf(stageId);
+      if (idx <= 0) return false;
+      return !checked.includes(order[idx - 1]);
+    }
+
+    function applySavedReview(saved) {
+      if (!saved) {
+        checklist = null;
+        review = null;
+        return;
+      }
+      checklist = saved.checklist || null;
+      review = saved.review || null;
+    }
+
+    async function loadList() {
+      const data = await j("/api/jobs");
+      const box = document.getElementById("job-list");
+      if (!data.jobs.length) {
+        box.innerHTML = '<p class="muted">No jobs yet. Create a new job and upload fresh files.</p>';
+        return;
+      }
+      box.innerHTML = data.jobs.map((job) => (
+        `<div class="card job-card" data-open="${escapeHtml(job.job_id)}"><div class="row">
+          <div><strong>${escapeHtml(job.job_id)}</strong><div class="muted">${escapeHtml(job.file_name)} · ${escapeHtml(job.customer || "")}</div></div>
+          <span class="muted">Open</span>
+        </div></div>`
+      )).join("");
+      box.querySelectorAll("[data-open]").forEach((el) => {
+        el.onclick = () => openJob(el.getAttribute("data-open"));
+      });
+    }
+
+    async function openJob(id) {
+      currentId = id;
+      snapshot = await j("/api/jobs/" + encodeURIComponent(id));
+      document.getElementById("job-title").textContent = id + "  ·  " + (snapshot.job.file_name || "");
+      applySavedReview(snapshot.last_review);
+      const checked = (checklist && checklist.stages_checked) || snapshot.stages_checked || [];
+      activeStage = checked.includes("print") ? "print" : checked.includes("vendor") ? "vendor" : "approval";
+      renderJob();
+      show("job-view");
+    }
+
+    function renderJob() {
+      const defs = snapshot.stage_defs || [];
+      const checked = (checklist && checklist.stages_checked) || snapshot.stages_checked || [];
+      const stepper = document.getElementById("stepper");
+      stepper.innerHTML = defs.map((def) => {
+        const locked = stageLocked(def.stage_id, defs, checked);
+        const on = def.stage_id === activeStage ? " active" : "";
+        const lock = locked ? " locked" : "";
+        const lockHint = locked
+          ? (def.stage_id === "print"
+            ? "Check step 2 (vendor plates) first"
+            : "Check the previous step first")
+          : def.hint;
+        return `<button type="button" class="step${on}${lock}" data-stage="${def.stage_id}">
+          ${escapeHtml(def.title)}<small>${escapeHtml(lockHint)}</small>
+        </button>`;
+      }).join("");
+      stepper.querySelectorAll("[data-stage]").forEach((btn) => {
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-stage");
+          if (stageLocked(id, defs, checked)) {
+            document.getElementById("job-err").textContent =
+              id === "print"
+                ? "Check step 2 first — then step 3 (printout) unlocks."
+                : "Check the previous step first.";
+            return;
+          }
+          document.getElementById("job-err").textContent = "";
+          activeStage = id;
+          renderJob();
+        };
+      });
+      const def = defs.find((d) => d.stage_id === activeStage) || defs[0];
+      const geminiHint = snapshot.gemini_ok
+        ? "Gemini: ON — Google accepted the key."
+        : snapshot.gemini
+          ? "Gemini: key is present but Google did not accept it. Check gemini-key.txt."
+          : "Gemini: OFF — paste the key in gemini-key.txt next to start-tool.bat, save, restart the black window.";
+      document.getElementById("job-hint").textContent = (def ? def.hint + " " : "") + geminiHint;
+      document.getElementById("stage-panel").innerHTML = renderStage(def, checked, defs);
+      bindStage(def, defs, checked);
+    }
+
+    function slotCard(role) {
+      const info = (snapshot.slots || {})[role];
+      const copy = SLOT_COPY[role] || [role, ""];
+      const have = info && info.name;
+      const pages = info && info.pages ? Number(info.pages) : 1;
+      const uploading = uploadingRoles.has(role);
+      const checked = comparePick.has(role) ? " checked" : "";
+      const preview = uploading
+        ? `<p class="uploading">Uploading…</p>`
+        : have ? `
+        <label class="compare-pick">
+          <input type="checkbox" data-compare="${role}"${checked} />
+          Compare
+        </label>
+        <img class="preview" data-role="${role}" data-page="1" data-pages="${pages}"
+          src="${previewUrl(role, 1)}" alt="${copy[0]} preview" />
+        <p class="muted">${escapeHtml(info.name)} · ${escapeHtml(info.kind)}${pages > 1 ? " · " + pages + " pages" : ""}</p>
+        ${pages > 1 ? `<div class="preview-nav">
+          <button type="button" class="ghost" data-preview-role="${role}" data-delta="-1">Prev</button>
+          <span class="muted" data-page-label="${role}">Page 1 / ${pages}</span>
+          <button type="button" class="ghost" data-preview-role="${role}" data-delta="1">Next</button>
+        </div>` : ""}` : `<p class="muted">${escapeHtml(copy[1])}</p>`;
+      return `<div class="card">
+        <div class="row">
+          <div><strong>${escapeHtml(copy[0])}</strong></div>
+          <div class="pick-wrap">
+            <input class="file-pick" type="file" accept="${FILE_ACCEPT}" data-role="${role}" />
+            <button type="button" class="ghost" data-pick="${role}">${have ? "Replace" : "Upload"}</button>
+          </div>
+        </div>
+        ${preview}
+      </div>`;
+    }
+
+    function reviewItems(stageId) {
+      const rows = ((review && review.stages) || []).find((s) => s.stage_id === stageId);
+      return rows && rows.checked ? rows.items : [];
+    }
+
+    function renderReviewRows(items) {
+      if (!items.length) {
+        return '<p class="muted">Press Check this step for a point-wise review.</p>';
+      }
+      return items.map((item) => `
+        <div class="review-row">
+          <div class="tick ${item.state}" title="${escapeHtml(item.state)}">${TICK[item.state] || "—"}</div>
+          <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div></div>
+        </div>`).join("");
+    }
+
+    function renderStage(def, checked, defs) {
+      if (!def) return "";
+      const items = reviewItems(def.stage_id);
+      const next = defs[defs.findIndex((d) => d.stage_id === def.stage_id) + 1];
+      const nextOpen = next && !stageLocked(next.stage_id, defs, checked);
+      return `
+        <div class="grid">${def.slots.map(slotCard).join("")}</div>
+        <div class="row" style="margin:16px 0">
+          <div>
+            <button type="button" id="check-btn">Check this step</button>
+            ${items.length ? '<button type="button" class="ghost" id="detail-btn">See review detail</button>' : ""}
+          </div>
+          ${nextOpen ? `<button type="button" id="next-btn">Go to ${escapeHtml(next.title)}</button>` : `<span class="muted">${next ? "The next step unlocks after this one is checked." : ""}</span>`}
+        </div>
+        <div class="card"><strong>Review</strong>${renderReviewRows(items)}
+          ${snapshot && snapshot.gemini ? "" : '<p class="muted">Image wording, bowl place, logo place, batch and MRP on a PNG need a Gemini key. Put it in gemini-key.txt next to start-tool.bat, restart the black window, then Check this step again. Or compare the two previews side by side.</p>'}
+        </div>
+        ${def.stage_id === "print" ? `<div class="card">
+          <label>Remark</label>
+          <input id="remark-by" placeholder="Name" />
+          <textarea id="remark-text" rows="3" placeholder="What looks right or wrong"></textarea>
+          <button type="button" class="ghost" id="save-remark">Save remark</button>
+        </div>` : ""}
+      `;
+    }
+
+    function openReviewDetail(def) {
+      const rows = ((review && review.stages) || []).find((s) => s.stage_id === def.stage_id);
+      if (!rows || !rows.checked) return;
+      const skipped = (rows.not_checked || []).map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+      const box = document.getElementById("review-modal");
+      box.className = "modal-back is-open";
+      box.hidden = false;
+      box.innerHTML = `<div class="modal">
+        <div class="row">
+          <strong>${escapeHtml(rows.title)} — review detail</strong>
+          <button type="button" class="ghost" id="close-review">Close</button>
+        </div>
+        <p class="muted">A green tick means this check did not flag a problem. It is not a sign-off.</p>
+        ${renderReviewRows(rows.items)}
+        <div class="card">
+          <strong>What this step did not check</strong>
+          <ul class="muted">${skipped}</ul>
+        </div>
+      </div>`;
+      document.getElementById("close-review").onclick = closeReviewDetail;
+      box.onclick = (event) => { if (event.target === box) closeReviewDetail(); };
+    }
+
+    function closeReviewDetail() {
+      const box = document.getElementById("review-modal");
+      box.className = "modal-back";
+      box.hidden = true;
+      box.innerHTML = "";
+      box.onclick = null;
+    }
+
+    function bindStage(def, defs, checked) {
+      document.querySelectorAll("[data-pick]").forEach((btn) => {
+        btn.onclick = (event) => {
+          event.preventDefault();
+          const role = btn.getAttribute("data-pick");
+          const input = document.querySelector('input.file-pick[data-role="' + role + '"]');
+          if (input) input.click();
+        };
+      });
+      document.querySelectorAll("input.file-pick[data-role]").forEach((input) => {
+        input.onchange = () => {
+          const file = input.files && input.files[0];
+          input.value = "";
+          upload(input.getAttribute("data-role"), file);
+        };
+      });
+      document.querySelectorAll("[data-preview-role]").forEach((btn) => {
+        btn.onclick = () => shiftPreview(btn.getAttribute("data-preview-role"), Number(btn.getAttribute("data-delta")));
+      });
+      document.querySelectorAll("input[data-compare]").forEach((box) => {
+        box.onchange = () => {
+          const role = box.getAttribute("data-compare");
+          if (box.checked) comparePick.add(role);
+          else comparePick.delete(role);
+        };
+      });
+      document.querySelectorAll("img.preview").forEach((img) => {
+        img.onclick = () => {
+          const role = img.getAttribute("data-role");
+          const selected = [...document.querySelectorAll("input[data-compare]:checked")]
+            .map((el) => el.getAttribute("data-compare"));
+          if (selected.length >= 2 && selected.includes(role)) {
+            openViewer(selected);
+          } else {
+            openViewer([role]);
+          }
+        };
+      });
+      const checkBtn = document.getElementById("check-btn");
+      if (checkBtn) checkBtn.onclick = () => checkStage(def.stage_id, checkBtn);
+      const detailBtn = document.getElementById("detail-btn");
+      if (detailBtn) detailBtn.onclick = () => openReviewDetail(def);
+      const nextBtn = document.getElementById("next-btn");
+      if (nextBtn) nextBtn.onclick = () => {
+        const next = defs[defs.findIndex((d) => d.stage_id === def.stage_id) + 1];
+        if (!next || stageLocked(next.stage_id, defs, checked)) return;
+        activeStage = next.stage_id;
+        renderJob();
+      };
+      const saveRemark = document.getElementById("save-remark");
+      if (saveRemark) saveRemark.onclick = async () => {
+        await j("/api/jobs/" + encodeURIComponent(currentId) + "/remarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            remark: document.getElementById("remark-text").value,
+            by: document.getElementById("remark-by").value,
+          }),
+        });
+        document.getElementById("remark-text").value = "";
+      };
+    }
+
+    function shiftPreview(role, delta) {
+      const img = document.querySelector('img.preview[data-role="' + role + '"]');
+      if (!img) return;
+      const max = Number(img.getAttribute("data-pages") || "1");
+      let page = Number(img.getAttribute("data-page") || "1") + delta;
+      if (page < 1) page = max;
+      if (page > max) page = 1;
+      img.setAttribute("data-page", String(page));
+      img.src = previewUrl(role, page);
+      const label = document.querySelector('[data-page-label="' + role + '"]');
+      if (label) label.textContent = "Page " + page + " / " + max;
+    }
+
+    async function upload(role, file) {
+      if (!file) return;
+      document.getElementById("job-err").textContent = "";
+      uploadingRoles.add(role);
+      renderJob();
+      try {
+        const body = new FormData();
+        body.append("role", role);
+        body.append("file", file, file.name);
+        const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
+      } catch (err) {
+        document.getElementById("job-err").textContent = err.message;
+      } finally {
+        uploadingRoles.delete(role);
+        renderJob();
+      }
+    }
+
+    function viewerPane(role) {
+      const info = (snapshot.slots || {})[role] || {};
+      const copy = (SLOT_COPY[role] || [role])[0];
+      const pages = info.pages ? Number(info.pages) : 1;
+      const page = 1;
+      return `<div class="viewer-pane" data-viewer-role="${role}">
+        <div class="viewer-toolbar">
+          <strong>${escapeHtml(copy)}</strong>
+          <button type="button" class="ghost" data-zoom="${role}" data-zoom-delta="-1">Zoom out</button>
+          <span class="muted" data-zoom-label="${role}">100%</span>
+          <button type="button" class="ghost" data-zoom="${role}" data-zoom-delta="1">Zoom in</button>
+          <button type="button" class="ghost loupe-btn" data-loupe="${role}" title="Magnifying glass">🔍 Magnifier</button>
+          ${pages > 1 ? `<button type="button" class="ghost" data-viewer-page="${role}" data-delta="-1">Prev</button>
+            <span class="muted" data-viewer-page-label="${role}">Page 1 / ${pages}</span>
+            <button type="button" class="ghost" data-viewer-page="${role}" data-delta="1">Next</button>` : ""}
+        </div>
+        <div class="viewer-stage" data-stage="${role}">
+          <img class="viewer-img" data-viewer-img="${role}" data-page="${page}" data-pages="${pages}"
+            src="${previewUrl(role, page, VIEWER_WIDTH)}" alt="${escapeHtml(copy)} full preview" />
+          <div class="loupe hidden" data-loupe-lens="${role}"></div>
+        </div>
+      </div>`;
+    }
+
+    function openViewer(roles) {
+      const box = document.getElementById("viewer-modal");
+      const many = roles.length > 1;
+      box.className = "modal-back is-open viewer-open";
+      box.hidden = false;
+      box.innerHTML = `<div class="modal viewer-modal">
+        <div class="row">
+          <strong>${many ? "Compare" : "Full preview"}</strong>
+          <button type="button" class="ghost" id="close-viewer">Close</button>
+        </div>
+        <p class="muted">${many ? "Both files, side by side. Zoom in until the type is readable, or use the magnifying glass." : "Zoom in until the type is readable, or use the magnifying glass."}</p>
+        <div class="viewer-grid${many ? "" : " one"}">${roles.map(viewerPane).join("")}</div>
+      </div>`;
+      document.getElementById("close-viewer").onclick = closeViewer;
+      box.onclick = (event) => { if (event.target === box) closeViewer(); };
+      roles.forEach(bindViewerPane);
+    }
+
+    function closeViewer() {
+      const box = document.getElementById("viewer-modal");
+      box.className = "modal-back";
+      box.hidden = true;
+      box.innerHTML = "";
+      box.onclick = null;
+    }
+
+    function bindViewerPane(role) {
+      let scale = 1;
+      const img = document.querySelector('[data-viewer-img="' + role + '"]');
+      const label = document.querySelector('[data-zoom-label="' + role + '"]');
+      const applyZoom = () => {
+        img.style.zoom = String(scale);
+        if (label) label.textContent = Math.round(scale * 100) + "%";
+      };
+      document.querySelectorAll('[data-zoom="' + role + '"]').forEach((btn) => {
+        btn.onclick = () => {
+          const delta = Number(btn.getAttribute("data-zoom-delta"));
+          scale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale + delta * ZOOM_STEP * 4));
+          applyZoom();
+        };
+      });
+      img.addEventListener("wheel", (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        scale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, scale + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP)));
+        applyZoom();
+      }, { passive: false });
+      document.querySelectorAll('[data-viewer-page="' + role + '"]').forEach((btn) => {
+        btn.onclick = () => {
+          const max = Number(img.getAttribute("data-pages") || "1");
+          let page = Number(img.getAttribute("data-page") || "1") + Number(btn.getAttribute("data-delta"));
+          if (page < 1) page = max;
+          if (page > max) page = 1;
+          img.setAttribute("data-page", String(page));
+          img.src = previewUrl(role, page, VIEWER_WIDTH);
+          const pageLabel = document.querySelector('[data-viewer-page-label="' + role + '"]');
+          if (pageLabel) pageLabel.textContent = "Page " + page + " / " + max;
+        };
+      });
+      const stage = document.querySelector('[data-stage="' + role + '"]');
+      const lens = document.querySelector('[data-loupe-lens="' + role + '"]');
+      const loupeBtn = document.querySelector('[data-loupe="' + role + '"]');
+      let loupeOn = false;
+      loupeBtn.onclick = () => {
+        loupeOn = !loupeOn;
+        loupeBtn.classList.toggle("active", loupeOn);
+        if (!loupeOn) lens.classList.add("hidden");
+      };
+      stage.onmousemove = (event) => {
+        if (!loupeOn) return;
+        const rect = img.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) {
+          lens.classList.add("hidden");
+          return;
+        }
+        lens.classList.remove("hidden");
+        const stageRect = stage.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        lens.style.left = (event.clientX - stageRect.left - LOUPE_SIZE / 2 + stage.scrollLeft) + "px";
+        lens.style.top = (event.clientY - stageRect.top - LOUPE_SIZE / 2 + stage.scrollTop) + "px";
+        const natW = img.naturalWidth || rect.width;
+        const natH = img.naturalHeight || rect.height;
+        const sx = natW / rect.width;
+        const sy = natH / rect.height;
+        lens.style.backgroundImage = "url(" + img.src + ")";
+        lens.style.backgroundSize = (natW * LOUPE_MAG) + "px " + (natH * LOUPE_MAG) + "px";
+        lens.style.backgroundPosition =
+          (-(x * sx * LOUPE_MAG - LOUPE_SIZE / 2)) + "px " +
+          (-(y * sy * LOUPE_MAG - LOUPE_SIZE / 2)) + "px";
+      };
+      stage.onmouseleave = () => lens.classList.add("hidden");
+    }
+
+    async function checkStage(stage, button) {
+      try {
+        document.getElementById("job-err").textContent = "";
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Checking…";
+        }
+        const report = await j("/api/jobs/" + encodeURIComponent(currentId) + "/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stage }),
+        });
+        checklist = report.checklist;
+        review = report.review;
+        snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
+        snapshot.stages_checked = report.stages_checked || snapshot.stages_checked;
+        renderJob();
+      } catch (err) {
+        document.getElementById("job-err").textContent = err.message;
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Check this step";
+        }
+      }
+    }
+
+    document.getElementById("new-btn").onclick = () => { document.getElementById("new-err").textContent = ""; show("new-view"); };
+    document.getElementById("back-list").onclick = () => { show("list-view"); loadList(); };
+    document.getElementById("back-jobs").onclick = () => { show("list-view"); loadList(); };
+    document.getElementById("clear-btn").onclick = async () => {
+      if (!window.confirm("Delete every job on this computer? Uploaded files will be removed.")) return;
+      document.getElementById("list-err").textContent = "";
+      try {
+        await j("/api/jobs", { method: "DELETE" });
+        currentId = "";
+        snapshot = null;
+        checklist = null;
+        review = null;
+        await loadList();
+      } catch (err) {
+        document.getElementById("list-err").textContent = err.message;
+      }
+    };
+
+    document.getElementById("save-job").onclick = async () => {
+      try {
+        const payload = {
+          job_id: document.getElementById("job_id").value.trim(),
+          file_name: document.getElementById("file_name").value.trim(),
+          customer: document.getElementById("customer").value.trim(),
+          print_type: "Flexo",
+        };
+        await j("/api/jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        openJob(payload.job_id);
+      } catch (err) {
+        document.getElementById("new-err").textContent = err.message;
+      }
+    };
+
+    loadList().then(() => {
+      const startJob = new URLSearchParams(location.search).get("job");
+      if (startJob) return openJob(startJob);
+    }).catch((err) => {
+      document.getElementById("job-list").innerHTML =
+        '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
+        '<p class="muted">' + escapeHtml(err.message) + "</p></div>";
+    });
+  </script>
+</body>
+</html>

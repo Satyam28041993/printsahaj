@@ -45,6 +45,17 @@ class Finding:
     #: Where in the job to go and look.
     location: str | None = None
 
+    def to_dict(self) -> dict[str, str | None]:
+        """JSON-ready finding. Never includes a verdict word."""
+        return {
+            "check_id": self.check_id,
+            "summary": self.summary,
+            "certainty": self.certainty.value,
+            "expected": self.expected,
+            "found": self.found,
+            "location": self.location,
+        }
+
 
 @dataclass(frozen=True)
 class CheckResult:
@@ -69,3 +80,14 @@ class CheckResult:
     def ran(self) -> bool:
         """True when the check completed, whether or not it flagged anything."""
         return self.not_run_reason is None
+
+    def to_dict(self) -> dict[str, object]:
+        """JSON-ready check result."""
+        return {
+            "check_id": self.check_id,
+            "title": self.title,
+            "findings": [finding.to_dict() for finding in self.findings],
+            "observations": self.observations,
+            "not_run_reason": self.not_run_reason,
+            "ran": self.ran,
+        }

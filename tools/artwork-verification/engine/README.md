@@ -1,14 +1,15 @@
-# Engine — pehla version
+# Engine
 
-Computer par chalta hai. Website nahi. Phone app nahi.
+The checks live here. The screen is the Flutter `app/` or `static/desk.html`.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+.venv/bin/python -m printsahaj_verify --serve
 .venv/bin/python -m printsahaj_verify ../samples/kalonji
 ```
 
-Purana probe (file ke andar kya hai, check nahi):
+Older probe (what is in the file, no check):
 
 ```bash
 .venv/bin/python probe.py ../samples/kalonji

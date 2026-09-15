@@ -1,42 +1,23 @@
 # Artwork Verification
 
-Yeh PrintSahaj **website nahi** hai.
+This is not the PrintSahaj website. The website does **not** start this tool.
 
-PrintSahaj website par kai tools aayenge. Yeh unme se **pehla tool** hai.
-Website par iska sirf **link** hoga. Tool ka saara kaam is folder mein hai.
+Opening `http://127.0.0.1:8765` in Chrome is not enough. That address only works while the Python server is running on this computer. Otherwise Chrome shows: **This site can’t be reached / refused to connect**.
 
-```
-artwork-verification/
-  engine/    pehla version — computer par chalta hai
-  app/       kal yahan phone app / web app aayegi
-  samples/   test jobs (asli customer files yahan rakhna, git mein nahi)
-```
+## Windows
 
-Kal Flutter se phone app ya web app banani ho to `app/` mein banao.
-Hisab-kitab wala dimaag `engine/` mein rahega — website ke code se mix mat karna.
+1. Install Python 3.11+ — tick **Add python.exe to PATH** during install, then restart the computer.
+2. Double-click `start-artwork-verification.bat` at the repo root, **or** `tools\artwork-verification\start-tool.bat`
+3. Leave the black window **open**
+4. The browser opens after the server is ready — `http://127.0.0.1:8765`
 
-## Abhi kya chalta hai
+If Chrome still says "can't be reached": the bat file did not start, the window was closed, or Python is not on PATH. Read the black window — the error is there.
 
-Computer par folder do, tool batata hai:
-
-- Job sheet par kitni plates likhi hain
-- Plate file mein kitne pages hain
-- Donon match nahi kiye to dikhata hai
-
-PASS / APPROVED / FAIL nahi likhta. Sirf jo mila, woh likhta hai.
-
-## Kaise chalao
+## Linux / Mac
 
 ```bash
-cd tools/artwork-verification/engine
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python -m printsahaj_verify ../samples/kalonji
+chmod +x start-tool.sh
+./start-tool.sh
 ```
 
-Kalonji folder mein `job.json` hai. Asli PDFs abhi daalni hain.
-
-## Website
-
-PrintSahaj site par Tools → Artwork Verification.
-App banne ke baad wahi button app kholega.
+Then open http://127.0.0.1:8765

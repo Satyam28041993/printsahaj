@@ -1,27 +1,27 @@
-# Kalonji — pehla test job
+# Kalonji — first test job
 
 Job `CGM2026-27-1326`, DAILY KALONJI 100ML LABEL.
 
-Job sheet kehta hai **6 COL + VARNISH** (7 units). Plate file mein **6 pages**.
-Varnish plate nahi hai.
+The job sheet says **6 COL + VARNISH** (7 units). The plate file has **6 pages**.
+The varnish plate is missing.
 
-Isse pakadna chahiye. Jo change yeh miss kare, woh galat hai.
+This must be caught. Any change that misses it is a regression.
 
-## Is folder mein
+## In this folder
 
-| File | Kya hai |
+| File | What it is |
 |---|---|
-| `job.json` | Job sheet, type karke (git mein hai) |
-| `job-sheet.pdf` | Asli sheet — tum daalo, git nahi lega |
-| `separations.pdf` | 6 pages — tum daalo |
-| `composite.pdf` | Vendor proof — tum daalo |
+| `job.json` | Job sheet, typed in (in git) |
+| `job-sheet.pdf` | Real sheet — add it locally; git will not take it |
+| `separations.pdf` | 6 pages — add it locally |
+| `composite.pdf` | Vendor proof — add it locally |
 
-## Chalana
+## Run
 
-`tools/artwork-verification/engine` se:
+From `tools/artwork-verification/engine`:
 
 ```bash
 .venv/bin/python -m printsahaj_verify ../samples/kalonji
 ```
 
-PDFs customer ki files hain. Public repo mein nahi jaati.
+The PDFs are customer files. They do not go in the public repo.
