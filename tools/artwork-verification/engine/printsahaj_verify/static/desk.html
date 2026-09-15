@@ -187,10 +187,23 @@
   </style>
 </head>
 <body>
+  <section id="login-view" class="hidden" style="max-width:360px;margin:15vh auto;padding:0 16px;">
+    <div class="kicker">PrintSahaj</div>
+    <h1>Artwork Verification</h1>
+    <p class="muted">Sign in to open the desk.</p>
+    <label>Email</label>
+    <input id="login-email" type="email" autocomplete="username" />
+    <label>Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" />
+    <p id="login-err" class="err"></p>
+    <button type="button" id="login-btn">Sign in</button>
+  </section>
+  <div id="app-root" class="hidden">
   <header>
     <div class="kicker">PrintSahaj</div>
     <h1>Artwork Verification</h1>
     <p>First approval, then vendor plates, then print. This is not the website. Start with start-tool.bat.</p>
+    <button type="button" class="ghost" id="signout-btn" hidden style="position:absolute;top:16px;right:16px;">Sign out</button>
   </header>
   <main>
     <section id="list-view">
@@ -230,6 +243,7 @@
   </main>
   <div id="review-modal" class="modal-back" hidden></div>
   <div id="viewer-modal" class="modal-back" hidden></div>
+  </div>
   <script>
     const FILE_ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp";
     const SLOT_COPY = {
@@ -254,6 +268,85 @@
     const uploadingRoles = new Set();
     const comparePick = new Set();
 
+    // Cloud login. Local desktop runs (PRINTSAHAJ_REQUIRE_AUTH unset) skip all of this.
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDc6DYZPYXyeIBRD-amIof8aZs20VEs5CU",
+      authDomain: "printsahaj.firebaseapp.com",
+      projectId: "printsahaj",
+    };
+    let authRequired = false;
+    let booted = false;
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const el = document.createElement("script");
+        el.src = src;
+        el.onload = resolve;
+        el.onerror = reject;
+        document.head.appendChild(el);
+      });
+    }
+
+    async function authHeader() {
+      if (!authRequired || !window.firebase || !firebase.auth().currentUser) return {};
+      const token = await firebase.auth().currentUser.getIdToken();
+      return { Authorization: "Bearer " + token };
+    }
+
+    async function bootAppOnce() {
+      if (booted) return;
+      booted = true;
+      loadList().then(() => {
+        const startJob = new URLSearchParams(location.search).get("job");
+        if (startJob) return openJob(startJob);
+      }).catch((err) => {
+        document.getElementById("job-list").innerHTML =
+          '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
+          '<p class="muted">' + escapeHtml(err.message) + "</p></div>";
+      });
+    }
+
+    async function initAuthGate() {
+      let health = {};
+      try {
+        health = await fetch("/api/health").then((res) => res.json());
+      } catch (err) {
+        health = {};
+      }
+      authRequired = !!health.auth_required;
+      if (!authRequired) {
+        document.getElementById("app-root").classList.remove("hidden");
+        bootAppOnce();
+        return;
+      }
+      await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
+      await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js");
+      firebase.initializeApp(FIREBASE_CONFIG);
+      document.getElementById("signout-btn").hidden = false;
+      document.getElementById("signout-btn").onclick = () => firebase.auth().signOut();
+      document.getElementById("login-btn").onclick = async () => {
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+        const err = document.getElementById("login-err");
+        err.textContent = "";
+        try {
+          await firebase.auth().signInWithEmailAndPassword(email, password);
+        } catch (e) {
+          err.textContent = e.message;
+        }
+      };
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          document.getElementById("login-view").classList.add("hidden");
+          document.getElementById("app-root").classList.remove("hidden");
+          bootAppOnce();
+        } else {
+          document.getElementById("login-view").classList.remove("hidden");
+          document.getElementById("app-root").classList.add("hidden");
+        }
+      });
+    }
+
     function show(id) {
       document.querySelectorAll("main > section").forEach((el) => el.classList.add("hidden"));
       document.getElementById(id).classList.remove("hidden");
@@ -268,7 +361,9 @@
     }
 
     async function j(path, opts) {
-      const res = await fetch(path, opts);
+      opts = opts || {};
+      const headers = Object.assign({}, opts.headers || {}, await authHeader());
+      const res = await fetch(path, Object.assign({}, opts, { headers }));
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return data;
@@ -561,7 +656,7 @@
         const body = new FormData();
         body.append("role", role);
         body.append("file", file, file.name);
-        const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body });
+        const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body, headers: await authHeader() });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
@@ -750,14 +845,7 @@
       }
     };
 
-    loadList().then(() => {
-      const startJob = new URLSearchParams(location.search).get("job");
-      if (startJob) return openJob(startJob);
-    }).catch((err) => {
-      document.getElementById("job-list").innerHTML =
-        '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
-        '<p class="muted">' + escapeHtml(err.message) + "</p></div>";
-    });
+    initAuthGate();
   </script>
 </body>
 </html>

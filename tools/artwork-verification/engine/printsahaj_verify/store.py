@@ -1,8 +1,13 @@
-"""On-disk jobs for the desk app. Each job is a folder. No cloud."""
+"""On-disk jobs for the desk app. Each job is a folder.
+
+On Cloud Run, PRINTSAHAJ_JOBS_ROOT points at a Cloud Storage bucket mounted
+into the container, so this stays plain file I/O either way.
+"""
 
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 from pathlib import Path
@@ -21,7 +26,12 @@ from printsahaj_verify.run import JOB_FILE_NAME
 
 SAFE_CODE = re.compile(r"[A-Za-z0-9._-]+")
 
-DEFAULT_JOBS_ROOT = Path(__file__).resolve().parents[2] / "jobs"
+JOBS_ROOT_ENV = "PRINTSAHAJ_JOBS_ROOT"
+DEFAULT_JOBS_ROOT = (
+    Path(os.environ[JOBS_ROOT_ENV])
+    if os.environ.get(JOBS_ROOT_ENV)
+    else Path(__file__).resolve().parents[2] / "jobs"
+)
 LAST_REVIEW_FILE = "last_review.json"
 
 

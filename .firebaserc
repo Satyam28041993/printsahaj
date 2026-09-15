@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "printsahaj"
-  }
+  },
+  "targets": {
+    "printsahaj": {
+      "hosting": {
+        "tool": [
+          "printsahaj-tool"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

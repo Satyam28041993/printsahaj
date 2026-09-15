@@ -1,0 +1,37 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: artwork-verification
+  namespace: printsahaj
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "1"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containers:
+        - image: asia-south1-docker.pkg.dev/printsahaj/cloud-run-source-deploy/artwork-verification:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PRINTSAHAJ_JOBS_ROOT
+              value: /mnt/jobs
+            - name: PRINTSAHAJ_GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: printsahaj-gemini-key
+                  key: latest
+          resources:
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: jobs
+              mountPath: /mnt/jobs
+      volumes:
+        - name: jobs
+          csi:
+            driver: gcsfuse.run.googleapis.com
+            volumeAttributes:
+              bucketName: printsahaj-artwork-jobs

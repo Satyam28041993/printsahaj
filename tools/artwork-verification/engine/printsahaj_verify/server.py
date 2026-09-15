@@ -42,6 +42,43 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
 OPEN_BROWSER_ENV = "PRINTSAHAJ_OPEN_BROWSER"
 
+# Off by default so the local desktop tool keeps working with no login.
+# Set to "1" only in the Cloud Run deployment, which is reachable over the
+# open internet and therefore needs a signed-in user.
+REQUIRE_AUTH_ENV = "PRINTSAHAJ_REQUIRE_AUTH"
+_firebase_ready = False
+
+
+def _ensure_firebase_admin() -> None:
+    global _firebase_ready
+    if _firebase_ready:
+        return
+    import firebase_admin
+
+    if not firebase_admin._apps:  # noqa: SLF001
+        firebase_admin.initialize_app()
+    _firebase_ready = True
+
+
+def _authenticated(handler: BaseHTTPRequestHandler) -> bool:
+    """True when the request may proceed. Always true unless auth is required."""
+    if os.environ.get(REQUIRE_AUTH_ENV, "0") != "1":
+        return True
+    header = handler.headers.get("Authorization", "")
+    if not header.startswith("Bearer "):
+        return False
+    token = header[len("Bearer ") :].strip()
+    if not token:
+        return False
+    try:
+        _ensure_firebase_admin()
+        from firebase_admin import auth as firebase_auth
+
+        firebase_auth.verify_id_token(token)
+        return True
+    except Exception:
+        return False
+
 
 def bind_error_message(host: str, port: int, error: OSError) -> str:
     """Explain why the desk could not listen, in language a person can act on."""
@@ -244,11 +281,15 @@ class DeskHandler(BaseHTTPRequestHandler):
         path = unquote(parsed.path)
         query = parse_qs(parsed.query)
         parts = [item for item in path.split("/") if item]
+        if path.startswith("/api/") and path != "/api/health" and not _authenticated(self):
+            _json(self, 401, {"error": "Sign in required"})
+            return
         try:
             if path == "/api/health":
                 payload = {
                     "ok": True,
                     "tool": "artwork-verification",
+                    "auth_required": os.environ.get(REQUIRE_AUTH_ENV, "0") == "1",
                 }
                 payload.update(gemini_status())
                 _json(self, 200, payload)
@@ -330,6 +371,9 @@ class DeskHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+        if path.startswith("/api/") and not _authenticated(self):
+            _json(self, 401, {"error": "Sign in required"})
+            return
         try:
             if path == "/api/jobs":
                 payload = _read_json(self)
@@ -381,6 +425,9 @@ class DeskHandler(BaseHTTPRequestHandler):
     def do_DELETE(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+        if path.startswith("/api/") and not _authenticated(self):
+            _json(self, 401, {"error": "Sign in required"})
+            return
         try:
             if path == "/api/jobs":
                 removed = delete_all_jobs()

@@ -1,11 +1,26 @@
 {
-  "hosting": {
-    "public": "web/out",
-    "cleanUrls": true,
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }
+  "hosting": [
+    {
+      "public": "web/out",
+      "cleanUrls": true,
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ]
+    },
+    {
+      "target": "tool",
+      "public": "tools/artwork-verification/hosting-proxy",
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "artwork-verification",
+            "region": "asia-south1"
+          }
+        }
+      ]
+    }
+  ]
 }

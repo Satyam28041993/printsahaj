@@ -68,3 +68,4 @@ tools/**/samples/**/*.png
 tools/artwork-verification/jobs/
 tools/artwork-verification/app/build/
 printsahaj-site.zip
+artwork-deploy-key.json
