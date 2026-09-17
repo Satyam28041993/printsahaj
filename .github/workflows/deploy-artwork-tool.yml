@@ -12,7 +12,7 @@ env:
   PROJECT_ID: printsahaj
   REGION: asia-south1
   SERVICE: artwork-verification
-  IMAGE: asia-south1-docker.pkg.dev/printsahaj/cloud-run-source-deploy/artwork-verification:latest
+  IMAGE_REPO: asia-south1-docker.pkg.dev/printsahaj/cloud-run-source-deploy/artwork-verification
 
 jobs:
   deploy:
@@ -29,25 +29,39 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # Streaming Cloud Build logs needs project Viewer; submit async and poll status instead.
+      # Streaming Cloud Build logs needs project Viewer; submit async and poll
+      # status instead. The image is tagged with the commit so a bad deploy can
+      # be rolled back to a known one.
       - name: Build and push image
         working-directory: tools/artwork-verification/engine
         run: |
-          BUILD_ID=$(gcloud builds submit --project=${{ env.PROJECT_ID }} --tag=${{ env.IMAGE }} --async --format='value(id)' .)
+          set -euo pipefail
+          BUILD_ID=$(gcloud builds submit \
+            --project=${{ env.PROJECT_ID }} \
+            --tag=${{ env.IMAGE_REPO }}:${{ github.sha }} \
+            --async --format='value(id)' .)
           echo "Build: $BUILD_ID"
-          while true; do
+          # 10s between checks, 90 checks: give up after 15 minutes rather than
+          # holding the runner for six hours on a stuck build.
+          for _ in $(seq 1 90); do
             STATUS=$(gcloud builds describe "$BUILD_ID" --project=${{ env.PROJECT_ID }} --format='value(status)')
             echo "Status: $STATUS"
             case "$STATUS" in
-              SUCCESS) break ;;
+              SUCCESS) exit 0 ;;
               FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED) exit 1 ;;
             esac
             sleep 10
           done
+          echo "Build $BUILD_ID did not finish within 15 minutes."
+          exit 1
 
+      # --update-env-vars merges, so the jobs bucket and the Gemini secret set
+      # on the service stay as they are.
       - name: Deploy to Cloud Run
         run: |
+          set -euo pipefail
           gcloud run deploy ${{ env.SERVICE }} \
             --project=${{ env.PROJECT_ID }} \
             --region=${{ env.REGION }} \
-            --image=${{ env.IMAGE }}
+            --image=${{ env.IMAGE_REPO }}:${{ github.sha }} \
+            --update-env-vars=PRINTSAHAJ_REQUIRE_AUTH=1,PRINTSAHAJ_ALLOWED_EMAILS='${{ secrets.DESK_ALLOWED_EMAILS }}'

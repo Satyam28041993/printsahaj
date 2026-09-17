@@ -30,6 +30,18 @@ jobs:
         working-directory: web
         run: npm run build
 
+      # A missing index.html is the one failure FTP cannot report, so catch it
+      # here rather than after a two-minute upload into a live site.
+      - name: Check the export looks right
+        working-directory: web
+        run: |
+          test -f out/index.html || { echo "out/index.html missing"; exit 1; }
+          test -f out/.htaccess || { echo "out/.htaccess missing"; exit 1; }
+          test -f out/tools/index.html || { echo "route folders have no index.html — is trailingSlash still set?"; exit 1; }
+
+      # FTP_SERVER_DIR overrides the path when the FTP account's home is already
+      # the document root, in which case /public_html/ would nest a second copy
+      # inside it. Set the secret to "./" for such an account.
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -37,5 +49,9 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
-          server-dir: /public_html/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
           dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**

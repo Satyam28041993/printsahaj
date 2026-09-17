@@ -1,0 +1,39 @@
+# Apache/LiteSpeed config for the static export on Hostinger.
+# Firebase Hosting ignores this file; it reads firebase.json instead.
+
+DirectoryIndex index.html
+
+# Every route is exported as <route>/index.html (next.config.ts sets
+# trailingSlash). MultiViews would guess at extensionless names and serve the
+# wrong file, so it stays off. Indexes stays off so a folder without an index
+# file is never listed.
+Options -Indexes -MultiViews
+
+# DirectorySlash is on by default and sends /tools to /tools/. Spelled out here
+# so an old bookmark without the slash keeps working.
+DirectorySlash On
+
+ErrorDocument 404 /404.html
+
+# Build assets carry a content hash in the filename, so they never change.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  <FilesMatch "\.(js|css|woff2|png|jpg|jpeg|svg|ico)$">
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+</IfModule>
+
+# HTML must not be cached, or a deploy takes hours to show up.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
+
+# The deploy state file belongs to the deploy tool, not to visitors.
+<Files ".ftp-deploy-sync-state.json">
+  Require all denied
+</Files>

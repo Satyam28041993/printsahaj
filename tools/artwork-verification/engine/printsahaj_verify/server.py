@@ -6,6 +6,7 @@ This is the tool, not the PrintSahaj marketing site. Jobs stay on this machine.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -46,7 +47,25 @@ OPEN_BROWSER_ENV = "PRINTSAHAJ_OPEN_BROWSER"
 # Set to "1" only in the Cloud Run deployment, which is reachable over the
 # open internet and therefore needs a signed-in user.
 REQUIRE_AUTH_ENV = "PRINTSAHAJ_REQUIRE_AUTH"
+
+# A valid Firebase token only proves the caller has some account in the
+# project. Anyone who can reach the sign-up endpoint can get one, so the desk
+# also checks the address against this list. Comma-separated, case-insensitive.
+ALLOWED_EMAILS_ENV = "PRINTSAHAJ_ALLOWED_EMAILS"
+
+_log = logging.getLogger("printsahaj.desk")
 _firebase_ready = False
+
+
+def auth_required() -> bool:
+    """True when callers must present a Firebase ID token."""
+    return os.environ.get(REQUIRE_AUTH_ENV, "0") == "1"
+
+
+def allowed_emails() -> set[str]:
+    """Addresses cleared to use the desk, lower-cased."""
+    raw = os.environ.get(ALLOWED_EMAILS_ENV, "")
+    return {part.strip().lower() for part in raw.split(",") if part.strip()}
 
 
 def _ensure_firebase_admin() -> None:
@@ -60,10 +79,33 @@ def _ensure_firebase_admin() -> None:
     _firebase_ready = True
 
 
+def _verify_token(token: str) -> dict:
+    """Return the claims in a Firebase ID token, or raise if it is not valid.
+
+    The only place the Firebase SDK is touched, so the gate around it can be
+    tested without the SDK installed.
+    """
+    _ensure_firebase_admin()
+    from firebase_admin import auth as firebase_auth
+
+    return dict(firebase_auth.verify_id_token(token))
+
+
 def _authenticated(handler: BaseHTTPRequestHandler) -> bool:
     """True when the request may proceed. Always true unless auth is required."""
-    if os.environ.get(REQUIRE_AUTH_ENV, "0") != "1":
+    if not auth_required():
         return True
+    allowed = allowed_emails()
+    if not allowed:
+        # Fail closed. An empty list on a public deployment would otherwise let
+        # in every account in the Firebase project.
+        _log.error(
+            "%s is set but %s is empty, so every request is refused. "
+            "Set it to the addresses that may use the desk.",
+            REQUIRE_AUTH_ENV,
+            ALLOWED_EMAILS_ENV,
+        )
+        return False
     header = handler.headers.get("Authorization", "")
     if not header.startswith("Bearer "):
         return False
@@ -71,13 +113,20 @@ def _authenticated(handler: BaseHTTPRequestHandler) -> bool:
     if not token:
         return False
     try:
-        _ensure_firebase_admin()
-        from firebase_admin import auth as firebase_auth
-
-        firebase_auth.verify_id_token(token)
-        return True
+        claims = _verify_token(token)
     except Exception:
+        # Logged, not swallowed: a broken service account looks exactly like a
+        # bad password from the browser, and only the log tells them apart.
+        _log.warning("Could not verify the ID token", exc_info=True)
         return False
+    email = str(claims.get("email", "")).lower()
+    if not email or email not in allowed:
+        _log.warning("Refused a signed-in user who is not on the allow list")
+        return False
+    if not claims.get("email_verified", False):
+        _log.warning("Refused %s: the address is not verified", email)
+        return False
+    return True
 
 
 def bind_error_message(host: str, port: int, error: OSError) -> str:
@@ -185,7 +234,7 @@ def _json(handler: BaseHTTPRequestHandler, status: int, payload: object) -> None
     handler.send_header("Content-Length", str(len(body)))
     handler.send_header("Access-Control-Allow-Origin", "*")
     handler.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-    handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+    handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
     handler.end_headers()
     handler.wfile.write(body)
 
@@ -273,7 +322,7 @@ class DeskHandler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
@@ -289,7 +338,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                 payload = {
                     "ok": True,
                     "tool": "artwork-verification",
-                    "auth_required": os.environ.get(REQUIRE_AUTH_ENV, "0") == "1",
+                    "auth_required": auth_required(),
                 }
                 payload.update(gemini_status())
                 _json(self, 200, payload)

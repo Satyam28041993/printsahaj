@@ -13,6 +13,15 @@ from printsahaj_verify.reporting.terminal import format_report
 from printsahaj_verify.run import run_job
 
 
+def _default_port() -> int:
+    """Cloud Run names the port in PORT; the desktop tool has none set."""
+    raw = os.environ.get("PORT", "")
+    try:
+        return int(raw)
+    except ValueError:
+        return 8765
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run verification on a job folder. Returns a process exit code."""
     use_utf8_output()
@@ -34,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Start the local desk (API + Flutter web build)",
     )
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8765)))
+    parser.add_argument("--port", type=int, default=_default_port())
     args = parser.parse_args(argv)
 
     if args.serve:
