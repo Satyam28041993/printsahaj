@@ -1,5 +1,6 @@
 import React from "react";
 import Section from "./Section";
+import PrintWorkflow from "./visuals/PrintWorkflow";
 import { home } from "@content/home";
 
 export default function Specialization() {
@@ -15,6 +16,9 @@ export default function Specialization() {
           {copy.heading}
         </h2>
         <p className="mt-5 max-w-2xl text-body-lg text-muted">{copy.supporting}</p>
+        <div className="mt-10">
+          <PrintWorkflow />
+        </div>
         <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {copy.topics.map((topic) => (
             <li key={topic} className="border-t border-hairline pt-3 text-sm text-primary">

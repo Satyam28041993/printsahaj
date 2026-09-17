@@ -2,6 +2,8 @@ import React from "react";
 import Link from "next/link";
 import Section from "./Section";
 import CtaButton from "./CtaButton";
+import InView from "./visuals/InView";
+import ProductVisual from "./visuals/ProductVisual";
 import { home } from "@content/home";
 
 export default function SelectedProducts() {
@@ -19,13 +21,17 @@ export default function SelectedProducts() {
         <p className="mt-5 max-w-2xl text-body-lg text-muted">
           {copy.supporting}
         </p>
-        <ul className="mt-10 grid gap-4 md:grid-cols-2">
+        <InView className="stagger-in mt-10 grid gap-4 md:grid-cols-2">
           {copy.items.map((product) => (
-            <li key={product.name}>
-              <Link
-                href={product.href}
-                className="surface-card block h-full rounded-2xl p-6 sm:p-8"
-              >
+            <Link
+              key={product.name}
+              href={product.href}
+              className="group surface-card flex h-full flex-col overflow-hidden rounded-2xl"
+            >
+              <div className="p-5 pb-0 sm:p-6 sm:pb-0">
+                <ProductVisual name={product.name} />
+              </div>
+              <div className="flex flex-1 flex-col p-6 sm:p-8">
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-display text-title font-semibold text-primary">
                     {product.name}
@@ -37,10 +43,16 @@ export default function SelectedProducts() {
                 <p className="mt-4 text-sm leading-relaxed text-muted">
                   {product.positioning}
                 </p>
-              </Link>
-            </li>
+                <p className="mt-auto inline-flex items-center gap-2 pt-5 text-sm text-accent">
+                  Explore
+                  <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </p>
+              </div>
+            </Link>
           ))}
-        </ul>
+        </InView>
         <div className="mt-10">
           <CtaButton href={copy.cta.href} variant="ghost">
             {copy.cta.label}
