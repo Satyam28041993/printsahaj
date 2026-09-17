@@ -69,6 +69,7 @@
     .review-row.issue strong { color: var(--issue); }
     .review-row.judge strong { color: var(--judge); }
     .review-row.clear strong { color: var(--clear); }
+    .text-block .bad { color: var(--issue); font-weight: 600; }
     .text-block {
       max-height: 220px;
       overflow-y: auto;
@@ -623,6 +624,20 @@
       return rows && rows.checked ? rows.items : [];
     }
 
+    // The server marks a line that disagrees with the artwork with "!! ".
+    // Escape first, then colour, so nothing in the label's own text can
+    // become markup.
+    const BAD_LINE_MARKER = "!! ";
+
+    function renderTextBlock(text) {
+      return String(text).split("\n").map((line) => {
+        if (line.startsWith(BAD_LINE_MARKER)) {
+          return '<span class="bad">' + escapeHtml(line.slice(BAD_LINE_MARKER.length)) + "</span>";
+        }
+        return escapeHtml(line);
+      }).join("\n");
+    }
+
     /** Review rows. *withText* adds the full matter, which only the detail
      *  view shows — on the main screen it would bury everything else. */
     function renderReviewRows(items, withText) {
@@ -631,7 +646,7 @@
       }
       return items.map((item) => {
         const block = withText && item.text_block
-          ? `<div class="text-block">${escapeHtml(item.text_block)}</div>`
+          ? `<div class="text-block">${renderTextBlock(item.text_block)}</div>`
           : "";
         return `
         <div class="review-row ${item.state}">

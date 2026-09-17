@@ -37,6 +37,7 @@ STAGE_CHECKS: dict[str, tuple[str, ...]] = {
     ),
     STAGE_VENDOR: (
         "job_identity",
+        "batch_consistency",
         "plate_count",
         "colour_names",
         "geometry",

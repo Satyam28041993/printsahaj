@@ -6,6 +6,7 @@ from pathlib import Path
 
 from printsahaj_verify.approval_sheet import parse_approval_sheet
 from printsahaj_verify.checks.approval_sheet_check import check_approval_sheet
+from printsahaj_verify.checks.batch_consistency import check_batch_consistency
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_ID as ARTWORK_ID
 from printsahaj_verify.checks.artwork_vs_approval import CHECK_TITLE as ARTWORK_TITLE
 from printsahaj_verify.checks.artwork_vs_approval import (
@@ -463,6 +464,7 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
             panel_composite,
         ),
         check_plate_review(separations_doc, plate_notes, plate_vision_error),
+        check_batch_consistency(notes, plate_notes, composite_notes),
         check_headers(spec, vendor_docs),
         text_result,
         plate_text,

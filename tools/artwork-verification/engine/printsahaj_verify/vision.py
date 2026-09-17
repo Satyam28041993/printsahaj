@@ -111,8 +111,13 @@ logo_note (string): short note
 batch_on_label (boolean): a batch number is printed on the label artwork.
 A blank box or missing batch is false
 batch_note (string): short note
+batch_number_text (string): the batch number exactly as printed on this
+artwork, character for character. Empty string if the box is blank or a
+coding window left for the press to fill in later — do not guess a value.
 mrp_on_label (boolean): MRP is printed on the label artwork
 mrp_note (string): short note
+mfg_date_text (string): the manufacturing / packing date exactly as printed
+on this artwork. Empty string if blank or left for coding.
 
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
@@ -156,6 +161,12 @@ text_on_plate (string): words / phrases actually visible on THIS ink,
 or "no body copy" / "no type",
 text_not_on_plate (string): important words that belong on other inks,
 images_note (string): bowl, logo, FSSAI, glow on this ink,
+batch_number_text (string): if a batch number is printed on THIS ink, the
+value exactly as printed, character for character. Empty string when it is
+not on this ink, or when the space is a blank coding window. Do not guess,
+do not copy it from the artwork you were shown,
+mfg_date_text (string): the manufacturing / packing date on THIS ink, same
+rule — exact characters, or empty,
 note (string): one-line summary,
 uv_cutouts (boolean)
 
@@ -199,7 +210,13 @@ all_ups_same (boolean),
 matches_artwork (boolean),
 matches_approval (boolean),
 damaged_up (number or 0),
-note (string)
+note (string),
+batch_number_text (string): the batch number printed on the ups, exactly as
+printed, character for character. Empty string when the space is a blank
+coding window. Read it from the close-up images. Do not guess, and do not
+copy it from the artwork or approval images you were shown,
+mfg_date_text (string): the manufacturing / packing date on the ups, same
+rule — exact characters, or empty
 
 Do not write the words PASS, APPROVED, FAIL, or COMPLIANT.
 """
@@ -241,6 +258,8 @@ class PlateVisionNote:
     text_on_plate: str = ""
     text_not_on_plate: str = ""
     images_note: str = ""
+    batch_text: str = ""
+    mfg_date_text: str = ""
 
 
 @dataclass(frozen=True)
@@ -253,6 +272,8 @@ class CompositeVisionNotes:
     matches_approval: bool | None
     damaged_up: int | None
     note: str
+    batch_text: str = ""
+    mfg_date_text: str = ""
 
 
 @dataclass(frozen=True)
@@ -270,6 +291,8 @@ class VisionNotes:
     mrp_on_label: bool | None
     mrp_note: str
     source: str
+    batch_text: str = ""
+    mfg_date_text: str = ""
 
 
 def gemini_key_path() -> Path:
@@ -490,6 +513,8 @@ def notes_from_payload(payload: dict[str, object], source: str) -> VisionNotes:
         mrp_on_label=_as_bool(payload.get("mrp_on_label")),
         mrp_note=scrub_vision_text(str(payload.get("mrp_note") or "")),
         source=source,
+        batch_text=scrub_vision_text(str(payload.get("batch_number_text") or "")),
+        mfg_date_text=scrub_vision_text(str(payload.get("mfg_date_text") or "")),
     )
 
 
@@ -694,6 +719,8 @@ def plate_notes_from_payload(
                 matter_same=_as_bool(item.get("matter_same")),
                 note=scrub_vision_text(str(item.get("note") or "")),
                 uv_cutouts=_as_bool(item.get("uv_cutouts")),
+                batch_text=scrub_vision_text(str(item.get("batch_number_text") or "")),
+                mfg_date_text=scrub_vision_text(str(item.get("mfg_date_text") or "")),
                 text_on_plate=scrub_vision_text(str(item.get("text_on_plate") or "")),
                 text_not_on_plate=scrub_vision_text(
                     str(item.get("text_not_on_plate") or "")
@@ -767,6 +794,8 @@ def composite_notes_from_payload(payload: dict[str, object]) -> CompositeVisionN
         matches_approval=_as_bool(payload.get("matches_approval")),
         damaged_up=damaged if damaged and damaged > 0 else None,
         note=scrub_vision_text(str(payload.get("note") or "")),
+        batch_text=scrub_vision_text(str(payload.get("batch_number_text") or "")),
+        mfg_date_text=scrub_vision_text(str(payload.get("mfg_date_text") or "")),
     )
 
 
@@ -867,4 +896,6 @@ def correct_composite_notes(
         matches_approval=True,
         damaged_up=None,
         note=count + CODING_PANEL_PRESENT_NOTE,
+        batch_text=notes.batch_text,
+        mfg_date_text=notes.mfg_date_text,
     )

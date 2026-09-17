@@ -222,6 +222,7 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
     wording = by_id.get("text_completeness")
     plate_look = by_id.get("plate_review")
     composite_look = by_id.get("composite_matter")
+    batch = by_id.get("batch_consistency")
     obs = geometry.observations if geometry else {}
     plate_obs = plates.observations if plates else {}
     pages = plate_obs.get("separation_pages", "?")
@@ -299,6 +300,7 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
             )
         )
     return [
+        _batch_item(batch),
         _from_check(
             plates,
             "plates",
@@ -344,6 +346,66 @@ def _vendor_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
         ),
         *wording_items,
     ]
+
+
+#: Lines the desk shows in red inside the detail box. The renderer strips
+#: the marker; anything without it stays in the normal colour.
+BAD_LINE_MARKER = "!! "
+
+BATCH_SOURCE_ROWS = (
+    ("artwork", "Client artwork / first approval"),
+    ("composite", "Vendor composite"),
+    ("plate", "Separation plate"),
+)
+
+
+def _batch_block(observations: dict[str, str]) -> str:
+    """Every batch / date value that was read, one source per line."""
+    lines: list[str] = []
+    for field, heading in (("batch", "Batch number"), ("date", "Manufacturing date")):
+        expected = observations.get(f"{field}_artwork", "")
+        rows = [
+            (label, observations.get(f"{field}_{key}", ""))
+            for key, label in BATCH_SOURCE_ROWS
+        ]
+        if not any(value for _label, value in rows):
+            continue
+        lines.append(heading)
+        for label, value in rows:
+            if not value:
+                continue
+            differs = bool(expected) and value != expected
+            marker = BAD_LINE_MARKER if differs else "  "
+            tail = "   <-- does not match the artwork" if differs else ""
+            lines.append(f"{marker}{label}: {value}{tail}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _batch_item(result: CheckResult | None) -> dict[str, str]:
+    """Batch / date row. A value mismatch is certain, so it shows in red."""
+    item_id = "batch_consistency"
+    title = "Batch number and manufacturing date"
+    if result is None or not result.ran:
+        reason = result.not_run_reason if result else None
+        return _item(item_id, title, STATE_WAIT, reason or "Check did not run")
+    observations = result.observations or {}
+    block = _batch_block(observations)
+    certain = [item for item in result.findings if item.certainty is Certainty.DETERMINISTIC]
+    if certain:
+        extra = f" ({len(certain)} in total)" if len(certain) > 1 else ""
+        return _item(item_id, title, STATE_ISSUE, certain[0].summary + extra, block)
+    matched = [
+        observations.get("batch_artwork", ""),
+        observations.get("date_artwork", ""),
+    ]
+    shown = ", ".join(value for value in matched if value)
+    detail = (
+        f"The same value is printed everywhere it was read: {shown}."
+        if shown
+        else "The values read from the plates and composite agree with the artwork."
+    )
+    return _item(item_id, title, STATE_CLEAR, detail, block)
 
 
 def _composite_matter_item(
