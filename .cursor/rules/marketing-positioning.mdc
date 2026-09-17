@@ -1,0 +1,39 @@
+---
+description: How PrintSahaj talks about growth, marketing, and portfolio on the website.
+globs: web/**
+alwaysApply: false
+---
+
+# Marketing positioning
+
+Digital Growth & Marketing is a core official pillar, not a footnote. Use that exact pillar name. Frame it as a connected business system, not "social media services" and not a shortened label such as "Digital Growth" or "Digital Marketing" when naming the pillar.
+
+The pillar may still list capabilities: lead generation, lead management, lead qualification, high-conversion websites, landing pages, branding, SEO, search visibility, content strategy, digital marketing, marketing automation, CRM integration, analytics, conversion optimization.
+
+Show the connected system: traffic → landing page → lead → CRM → qualification → follow-up → conversion → reporting.
+
+Final CTA is a business-problem ask, not "Need a website?":
+
+- Headline: Have a business problem worth solving?
+- Support: Tell us what you're trying to improve. We'll help you figure out whether the answer is software, automation, marketing, or something else.
+- Button: Start a Project
+
+PrintSahaj footer/company copy must not say "verification system for India's printing and packaging industry." That line is PrintVerify-only.
+
+## Portfolio accuracy
+
+Never invent a client, project, product, feature, result, metric, testimonial, technology, business outcome, launch status, capability, certification, award, or case-study claim. If uncertain: CONTENT GAP — NEEDS VERIFICATION. Do not infer.
+
+Status enum only: Live | Building | Concept | Internal | Not publicly disclosed. Use Live only with verified evidence that the project is live and publicly presentable. Do not assume permission to name a client because a project folder exists.
+
+Homepage: 4–6 verified projects, full list later on `/work`. Sibling apps live outside this repo — inspect them before naming features as shipped.
+
+Internal inventory until Satyam confirms otherwise:
+
+- Flexora: Building. Do not describe unverified modules as live features.
+- Pactech Nexus: candidate portfolio project. Do not make an unsupported Live claim.
+- ATS / LeadTrack: hold from public portfolio. CONTENT GAP — PUBLIC NAME NEEDS CONFIRMATION. Do not guess ATS LeadTracker, ATS Lead Tracker, LeadTrack, or LeadTrack CRM as the public name.
+- Aivy, SmartTrack, RuchiLeadBot, Ayesha, Birla Opus: hold.
+- Satyam photo/bio: CONTENT GAP.
+- Currently Building homepage section: optional. No placeholder/fake roadmap.
+- WhatsApp placeholder and unconfirmed email: do not expose publicly.

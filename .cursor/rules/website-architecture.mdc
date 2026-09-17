@@ -1,0 +1,54 @@
+---
+description: PrintSahaj marketing site structure, copy location, and what not to destroy.
+globs: web/**
+alwaysApply: false
+---
+
+# Website architecture
+
+This is a multi-page site. Every destination has its own URL. Do not ship PrintSahaj as a one-page homepage with hash-only sections for Solutions, Products, Tools, Work, Insights, About, or Contact.
+
+Every page must answer whether the visitor is looking for a product, a business solution, a marketing/growth solution, a tool, or a custom project.
+
+Stack: Next.js App Router in `web/` (`output: "export"`), Tailwind v4 tokens in `globals.css`, copy in `web/content/*.ts`. Edit copy in content files, not inside JSX.
+
+Keep two chrome systems until a deliberate unification: `SiteNav` + `SiteFooter` on `/`; `Navbar` + `Footer` on `(pages)`. Prefer the landing visual language (tokens, `CtaButton`, `Logo` SVG) when adding brand pages.
+
+Do not rewrite PrintVerify: `/tools/artwork-verification` and `web/content/tools.ts` (`artworkTool`). `/verification` redirects there. Do not change Hostinger/Firebase deploy config unless asked.
+
+Target IA (implement only when a later task asks; each is a real page, not a homepage anchor):
+
+- `/` company homepage (overview + links)
+- `/products` `/products/printverify` `/products/flexora`
+- `/solutions` software, AI, Digital Growth & Marketing, custom
+- `/tools` calculators and tools
+- `/work` `/insights` `/about` `/contact`
+
+Existing PrintVerify URL `/tools/artwork-verification` stays until a move is approved. `/verification` redirects there.
+
+Primary global CTA: "Start a Project". Do not use Pricing as a primary nav item.
+
+Logo: header uses inline SVG `Logo.tsx` at 30px (`size="sm"`) — too small. PNGs in `web/public/assets/` have large white canvases; do not drop them into a dark header uncropped. Do not distort the mark.
+
+Footer and company chrome must describe PrintSahaj around Technology, AI, Automation, Digital Growth & Marketing, business systems, digital solutions, and printing & packaging expertise. Never use "verification system for India's printing and packaging industry" for the company.
+
+## Content model (plan; create files only when implementation is approved)
+
+Do not duplicate the same copy across components. Keep content out of JSX.
+
+```
+web/content/
+  site.ts       global chrome/config
+  home.ts       homepage-only sections
+  products.ts
+  solutions.ts
+  work.ts
+  tools.ts      existing PrintVerify tool copy — do not rewrite artworkTool
+  insights.ts
+```
+
+`site.ts`: brand metadata, navigation, page-intent labels, global CTAs, footer, contact placeholders/config, global SEO defaults.
+
+`home.ts`: hero, what is PrintSahaj, four pillars, selected products, Digital Growth & Marketing, printing & packaging specialization, selected work references, founder, optional currently-building, final CTA.
+
+Contact: do not expose the placeholder WhatsApp number or an unconfirmed email publicly.

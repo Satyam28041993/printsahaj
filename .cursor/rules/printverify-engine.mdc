@@ -1,0 +1,17 @@
+---
+description: PrintVerify engine and desk rules. Does not apply to the marketing website.
+globs: tools/artwork-verification/**
+alwaysApply: false
+---
+
+# PrintVerify engine
+
+Read `tools/artwork-verification/AGENTS.md` before changing checks.
+
+Never output PASS, APPROVED, FAIL, or COMPLIANT. Findings and counts only. State what was not checked. Keep deterministic vs advisory visually separate. Compliance lives in versioned JSON rule packs. Never claim a barcode ISO grade.
+
+Kalonji (`samples/kalonji/`): 6 COL + VARNISH declared, 6 SEP pages, varnish missing. Catching this is regression test #1.
+
+Do not add Python packages, OpenCV, OCR, or ML without asking. Checks return structured results; reporters format output.
+
+The desk (`server.py`, `static/desk.html`) is the tool UI. The marketing site in `web/` only links to it.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
-import { site } from "@content/site";
+import { printSahajSite } from "@content/site";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -25,8 +25,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: site.meta.title,
-  description: site.meta.description,
+  title: {
+    default: printSahajSite.meta.title,
+    template: "%s — PrintSahaj",
+  },
+  description: printSahajSite.meta.description,
   icons: {
     icon: "/assets/Icon only favicon Logo.png",
   },

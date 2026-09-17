@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { artworkTool } from "@content/tools";
+
+export const metadata: Metadata = {
+  title: artworkTool.name,
+  description: artworkTool.summary,
+};
 
 export default function ArtworkVerificationToolPage() {
   return (

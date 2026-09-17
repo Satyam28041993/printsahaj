@@ -21,16 +21,20 @@ const INK = {
   core: "#08090B",
 } as const;
 
+/**
+ * The SVG viewBox is 0 0 100 100. Visible mark is roughly y=9–91 (82 units),
+ * so visual height ≈ 0.82 × CSS size. Header uses `md` (56px) → ~46px visual.
+ */
 const SIZES = {
-  sm: 30,
-  md: 36,
-  lg: 44,
-  xl: 64,
+  sm: 44,
+  md: 56,
+  lg: 58,
+  xl: 72,
 } as const;
 
 const TEXT_SIZES = {
   sm: "text-lg",
-  md: "text-xl",
+  md: "text-2xl",
   lg: "text-2xl",
   xl: "text-4xl",
 } as const;

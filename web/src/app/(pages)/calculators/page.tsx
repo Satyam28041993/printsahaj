@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Calculator,
-  Layers,
-  FileSpreadsheet,
-  RotateCw,
-  Box,
-  Settings,
-  Sparkles,
-  CheckCircle2,
-} from "lucide-react";
+import { Calculator, Layers, FileSpreadsheet, RotateCw, Box, Settings, Sparkles } from "lucide-react";
 
 export default function CalculatorsPage() {
   const [activeTab, setActiveTab] = useState<
@@ -110,7 +101,7 @@ export default function CalculatorsPage() {
           Printing & Packaging Calculator Hub
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-          Tailored specifically for Indian converters: standard sheet sizes (Demy, Crown, Royal), 1/8" flexo repeats, ₹/sqm paper rates, and ream formulas.
+          Tailored specifically for Indian converters: standard sheet sizes (Demy, Crown, Royal), 1/8&quot; flexo repeats, ₹/sqm paper rates, and ream formulas.
         </p>
       </div>
 
@@ -161,7 +152,7 @@ export default function CalculatorsPage() {
           }`}
         >
           <RotateCw className="w-4 h-4" />
-          Flexo Cylinder Repeat (1/8" CP)
+          Flexo Cylinder Repeat (1/8&quot; CP)
         </button>
 
         <button

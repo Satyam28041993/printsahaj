@@ -31,6 +31,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     const initial: Theme = stored === "light" ? "light" : "dark";
+    // Catch up after the pre-paint script. Must run in an effect so SSR stays "dark".
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe theme restore
     setTheme(initial);
     applyTheme(initial);
   }, []);

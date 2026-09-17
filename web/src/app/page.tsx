@@ -1,12 +1,13 @@
 import SiteNav from "@/components/landing/SiteNav";
-import Hero from "@/components/landing/Hero";
-import Problem from "@/components/landing/Problem";
-import Checks from "@/components/landing/Checks";
-import Pricing from "@/components/landing/Pricing";
-import Limits from "@/components/landing/Limits";
-import Audience from "@/components/landing/Audience";
-import Faq from "@/components/landing/Faq";
-import FinalCta from "@/components/landing/FinalCta";
+import HomeHero from "@/components/landing/HomeHero";
+import WhatIsPrintSahaj from "@/components/landing/WhatIsPrintSahaj";
+import Pillars from "@/components/landing/Pillars";
+import SelectedProducts from "@/components/landing/SelectedProducts";
+import DigitalGrowth from "@/components/landing/DigitalGrowth";
+import Specialization from "@/components/landing/Specialization";
+import SelectedWork from "@/components/landing/SelectedWork";
+import Founder from "@/components/landing/Founder";
+import HomeFinalCta from "@/components/landing/HomeFinalCta";
 import SiteFooter from "@/components/landing/SiteFooter";
 
 export default function HomePage() {
@@ -15,16 +16,17 @@ export default function HomePage() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <SiteNav />
+      <SiteNav variant="overlay" />
       <main id="main">
-        <Hero />
-        <Problem />
-        <Checks />
-        <Pricing />
-        <Limits />
-        <Audience />
-        <Faq />
-        <FinalCta />
+        <HomeHero />
+        <WhatIsPrintSahaj />
+        <Pillars />
+        <SelectedProducts />
+        <DigitalGrowth />
+        <Specialization />
+        <SelectedWork />
+        <Founder />
+        <HomeFinalCta />
       </main>
       <SiteFooter />
     </>

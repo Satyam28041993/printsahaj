@@ -1,0 +1,16 @@
+---
+description: Frontend quality bar for the PrintSahaj website.
+globs: web/**
+alwaysApply: false
+---
+
+# Frontend quality
+
+- Keep the dark premium system: `--bg-base`, teal accent, hairline borders, Space Grotesk / Inter / JetBrains Mono. Do not add a new UI framework or extra animation libraries without asking.
+- Motion: GSAP `useReveal` + `prefers-reduced-motion`. Do not ship invisible content if JS fails.
+- Accessibility: skip link, real headings, buttons/links that are keyboard reachable, `aria` on icon-only controls.
+- Responsive: desktop and mobile headers both get a readable logo and a usable CTA.
+- SEO: `site.meta` must describe the **company**, not only PrintVerify, once the homepage changes.
+- Performance: no stock photos, no heavy 3D, no new dependencies for decoration.
+- Do not mix inner-page glassmorphism (`Navbar`) into the homepage without a unified design pass.
+- After UI changes, verify in the browser (behavior, not a single screenshot).

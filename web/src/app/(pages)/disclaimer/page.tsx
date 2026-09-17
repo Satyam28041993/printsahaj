@@ -27,7 +27,7 @@ export default function DisclaimerPage() {
               1. Never PASS / FAIL / APPROVED Output
             </h2>
             <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              PrintSahaj is built on strict pre-press audit principles. Our algorithms surface objective discrepancy counts, coordinate mappings, and single-plate dependency warnings. PrintSahaj does not certify or declare any print job as "APPROVED" or "100% DEFECT-FREE".
+              PrintSahaj is built on strict pre-press audit principles. Our algorithms surface objective discrepancy counts, coordinate mappings, and single-plate dependency warnings. PrintSahaj does not certify or declare any print job as &quot;APPROVED&quot; or &quot;100% DEFECT-FREE&quot;.
             </p>
             <p className="text-xs font-bold text-slate-900 dark:text-white">
               The final physical authorization, plate exposure sign-off, and press cylinder mounting remain the sole legal responsibility of the converter.

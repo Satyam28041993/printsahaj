@@ -1,85 +1,35 @@
 # PrintSahaj
 
-## What this is
+PrintSahaj is a **technology and digital solutions brand**, not a single product.
 
-A verification system for the Indian printing and packaging industry. It compares
-a print job's approved artwork, its plate separation PDFs, and its job
-specification against each other, and reports inconsistencies to a human.
+Core positioning: *Technology, AI & digital solutions for modern businesses.*
+Specialization: *Deep expertise in printing & packaging.*
+Public philosophy: *Understand the problem. Build the system. Make the work simpler.*
 
-Full product spec lives in `Artwork-Verification-System-Product-Spec.pdf`
-(plain-text dump: `artwork_spec.txt`). Read it before implementing any check.
+Internal/process (not the public headline): understand the business → identify the problem → build the system → automate the work → help the business grow.
 
-The verification **tool** is not the website. Its code lives in
-`tools/artwork-verification/`. The website only links to it. Later tools
-get their own folders the same way.
+Satyam Singh is the founder (personal brand). PrintSahaj is the company brand. Products (PrintVerify, Flexora, and later ones) are separate product brands.
 
-## Current phase
+PrintSahaj must NOT be described as a "verification system for India's printing and packaging industry." That wording belongs to PrintVerify. Company language: Technology, AI, Automation, Digital Growth & Marketing, business systems, digital solutions, and deep expertise in printing & packaging.
 
-**Phase 0 — validation script only.**
+## Layout of this repo
 
-Build a Python CLI script. Nothing else.
+| Path | What it is |
+|---|---|
+| `web/` | Marketing website (Next.js). Not PrintVerify. |
+| `tools/artwork-verification/` | PrintVerify engine, desk, and samples. |
+| `docs/` | Policies and planning notes. |
 
-- NO web UI
-- NO Flutter app
-- NO Firebase, no database, no auth
-- NO API server
+Website work follows `.cursor/rules/website-architecture.mdc` and the `print-sahaj-website` skill. Do not apply PrintVerify Phase 0 ("no UI / no server") to `web/`. Planned copy split: `web/content/site.ts` (chrome) and `web/content/home.ts` (homepage). Do not create routes or rewrite UI until implementation is approved.
 
-Output is printed to the terminal. That is the entire deliverable.
+PrintVerify work follows `tools/artwork-verification/AGENTS.md`. Do not weaken those product rules.
 
-The purpose of Phase 0 is to find out whether enough real errors exist in past
-jobs to justify building a product. It is not to build the product.
+## What PrintSahaj is not
 
-If asked to add UI, storage, or a server during Phase 0, stop and ask first.
+Not only a printing SaaS, not only an AI company, not only a web agency, not only a marketing agency, not only a consultancy.
 
-## Stack
+Four pillars: Software & Business Systems · AI & Automation · Digital Growth & Marketing · Products & Industry Tools.
 
-- Python 3.11+
-- PyMuPDF (fitz) — text extraction with coordinates, page rendering
-- pdfplumber — layout and table structure
-- Standard library for everything else
+## Public claims
 
-Do not add dependencies without asking. No OpenCV, no OCR, no ML libraries in
-Phase 0 — none of the Phase 0 checks need them.
-
-## Code standards
-
-- Type hints on all functions
-- Docstrings on all public functions
-- No magic numbers — named constants (e.g. `CIRCULAR_PITCH_MM = 3.175`)
-- One check per function, each independently testable
-- Checks return structured results, never print directly — a separate reporter
-  formats output
-- Fail loudly on malformed input; never silently skip a check
-
-## Non-negotiable product rules
-
-These are product decisions, not preferences. Do not override them.
-
-1. **Never output PASS, APPROVED, FAIL, or COMPLIANT.** Output findings and
-   counts only. The tool assists a human decision; it does not make one.
-2. **Every report states what was NOT checked** — colour accuracy, trap and
-   overprint intent, aesthetics.
-3. **Distinguish certainty levels.** Deterministic findings (plate count
-   mismatch) and advisory flags (same text on two plates) must be visually
-   separate in output.
-4. **Compliance rules are never hardcoded.** They belong in versioned JSON rule
-   packs loaded at runtime. Not in Python source.
-5. **Never claim a barcode grade.** Only "decoded" or "failed to decode".
-   ISO 15416 grading requires calibrated hardware.
-
-## Working style
-
-- Explain what you are about to do before writing code
-- If a check's logic is ambiguous, ask rather than guess — a wrong check in a
-  verification tool is worse than a missing one
-- Prefer boring, readable code over clever code
-- Write the test case first when a real sample PDF is available
-
-## Test data
-
-`tools/artwork-verification/samples/kalonji/` contains a real job with a known defect:
-approval sheet declares "6 COL + VARNISH" (7 units), separation PDF has 6 pages.
-The varnish plate is missing.
-
-**This is regression test #1. Any change that stops catching it is a
-regression.**
+Never invent a client, project, product, feature, result, metric, testimonial, technology, business outcome, launch status, capability, certification, award, or case-study claim. Use only what is verified in this repo or in an inspected sibling project. If information is uncertain, write CONTENT GAP — NEEDS VERIFICATION. Do not infer. If a module is still a spec, say it is being built — do not present it as shipped.

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield, MapPin, ExternalLink, Heart } from "lucide-react";
+import { Shield, MapPin, ExternalLink } from "lucide-react";
 import Logo from "./Logo";
 
 export default function Footer() {
@@ -14,7 +14,7 @@ export default function Footer() {
           <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300 text-center md:text-left">
             <Shield className="w-4 h-4 text-amber-500 shrink-0" />
             <span>
-              <strong>Decision-Support Notice:</strong> PrintSahaj provides algorithmic consistency checks and packaging estimators. The final plate sign-off and press initiation remain the operator's sole legal responsibility.
+              <strong>Decision-Support Notice:</strong> PrintSahaj provides algorithmic consistency checks and packaging estimators. The final plate sign-off and press initiation remain the operator&apos;s sole legal responsibility.
             </span>
           </div>
           <Link
@@ -34,7 +34,7 @@ export default function Footer() {
               <Logo size="xl" />
             </Link>
             <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm">
-              India's dedicated digital platform for printing & packaging converters. Built to make estimation rapid, pre-press audits defect-free, and factory workflows sahaj.
+              India&apos;s dedicated digital platform for printing & packaging converters. Built to make estimation rapid, pre-press audits defect-free, and factory workflows sahaj.
             </p>
             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-1">
               <span className="flex items-center gap-1">
@@ -67,7 +67,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/calculators" className="hover:text-cyan-600 dark:hover:text-cyan-400 transition">
-                  Flexo Cylinder Repeat (1/8" CP)
+                  Flexo Cylinder Repeat (1/8&quot; CP)
                 </Link>
               </li>
               <li>

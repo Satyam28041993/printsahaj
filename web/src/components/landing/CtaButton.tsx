@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 export interface CtaButtonProps {
   href: string;
@@ -6,6 +7,7 @@ export interface CtaButtonProps {
   variant?: "solid" | "ghost";
   size?: "md" | "lg";
   className?: string;
+  onClick?: () => void;
 }
 
 /**
@@ -18,6 +20,7 @@ export default function CtaButton({
   variant = "solid",
   size = "md",
   className = "",
+  onClick,
 }: CtaButtonProps) {
   const base =
     "group inline-flex items-center gap-2 rounded-full font-medium transition-colors duration-200";
@@ -28,7 +31,7 @@ export default function CtaButton({
       : "border border-hairline text-primary hover:border-[var(--border-hover)] hover:bg-surface";
 
   return (
-    <a href={href} className={`${base} ${sizing} ${skin} ${className}`}>
+    <Link href={href} onClick={onClick} className={`${base} ${sizing} ${skin} ${className}`}>
       {children}
       <svg
         width="16"
@@ -46,6 +49,6 @@ export default function CtaButton({
           strokeLinejoin="round"
         />
       </svg>
-    </a>
+    </Link>
   );
 }

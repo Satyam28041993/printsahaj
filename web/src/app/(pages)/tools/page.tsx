@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { tools } from "@content/tools";
+
+export const metadata: Metadata = {
+  title: "Tools",
+  description: tools.intro,
+};
 
 export default function ToolsPage() {
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-16 sm:px-8">
       <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-        PrintSahaj
+        Tool
       </p>
       <h1 className="mt-3 font-display text-display-lg font-bold text-slate-900 dark:text-white">
         {tools.heading}

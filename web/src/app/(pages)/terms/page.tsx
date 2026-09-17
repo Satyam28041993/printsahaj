@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Shield, FileText, CheckCircle2, ArrowLeft } from "lucide-react";
+import { FileText, ArrowLeft } from "lucide-react";
 
 export default function TermsPage() {
   return (
@@ -29,7 +29,7 @@ export default function TermsPage() {
             <div className="bg-white dark:bg-slate-900 border border-amber-500/30 p-5 rounded-2xl text-xs space-y-2 text-slate-700 dark:text-slate-300 shadow-md">
               <strong className="text-amber-600 dark:text-amber-400">Crucial Operational Condition:</strong>
               <p>
-                PrintSahaj is strictly a decision-support and consistency-checking tool. The Platform does not certify, approve, or warrant that any print job, separation PDF, plate set, or cylinder engraving is defect-free. The Platform never issues an automated "PASS", "APPROVED", or "CERTIFIED" status.
+                PrintSahaj is strictly a decision-support and consistency-checking tool. The Platform does not certify, approve, or warrant that any print job, separation PDF, plate set, or cylinder engraving is defect-free. The Platform never issues an automated &quot;PASS&quot;, &quot;APPROVED&quot;, or &quot;CERTIFIED&quot; status.
               </p>
               <p className="font-bold text-slate-900 dark:text-white">
                 The final sign-off, plate exposure authorization, and press run initiation remain the 100% sole operational and legal responsibility of the human operator and the licensed converter.

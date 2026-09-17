@@ -7,6 +7,7 @@ export interface SectionProps {
   className?: string;
   /** Narrower measure, used by the quiet "what it does not do" section. */
   width?: "default" | "narrow" | "wide";
+  padding?: "default" | "compact";
   children: React.ReactNode;
 }
 
@@ -14,6 +15,11 @@ const WIDTHS = {
   narrow: "max-w-3xl",
   default: "max-w-6xl",
   wide: "max-w-7xl",
+} as const;
+
+const PADDING = {
+  default: "py-[clamp(80px,10vw,180px)]",
+  compact: "py-[clamp(64px,7vw,120px)]",
 } as const;
 
 /**
@@ -25,13 +31,14 @@ export default function Section({
   labelledBy,
   className = "",
   width = "default",
+  padding = "default",
   children,
 }: SectionProps) {
   return (
     <section
       id={id}
       aria-labelledby={labelledBy}
-      className={`relative px-5 sm:px-8 py-[clamp(80px,10vw,180px)] ${className}`}
+      className={`relative px-5 sm:px-8 ${PADDING[padding]} ${className}`}
     >
       <div className={`mx-auto ${WIDTHS[width]}`}>{children}</div>
     </section>
