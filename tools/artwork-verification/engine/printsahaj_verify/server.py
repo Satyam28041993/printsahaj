@@ -136,7 +136,7 @@ def bind_error_message(host: str, port: int, error: OSError) -> str:
     extra = ""
     if blocked:
         extra = (
-            " An old Artwork Verification window is still holding this port. "
+            " An old PrintVerify window is still holding this port. "
             "Close every black tool window, then run start-tool.bat again."
         )
     return (
@@ -151,7 +151,7 @@ def ready_banner(url: str, gemini_line: str | None = None) -> str:
     gemini = gemini_line if gemini_line is not None else gemini_banner_line()
     return (
         "\n========================================\n"
-        "Artwork Verification is running\n"
+        "PrintVerify is running\n"
         f"Browser: {url}\n"
         f"{gemini}\n"
         "Do not close this window\n"

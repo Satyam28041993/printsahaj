@@ -95,7 +95,7 @@ class ServerApiTests(unittest.TestCase):
 
         with urllib.request.urlopen(self.base + "/") as response:
             home = response.read().decode("utf-8")
-        self.assertIn("Artwork Verification", home)
+        self.assertIn("PrintVerify", home)
         self.assertIn("New job", home)
         self.assertIn("Replace", home)
         self.assertIn("Delete all jobs", home)
@@ -157,7 +157,7 @@ class ServerApiTests(unittest.TestCase):
             8765,
             OSError("[WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions"),
         )
-        self.assertIn("old Artwork Verification window", blocked)
+        self.assertIn("old PrintVerify window", blocked)
         banner = ready_banner("http://127.0.0.1:8765", gemini_line="Gemini: OFF")
         self.assertIn("is running", banner)
         self.assertIn("http://127.0.0.1:8765", banner)

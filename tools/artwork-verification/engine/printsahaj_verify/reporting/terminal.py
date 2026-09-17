@@ -42,7 +42,7 @@ def format_report(job: JobSpec, results: list[CheckResult]) -> str:
     not_run = [result for result in results if not result.ran]
 
     lines: list[str] = []
-    lines.append("PrintSahaj — Artwork Verification")
+    lines.append("PrintSahaj — PrintVerify")
     lines.append(f"Job {job.job_id}   {job.file_name}")
     lines.append(f"Customer   {job.customer}")
     lines.append("")

@@ -154,7 +154,7 @@ export default function PlateRegister() {
             fill="currentColor"
             fillOpacity="0.9"
           >
-            DAILY PHARMA
+            BRAND NAME
           </text>
           <rect
             x={PLATE.x + 36}

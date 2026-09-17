@@ -62,7 +62,7 @@ export const checks: ChecksContent = {
         "Cylinder repeat         238.125 mm",
         "÷ 3.175                 75 teeth          ✓",
         "",
-        '"DAILY PHARMA"          plate 7483 only',
+        '"BRAND NAME"            plate 7483 only',
         "                        ── single-plate dependency",
       ].join("\n"),
     },

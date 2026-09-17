@@ -1,11 +1,11 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Artwork Verification
+title PrintVerify
 
 echo.
 echo ========================================
-echo  Artwork Verification
+echo  PrintVerify
 echo.
 echo  Opening 127.0.0.1 in Chrome is not enough.
 echo  This window must stay open first.

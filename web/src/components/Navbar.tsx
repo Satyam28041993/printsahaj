@@ -79,7 +79,7 @@ export default function Navbar() {
               href="/tools/artwork-verification"
               className="group relative inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-400 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs px-5 py-2.5 rounded-full shadow-lg shadow-emerald-500/20 transition-transform active:scale-95"
             >
-              <span>Artwork Verification</span>
+              <span>PrintVerify</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -149,7 +149,7 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center justify-center gap-2 w-full bg-emerald-400 text-slate-950 font-black px-4 py-3 rounded-full text-xs"
             >
-              Artwork Verification
+              PrintVerify
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

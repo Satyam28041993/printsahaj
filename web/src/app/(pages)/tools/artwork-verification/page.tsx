@@ -21,6 +21,21 @@ export default function ArtworkVerificationToolPage() {
         {artworkTool.summary}
       </p>
 
+      <div className="mt-8">
+        <a
+          href={artworkTool.openHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-400 px-6 py-3 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/20 transition-transform hover:from-emerald-400 hover:to-cyan-400 active:scale-95"
+        >
+          {artworkTool.openLabel}
+          <span aria-hidden="true">→</span>
+        </a>
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          {artworkTool.openNote}
+        </p>
+      </div>
+
       <ul className="mt-8 space-y-3 text-sm text-slate-600 dark:text-slate-300">
         {artworkTool.points.map((point) => (
           <li key={point} className="flex gap-3">

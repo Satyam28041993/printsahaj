@@ -19,11 +19,11 @@ export const tools: ToolsContent = {
     "PrintSahaj is the website. The tools sit on it. Each tool has its own home, so a new one can be added without mixing into the others.",
   items: [
     {
-      name: "Artwork Verification",
+      name: "PrintVerify",
       href: "/tools/artwork-verification",
       summary:
         "Compares the job sheet, the approved artwork, and the plate files, and shows where they disagree.",
-      status: "Runs on your computer. Double-click start-tool.bat",
+      status: "Open it online with a sign-in, or run it on your own computer",
     },
   ],
 };
@@ -33,6 +33,9 @@ export interface ArtworkToolPage {
   kicker: string;
   summary: string;
   points: string[];
+  openLabel: string;
+  openHref: string;
+  openNote: string;
   note: string;
   startHeading: string;
   startSteps: string[];
@@ -41,7 +44,7 @@ export interface ArtworkToolPage {
 }
 
 export const artworkTool: ArtworkToolPage = {
-  name: "Artwork Verification",
+  name: "PrintVerify",
   kicker: "A tool on PrintSahaj — not the website itself",
   summary:
     "This tool holds the job sheet, the approved artwork, and the plate files together and shows a person where they do not match. It does not say approved or rejected. That decision stays with the person who signs.",
@@ -50,9 +53,13 @@ export const artworkTool: ArtworkToolPage = {
     "Colour names that do not match across the papers",
     "Text that is on the artwork but on no plate — or the other way around",
   ],
+  openLabel: "Open PrintVerify",
+  openHref: "https://tool.printsahaj.com",
+  openNote:
+    "Opens the online desk in a new tab. It asks you to sign in, and only cleared addresses get in.",
   note:
-    "Chrome ka “This site can’t be reached / refused to connect” isliye aata hai kyunki 127.0.0.1 is computer hai, website nahi. Website tool start nahi karti. Pehle start-artwork-verification.bat chalao, kali window khuli rakho — tabhi woh address khulega.",
-  startHeading: "Computer par kaise chalao",
+    "Computer par chalane ka tarika neeche hai. Chrome ka “This site can’t be reached / refused to connect” isliye aata hai kyunki 127.0.0.1 is computer hai, website nahi. Website tool start nahi karti. Pehle start-artwork-verification.bat chalao, kali window khuli rakho — tabhi woh address khulega.",
+  startHeading: "Ya apne computer par chalao",
   startSteps: [
     "Python 3.11+ install karo. Install ke time Add python.exe to PATH tick karo, phir computer restart karo",
     "Repo root par start-artwork-verification.bat double-click (ya tools/artwork-verification/start-tool.bat)",

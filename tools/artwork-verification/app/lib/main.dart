@@ -13,7 +13,7 @@ class ArtworkVerificationApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Artwork Verification",
+      title: "PrintVerify",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -53,7 +53,7 @@ class _JobListPageState extends State<JobListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Artwork Verification"),
+        title: const Text("PrintVerify"),
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _jobs,

@@ -94,7 +94,7 @@ export default function Footer() {
                   href="/tools/artwork-verification"
                   className="hover:text-amber-600 dark:hover:text-amber-400 transition"
                 >
-                  Artwork Verification
+                  PrintVerify
                 </Link>
               </li>
             </ul>
