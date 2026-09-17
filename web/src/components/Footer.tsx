@@ -31,7 +31,7 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="inline-block py-1">
-              <Logo size="xl" />
+              <Logo size="xl" instance="legacy-footer" />
             </Link>
             <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm">
               India&apos;s dedicated digital platform for printing & packaging converters. Built to make estimation rapid, pre-press audits defect-free, and factory workflows sahaj.

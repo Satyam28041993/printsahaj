@@ -1,46 +1,34 @@
 import React from "react";
 import CtaButton from "./CtaButton";
-import HeroSystem from "./visuals/HeroSystem";
+import HeroStudio from "./visuals/HeroStudio";
 import { home } from "@content/home";
 
 export default function HomeHero() {
   const { hero } = home;
 
   return (
-    <section id="top" aria-labelledby="hero-heading" className="relative overflow-hidden">
+    <section id="top" aria-labelledby="hero-heading" className="relative min-h-[100svh] overflow-hidden">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-registration-marks" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-registration-marks grid-fade"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-[18%] top-[-220px] h-[720px] w-[720px] rounded-full"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: "radial-gradient(circle, var(--accent-glow) 0%, transparent 68%)",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute right-[-8%] top-[20%] h-[420px] w-[420px] rounded-full"
-        style={{
-          background: "radial-gradient(circle, var(--violet-weak) 0%, transparent 72%)",
+          background:
+            "radial-gradient(ellipse 70% 55% at 20% 20%, var(--accent-glow), transparent 60%), radial-gradient(ellipse 50% 40% at 80% 30%, var(--violet-weak), transparent 65%)",
         }}
       />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-8 pt-[clamp(112px,14vw,168px)] sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-8 lg:pb-4">
-        <div>
+      <div className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-10 px-5 pb-12 pt-[clamp(108px,13vw,150px)] sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <div className="relative z-10">
           <p className="text-sm font-medium tracking-wide text-muted">{hero.eyebrow}</p>
-
           <h1
             id="hero-heading"
             className="mt-6 max-w-xl font-display text-display-xl font-bold text-primary text-balance"
           >
             {hero.headline}
           </h1>
-
           <p className="mt-7 max-w-xl text-body-lg text-muted">{hero.supporting}</p>
           <p className="mt-4 max-w-xl text-sm text-faint">{hero.specialization}</p>
-
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
             <CtaButton href={hero.primaryCta.href} size="lg">
               {hero.primaryCta.label}
@@ -50,15 +38,7 @@ export default function HomeHero() {
             </CtaButton>
           </div>
         </div>
-
-        <HeroSystem />
-      </div>
-
-      <div className="relative mx-auto flex max-w-6xl justify-center px-5 pb-10 sm:px-8" aria-hidden="true">
-        <div className="flex flex-col items-center">
-          <span className="h-10 w-px bg-gradient-to-b from-accent-line to-transparent" />
-          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-accent" />
-        </div>
+        <HeroStudio />
       </div>
     </section>
   );

@@ -57,7 +57,7 @@ export default function SiteNav({
         className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-4 px-5 sm:px-8"
       >
         <Link href="/" className="rounded-md shrink-0" aria-label="PrintSahaj, home">
-          <Logo size="md" />
+          <Logo size="md" instance="nav" />
         </Link>
 
         <ul className="hidden items-center gap-6 xl:flex">
@@ -112,6 +112,15 @@ export default function SiteNav({
           </button>
         </div>
       </nav>
+
+      {menuOpen ? (
+        <button
+          type="button"
+          aria-label="Close menu overlay"
+          className="fixed inset-0 top-[4.5rem] z-40 bg-[color-mix(in_srgb,var(--bg-base)_72%,transparent)] backdrop-blur-[2px] xl:hidden"
+          onClick={closeMenu}
+        />
+      ) : null}
 
       <div
         id="mobile-nav"

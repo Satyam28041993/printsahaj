@@ -1,20 +1,15 @@
 import React from "react";
-import Section from "./Section";
 import ProcessFlow from "./visuals/ProcessFlow";
-import InView from "./visuals/InView";
 import { home } from "@content/home";
 
 export default function WhatIsPrintSahaj() {
   const copy = home.whatIsPrintSahaj;
 
   return (
-    <Section labelledBy="what-heading" padding="compact">
-      <InView className="grid items-start gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div>
-          <h2
-            id="what-heading"
-            className="font-display text-display-lg font-bold text-primary"
-          >
+    <section aria-labelledby="what-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="max-w-3xl">
+          <h2 id="what-heading" className="font-display text-display-lg font-bold text-primary">
             {copy.heading}
           </h2>
           {copy.paragraphs.map((paragraph) => (
@@ -26,8 +21,10 @@ export default function WhatIsPrintSahaj() {
             {copy.principleLines.join(" ")}
           </p>
         </div>
-        <ProcessFlow />
-      </InView>
-    </Section>
+        <div className="mt-14">
+          <ProcessFlow />
+        </div>
+      </div>
+    </section>
   );
 }

@@ -2,7 +2,7 @@ import React from "react";
 
 const ICONS = {
   software: (
-    <svg viewBox="0 0 48 48" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 48 48" className="h-24 w-24" aria-hidden="true">
       <circle cx="14" cy="14" r="4" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <circle cx="34" cy="14" r="4" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <circle cx="14" cy="34" r="4" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -12,7 +12,7 @@ const ICONS = {
     </svg>
   ),
   ai: (
-    <svg viewBox="0 0 48 48" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 48 48" className="h-24 w-24" aria-hidden="true">
       <circle cx="12" cy="16" r="3" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <circle cx="12" cy="32" r="3" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <circle cx="36" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -26,14 +26,14 @@ const ICONS = {
     </svg>
   ),
   growth: (
-    <svg viewBox="0 0 48 48" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 48 48" className="h-24 w-24" aria-hidden="true">
       <path d="M10 12h28L32 20H16L10 12z" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <path d="M16 22h16l-4 8H20l-4-8z" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <path d="M20 32h8v6h-8z" fill="currentColor" opacity="0.85" />
     </svg>
   ),
   products: (
-    <svg viewBox="0 0 48 48" className="h-10 w-10" aria-hidden="true">
+    <svg viewBox="0 0 48 48" className="h-24 w-24" aria-hidden="true">
       <rect x="8" y="8" width="14" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <rect x="26" y="8" width="14" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />
       <rect x="8" y="26" width="14" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.4" />

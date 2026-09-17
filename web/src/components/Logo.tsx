@@ -43,6 +43,8 @@ export interface LogoProps {
   className?: string;
   showWordmark?: boolean;
   size?: keyof typeof SIZES;
+  /** Stable clip-path prefix so two marks on one page never collide. */
+  instance?: string;
   /** Marks the SVG decorative when the wordmark already names the brand. */
   titleOverride?: string;
 }
@@ -58,9 +60,11 @@ export default function Logo({
   className = "",
   showWordmark = true,
   size = "md",
+  instance,
   titleOverride,
 }: LogoProps) {
-  const uid = useId().replace(/:/g, "");
+  const generatedId = useId().replace(/:/g, "");
+  const uid = instance ?? generatedId;
   const px = SIZES[size];
   const clipC = `${uid}-c`;
   const clipM = `${uid}-m`;

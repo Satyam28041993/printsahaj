@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { tools } from "@content/tools";
+import ToolVisual from "@/components/landing/visuals/ToolVisual";
 
 export const metadata: Metadata = {
   title: "Tools",
@@ -9,37 +10,53 @@ export const metadata: Metadata = {
 
 export default function ToolsPage() {
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-16 sm:px-8">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-        Tool
-      </p>
-      <h1 className="mt-3 font-display text-display-lg font-bold text-slate-900 dark:text-white">
-        {tools.heading}
-      </h1>
-      <p className="mt-4 max-w-xl text-slate-600 dark:text-slate-300">
-        {tools.intro}
-      </p>
+    <div className="relative overflow-hidden">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-registration-marks opacity-40" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-[-180px] h-[520px] w-[720px] -translate-x-1/2 rounded-full"
+        style={{ background: "radial-gradient(circle, var(--accent-glow) 0%, transparent 70%)" }}
+      />
 
-      <ul className="mt-10 space-y-4">
-        {tools.items.map((item) => (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              className="block rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-teal-500/50 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-                {item.name}
-              </h2>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {item.summary}
-              </p>
-              <p className="mt-3 text-xs text-teal-700 dark:text-teal-400">
-                {item.status}
-              </p>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">Tool</p>
+        <h1 className="mt-3 max-w-3xl font-display text-display-lg font-bold text-primary">
+          {tools.heading}
+        </h1>
+        <p className="mt-5 max-w-2xl text-body-lg text-muted">{tools.intro}</p>
+
+        <ul className="mt-14 grid gap-5 md:grid-cols-2">
+          {tools.items.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className="group surface-card flex h-full flex-col overflow-hidden rounded-3xl"
+              >
+                <div className="p-5 pb-0">
+                  <ToolVisual kind={item.visual} />
+                </div>
+                <div className="flex flex-1 flex-col p-6 sm:p-7">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-accent">
+                    {item.category}
+                  </p>
+                  <h2 className="mt-3 font-display text-title font-semibold text-primary">
+                    {item.name}
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-muted">{item.summary}</p>
+                  <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                      {item.status}
+                    </span>
+                    <span className="text-sm text-accent transition-transform duration-300 group-hover:translate-x-1">
+                      Open →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -1,12 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { Calculator, Layers, FileSpreadsheet, RotateCw, Box, Settings, Sparkles } from "lucide-react";
+import { isCalculatorTab, type CalculatorTab } from "@content/tools";
 
 export default function CalculatorsPage() {
-  const [activeTab, setActiveTab] = useState<
-    "label-rate" | "gsm-weight" | "sheet-ups" | "gear-repeat" | "corrugated-bf"
-  >("label-rate");
+  const [activeTab, setActiveTab] = useState<CalculatorTab>("label-rate");
+
+  useLayoutEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("tab");
+    const fromHash = window.location.hash.replace(/^#/, "");
+    const next = fromQuery || fromHash;
+    if (!isCalculatorTab(next)) return;
+    // Deep links from /tools must apply before paint. Server always starts on label-rate.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveTab(next);
+  }, []);
+
+  const selectTab = (tab: CalculatorTab) => {
+    setActiveTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    url.hash = "";
+    window.history.replaceState({}, "", url);
+  };
 
   // 1. Label Rate State
   const [labelW, setLabelW] = useState<number>(114);
@@ -108,7 +126,7 @@ export default function CalculatorsPage() {
       {/* Tabs */}
       <div className="max-w-7xl mx-auto flex items-center justify-start sm:justify-center overflow-x-auto gap-2 pb-2 scrollbar-none border-b border-slate-200 dark:border-slate-800">
         <button
-          onClick={() => setActiveTab("label-rate")}
+          onClick={() => selectTab("label-rate")}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 cursor-pointer ${
             activeTab === "label-rate"
               ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/25"
@@ -120,7 +138,7 @@ export default function CalculatorsPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("gsm-weight")}
+          onClick={() => selectTab("gsm-weight")}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 cursor-pointer ${
             activeTab === "gsm-weight"
               ? "bg-amber-500 text-white shadow-md shadow-amber-500/25"
@@ -132,7 +150,7 @@ export default function CalculatorsPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("sheet-ups")}
+          onClick={() => selectTab("sheet-ups")}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 cursor-pointer ${
             activeTab === "sheet-ups"
               ? "bg-pink-500 text-white shadow-md shadow-pink-500/25"
@@ -144,7 +162,7 @@ export default function CalculatorsPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("gear-repeat")}
+          onClick={() => selectTab("gear-repeat")}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 cursor-pointer ${
             activeTab === "gear-repeat"
               ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/25"
@@ -156,7 +174,7 @@ export default function CalculatorsPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("corrugated-bf")}
+          onClick={() => selectTab("corrugated-bf")}
           className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition flex items-center gap-2 cursor-pointer ${
             activeTab === "corrugated-bf"
               ? "bg-purple-600 text-white shadow-md shadow-purple-500/25"

@@ -20,6 +20,7 @@
  */
 
 import { printSahajSite, type CtaLink, type PageIntent, type ProjectStatus } from "./site";
+import { tools } from "./tools";
 
 export interface HomePillar {
   name: string;
@@ -101,6 +102,11 @@ export interface HomeContent {
     description: string;
     /** CONTENT GAP — no verified photo yet. */
     photo: string | null;
+  };
+  toolsTeaser: {
+    heading: string;
+    supporting: string;
+    cta: CtaLink;
   };
   currentlyBuilding: {
     optional: true;
@@ -277,6 +283,11 @@ export const home: HomeContent = {
     description:
       "Technology builder focused on software, business systems, AI, automation and digital growth, with deep hands-on understanding of printing & packaging workflows.",
     photo: null,
+  },
+  toolsTeaser: {
+    heading: tools.heading,
+    supporting: tools.intro,
+    cta: { label: "Open tools", href: "/tools" },
   },
   currentlyBuilding: {
     optional: true,

@@ -446,43 +446,93 @@ body {
 }
 
 .cta-solid {
-  background: linear-gradient(180deg, #2dd4bf 0%, var(--accent) 58%, var(--accent-press) 100%);
+  background: linear-gradient(180deg, #5eead4 0%, var(--accent) 42%, var(--accent-press) 100%);
   color: var(--accent-contrast);
+  border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.28),
-    0 10px 28px -14px var(--accent-glow-strong),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 0 0 1px rgba(45, 212, 191, 0.35),
+    0 14px 36px -14px var(--accent-glow-strong),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 .cta-solid:hover,
 .cta-solid:focus-visible {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.45),
-    0 16px 36px -12px var(--accent-glow-strong),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    0 0 0 1px rgba(45, 212, 191, 0.55),
+    0 22px 44px -12px var(--accent-glow-strong),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
 .cta-ghost {
+  position: relative;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--accent-line);
   color: var(--text-primary);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cta-ghost::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: conic-gradient(from 180deg, transparent 55%, var(--accent), transparent 78%);
+  opacity: 0;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.cta-ghost:hover::before,
+.cta-ghost:focus-visible::before {
+  opacity: 0.9;
+  animation: spin-border 4s linear infinite;
 }
 
 .cta-ghost:hover,
 .cta-ghost:focus-visible {
   background: var(--accent-weak);
-  border-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 0 24px -10px var(--accent-glow-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 0 28px -10px var(--accent-glow-strong);
 }
 
 .cta-solid:focus-visible,
 .cta-ghost:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
-  border-radius: 9999px;
+  border-radius: 14px;
+}
+
+@keyframes spin-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ui-frame {
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.band-sunken {
+  background:
+    radial-gradient(900px 320px at 10% 0%, var(--accent-glow), transparent 60%),
+    var(--bg-sunken);
+}
+
+.band-elevated {
+  background:
+    radial-gradient(800px 280px at 90% 10%, var(--violet-weak), transparent 55%),
+    var(--bg-elevated);
 }
 
 .cinematic-panel {

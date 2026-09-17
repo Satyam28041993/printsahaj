@@ -1,8 +1,10 @@
 import SiteNav from "@/components/landing/SiteNav";
+import ScrollProgress from "@/components/landing/ScrollProgress";
 import HomeHero from "@/components/landing/HomeHero";
 import WhatIsPrintSahaj from "@/components/landing/WhatIsPrintSahaj";
 import Pillars from "@/components/landing/Pillars";
 import SelectedProducts from "@/components/landing/SelectedProducts";
+import SelectedTools from "@/components/landing/SelectedTools";
 import DigitalGrowth from "@/components/landing/DigitalGrowth";
 import Specialization from "@/components/landing/Specialization";
 import SelectedWork from "@/components/landing/SelectedWork";
@@ -16,12 +18,14 @@ export default function HomePage() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
+      <ScrollProgress />
       <SiteNav variant="overlay" />
       <main id="main">
         <HomeHero />
         <WhatIsPrintSahaj />
         <Pillars />
         <SelectedProducts />
+        <SelectedTools />
         <DigitalGrowth />
         <Specialization />
         <SelectedWork />

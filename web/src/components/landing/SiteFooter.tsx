@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { printSahajSite } from "@content/site";
+import { tools } from "@content/tools";
 
 export default function SiteFooter() {
   const { brand, nav, footer } = printSahajSite;
@@ -12,7 +13,7 @@ export default function SiteFooter() {
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-md">
             <Link href="/" aria-label="PrintSahaj, home">
-              <Logo size="md" />
+              <Logo size="md" instance="footer" />
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">{brand.positioning}</p>
             <p className="mt-2 text-sm leading-relaxed text-faint">{brand.specialization}</p>
@@ -29,6 +30,23 @@ export default function SiteFooter() {
           </div>
 
           <div className="flex flex-col gap-8 sm:flex-row sm:gap-16">
+            <div>
+              <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
+                Tools
+              </h2>
+              <ul className="mt-4 space-y-2 text-sm">
+                {tools.items.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className="text-muted transition-colors hover:text-primary"
+                    >
+                      {item.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <div>
               <h2 className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
                 Explore

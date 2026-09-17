@@ -26,7 +26,7 @@ export default function Navbar() {
         <div className="bg-slate-900/80 dark:bg-[#070b12]/80 backdrop-blur-xl border border-white/10 dark:border-slate-800/80 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-2xl transition-colors duration-200">
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <Logo size="md" />
+            <Logo size="md" instance="legacy-nav" />
           </Link>
 
           {/* Center Pill Navigation */}
