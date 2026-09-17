@@ -24,7 +24,10 @@ def _names_from_separations(document: DocumentText) -> list[str]:
         cleaned = normalise_ink_name(item)
         if cleaned and cleaned not in names:
             names.append(cleaned)
-    for page in document.pages:
+    # The report cover's own header table (Job ID, Colours, swatches) is not
+    # a plate's text, so it is skipped here to avoid a stray word from that
+    # table reading as an ink name.
+    for page in document.plate_pages:
         header = page.text[:HEADER_WINDOW_CHARS]
         for token in header.replace("/", " ").replace(":", " ").split():
             cleaned = normalise_ink_name(token)
@@ -34,14 +37,19 @@ def _names_from_separations(document: DocumentText) -> list[str]:
 
 
 def plate_name_list(document: DocumentText) -> str:
-    """``1 Cyan, 2 Magenta, …`` from each SEP page, then leftover ink names."""
+    """``1 Cyan, 2 Magenta, …`` from each real plate page, then leftover names.
+
+    Numbers are the actual PDF page, matching :func:`plate_identities`, even
+    when a report cover at page 1 is excluded.
+    """
     parts: list[str] = []
     seen: set[str] = set()
-    for index, name in enumerate(document.page_colorants, start=1):
+    offset = len(document.pages) - len(document.plate_pages)
+    for index, name in enumerate(document.plate_page_colorants, start=1):
         cleaned = normalise_ink_name(name)
         if not cleaned:
             continue
-        parts.append(f"{index} {cleaned}")
+        parts.append(f"{index + offset} {cleaned}")
         seen.add(cleaned)
     for name in _names_from_separations(document):
         if name and name not in seen:

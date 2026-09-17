@@ -21,16 +21,24 @@ NOT_READ = (
 
 
 def plate_identities(separations: DocumentText) -> list[tuple[int, str]]:
-    """``(page_number, ink name)`` for each SEP page."""
-    count = max(len(separations.pages), len(separations.page_colorants))
+    """``(page_number, ink name)`` for each real plate page.
+
+    ``page_number`` is the actual PDF page (1-based), so it still points at
+    the right page in the file even when a vendor's own report cover sits
+    at page 1 and is excluded here.
+    """
+    plate_pages = separations.plate_pages
+    colorants = separations.plate_page_colorants
+    offset = len(separations.pages) - len(plate_pages)
+    count = max(len(plate_pages), len(colorants))
     rows: list[tuple[int, str]] = []
     for index in range(count):
         name = ""
-        if index < len(separations.page_colorants):
-            name = normalise_ink_name(separations.page_colorants[index])
+        if index < len(colorants):
+            name = normalise_ink_name(colorants[index])
         if not name and index < len(separations.colorants):
             name = normalise_ink_name(separations.colorants[index])
-        rows.append((index + 1, name or "unnamed"))
+        rows.append((index + 1 + offset, name or "unnamed"))
     return rows
 
 

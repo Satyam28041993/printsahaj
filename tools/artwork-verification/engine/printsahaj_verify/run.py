@@ -33,7 +33,6 @@ from printsahaj_verify.checks.text_completeness import check_text_completeness
 from printsahaj_verify.extract import (
     DocumentText,
     coding_panel_on_file,
-    count_pdf_pages,
     hash_file,
     parse_vendor_header,
     read_document_text,
@@ -60,6 +59,22 @@ IMAGE_TEXT_REASON = (
     "Set PRINTSAHAJ_GEMINI_API_KEY on this machine to compare wording, "
     "or open the two previews side by side."
 )
+
+
+def _header_has_numbers(header: object) -> bool:
+    """True when a vendor header actually carries a usable figure."""
+    if header is None:
+        return False
+    return any(
+        getattr(header, field, None) is not None
+        for field in (
+            "cylinder_repeat_mm",
+            "paper_width_mm",
+            "label_width_mm",
+            "plate_thickness_mm",
+            "col_count",
+        )
+    )
 
 
 def _pdf_text(path: Path | None) -> DocumentText | None:
@@ -101,18 +116,18 @@ def _vision_notes(files: JobFiles) -> tuple[VisionNotes | None, str | None]:
 
 def _plate_vision_notes(
     files: JobFiles,
-    page_count: int,
+    page_numbers: list[int],
 ) -> tuple[tuple[PlateVisionNote, ...] | None, str | None]:
-    """Gemini look at each SEP page against the client artwork."""
+    """Gemini look at each real plate page against the client artwork."""
     artwork = files.client_artwork or files.approval
-    if artwork is None or files.separations is None or page_count < 1:
+    if artwork is None or files.separations is None or not page_numbers:
         return None, None
     try:
         return (
             review_separation_plates(
                 artwork,
                 files.separations,
-                page_count,
+                page_numbers,
                 approval=files.approval,
             ),
             None,
@@ -187,6 +202,7 @@ def _approval_label_mm(files: JobFiles) -> tuple[float, float] | None:
 def _plate_count_result(
     spec: JobSpec,
     files: JobFiles,
+    separations_doc: DocumentText | None,
     header_col: int | None,
 ) -> CheckResult:
     if files.separations is None:
@@ -195,7 +211,7 @@ def _plate_count_result(
             title=PLATE_TITLE,
             not_run_reason="Separations PDF not found",
         )
-    if not is_pdf(files.separations):
+    if separations_doc is None:
         return CheckResult(
             check_id=PLATE_ID,
             title=PLATE_TITLE,
@@ -204,7 +220,9 @@ def _plate_count_result(
                 "(one page per plate)."
             ),
         )
-    pages = count_pdf_pages(files.separations)
+    # A vendor's own report-cover page, if one sits at page 1, is not a
+    # plate — count only the real ink pages.
+    pages = len(separations_doc.plate_pages)
     if spec.has_colour_line:
         return check_plate_count(spec, pages)
     if header_col is None:
@@ -337,7 +355,18 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
     approval_doc = _pdf_text(files.approval)
     composite_doc = _pdf_text(files.vendor_composite)
     separations_doc = _pdf_text(files.separations)
-    header = parse_vendor_header(composite_doc.full_text) if composite_doc else None
+    # Some vendors print CLY / paper / label size on the composite, others
+    # print it on the separations file's own report-cover page (or both).
+    # Try the composite first since that is the usual place; fall back to
+    # separations so a composite delivered only as an image (no text layer)
+    # does not lose geometry that the separations PDF already carries.
+    header = None
+    if composite_doc is not None:
+        header = parse_vendor_header(composite_doc.full_text)
+    if not _header_has_numbers(header) and separations_doc is not None:
+        fallback = parse_vendor_header(separations_doc.full_text)
+        if _header_has_numbers(fallback):
+            header = fallback
     vendor_docs = [doc for doc in (composite_doc, separations_doc) if doc is not None]
     identity_docs = [doc for doc in (approval_doc, composite_doc) if doc is not None]
     identity_paths = [
@@ -375,8 +404,10 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
         text_result = check_text_completeness(approved_for_text, separations_doc)
         plate_text = check_plate_text_map(spec, separations_doc)
 
-    sep_pages = len(separations_doc.pages) if separations_doc else 0
-    plate_notes, plate_vision_error = _plate_vision_notes(files, sep_pages)
+    plate_page_numbers = (
+        [page.number for page in separations_doc.plate_pages] if separations_doc else []
+    )
+    plate_notes, plate_vision_error = _plate_vision_notes(files, plate_page_numbers)
     composite_notes, composite_vision_error = _composite_vision_notes(files)
     panel_composite, panel_refs = _coding_panel_flags(files, header)
     if composite_notes is not None:
@@ -419,7 +450,9 @@ def _collect_results(spec: JobSpec, files: JobFiles) -> list[CheckResult]:
             notes,
             vision_error,
         ),
-        _plate_count_result(spec, files, header.col_count if header else None),
+        _plate_count_result(
+            spec, files, separations_doc, header.col_count if header else None
+        ),
         check_colour_names(spec, separations_doc),
         geometry,
         check_composite_matter(

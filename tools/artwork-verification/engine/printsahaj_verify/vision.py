@@ -142,6 +142,13 @@ The last plate is often UV / varnish. No type sits on varnish. A hole,
 white box or cut-out is the unvarnished coding window where batch number
 and MRP are coded later. That window is expected.
 
+Every image after the reference(s) should be one ink, full of registration
+marks, with little else. If one instead shows the whole label in full
+colour with several labels side by side and a data table (job ID, client
+name, colour count) — a vendor's own tracking cover sheet, not a plate —
+say so in that item's note and set text_on_plate to "not a plate — this is
+the vendor's report cover" rather than describing it as an ink.
+
 Return JSON only:
 plates (array of objects): page (number, 1-based), name (string),
 matter_same (boolean),
@@ -652,8 +659,19 @@ def _multi_image_body(prompt: str, images: list[bytes]) -> bytes:
     ).encode("utf-8")
 
 
-def plate_notes_from_payload(payload: dict[str, object]) -> tuple[PlateVisionNote, ...]:
-    """Parse the plates array from a Gemini JSON object."""
+def plate_notes_from_payload(
+    payload: dict[str, object],
+    page_numbers: list[int] | None = None,
+) -> tuple[PlateVisionNote, ...]:
+    """Parse the plates array from a Gemini JSON object.
+
+    *page_numbers* is the real PDF page each plate image came from, in the
+    order the images were sent. When given, it wins over Gemini's own
+    self-reported ``page`` — Gemini only knows the order it was shown
+    images in, not the true page number, which differs whenever a
+    report-cover page was skipped before sending. Left out, this falls
+    back to trusting the payload's own numbering (older behaviour).
+    """
     raw = payload.get("plates")
     if not isinstance(raw, list):
         return ()
@@ -661,11 +679,14 @@ def plate_notes_from_payload(payload: dict[str, object]) -> tuple[PlateVisionNot
     for index, item in enumerate(raw, start=1):
         if not isinstance(item, dict):
             continue
-        page_raw = item.get("page", index)
-        try:
-            page = int(page_raw)  # type: ignore[arg-type]
-        except (TypeError, ValueError):
-            page = index
+        if page_numbers and index <= len(page_numbers):
+            page = page_numbers[index - 1]
+        else:
+            page_raw = item.get("page", index)
+            try:
+                page = int(page_raw)  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                page = index
         notes.append(
             PlateVisionNote(
                 page=page,
@@ -686,14 +707,20 @@ def plate_notes_from_payload(payload: dict[str, object]) -> tuple[PlateVisionNot
 def review_separation_plates(
     artwork: Path,
     separations: Path,
-    page_count: int,
+    page_numbers: list[int],
     approval: Path | None = None,
 ) -> tuple[PlateVisionNote, ...] | None:
-    """Send artwork, first-approval and each SEP page to Gemini."""
+    """Send artwork, first-approval and each real plate page to Gemini.
+
+    *page_numbers* are the actual PDF pages that are plates (1-based, in
+    file order) — a vendor's report-cover page, if one sits at page 1, is
+    expected to already be excluded by the caller so it is never sent as
+    if it were an ink plate.
+    """
     if not read_gemini_api_key():
         return None
-    if page_count < 1:
-        raise JobSpecError("Separations file has no pages")
+    if not page_numbers:
+        raise JobSpecError("Separations file has no plate pages")
     images = [render_preview_png(artwork, 1, max_width_px=PLATE_PREVIEW_WIDTH_PX)]
     refs = (
         "Image 1 is the client artwork (one label). "
@@ -709,7 +736,7 @@ def review_separation_plates(
             "not the form table. Images after that are separation plates "
             "in page order, one ink each."
         )
-    for page in range(1, page_count + 1):
+    for page in page_numbers:
         images.append(
             render_preview_png(separations, page, max_width_px=PLATE_PREVIEW_WIDTH_PX)
         )
@@ -717,7 +744,7 @@ def review_separation_plates(
         _multi_image_body(PLATE_REVIEW_PROMPT.format(refs=refs) + language_rule(), images),
         PLATE_REVIEW_TIMEOUT_SEC,
     )
-    return plate_notes_from_payload(payload)
+    return plate_notes_from_payload(payload, page_numbers)
 
 
 def composite_notes_from_payload(payload: dict[str, object]) -> CompositeVisionNotes:

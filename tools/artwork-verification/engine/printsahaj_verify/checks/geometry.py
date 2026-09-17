@@ -42,10 +42,16 @@ def check_geometry(
 ) -> CheckResult:
     """Compare sizes with the vendor header, first-approval size, and cylinder teeth."""
     if header is None:
+        reason = (
+            "The vendor composite is an image, and no CLY / PAPER SIZE / "
+            "LABEL SIZE text was found on the separations file either."
+            if composite_path is not None
+            else "Vendor composite / plate PDF not found"
+        )
         return CheckResult(
             check_id=CHECK_ID,
             title=CHECK_TITLE,
-            not_run_reason="Vendor composite / plate PDF not found",
+            not_run_reason=reason,
         )
 
     has_any = any(

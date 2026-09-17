@@ -61,6 +61,28 @@ class PageText:
     tokens: list[str]
 
 
+#: Some pre-press vendors (this one included) put a "job specification
+#: report" cover ahead of the real plates: the full composite plus a header
+#: table (Job ID, Client, Colours, colour swatches). It is not an ink plate.
+#: Vendors only ever prepend this, so only page 1 is ever checked for it.
+REPORT_COVER_MARKERS = ("ARTWORK SIZE", "OPERATOR", "FILE NAME", "JOB ID")
+
+
+def _looks_like_report_cover(text: str) -> bool:
+    """True when a page reads like a vendor's report cover, not a plate.
+
+    A real one-ink separation page carries little more than registration
+    marks and the ink's own share of the artwork — it does not carry a
+    job-tracking header table. Requiring two markers (rather than one)
+    keeps a plate that happens to repeat a single stray word from being
+    mistaken for the cover.
+    """
+    upper = text.upper()
+    if "JOB SPECIFICATION REPORT" in upper:
+        return True
+    return sum(marker in upper for marker in REPORT_COVER_MARKERS) >= 2
+
+
 @dataclass
 class DocumentText:
     """Text from every page of one PDF."""
@@ -80,6 +102,21 @@ class DocumentText:
         for page in self.pages:
             tokens.extend(page.tokens)
         return tokens
+
+    @property
+    def has_report_cover(self) -> bool:
+        """True when page 1 is a report cover rather than a plate."""
+        return bool(self.pages) and _looks_like_report_cover(self.pages[0].text)
+
+    @property
+    def plate_pages(self) -> list[PageText]:
+        """Pages that are one-ink plates, skipping a report cover at page 1."""
+        return self.pages[1:] if self.has_report_cover else self.pages
+
+    @property
+    def plate_page_colorants(self) -> list[str]:
+        """``page_colorants``, aligned with :attr:`plate_pages`."""
+        return self.page_colorants[1:] if self.has_report_cover else self.page_colorants
 
 
 def normalise_token(text: str) -> str:

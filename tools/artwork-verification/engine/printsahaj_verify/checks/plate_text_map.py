@@ -38,7 +38,7 @@ def check_plate_text_map(
         needle = normalise_token(phrase)
         pages = [
             page.number
-            for page in separations.pages
+            for page in separations.plate_pages
             if needle in normalise_token(page.text)
         ]
         observations[phrase] = (
