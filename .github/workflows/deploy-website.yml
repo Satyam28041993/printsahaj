@@ -39,9 +39,10 @@ jobs:
           test -f out/.htaccess || { echo "out/.htaccess missing"; exit 1; }
           test -f out/tools/index.html || { echo "route folders have no index.html — is trailingSlash still set?"; exit 1; }
 
-      # FTP_SERVER_DIR overrides the path when the FTP account's home is already
-      # the document root, in which case /public_html/ would nest a second copy
-      # inside it. Set the secret to "./" for such an account.
+      # This Hostinger FTP user is already jailed to public_html ("Folder to
+      # upload files" in hPanel). Uploading to /public_html/ again nests a
+      # second folder and the live site stays empty (403). "./" is the
+      # website root. FTP_SERVER_DIR can still override if an account differs.
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -49,9 +50,25 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
-          server-dir: ${{ secrets.FTP_SERVER_DIR || '/public_html/' }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
           dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
+
+      # A successful FTP sync can still land in the wrong Hostinger folder.
+      # Fail the job if the live homepage is not a real page.
+      - name: Check the live homepage
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 https://printsahaj.com/)
+          echo "Homepage HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "printsahaj.com returned HTTP $code. FTP_SERVER_DIR is likely not the domain document root in hPanel."
+            exit 1
+          fi
+          grep -qi "printsahaj" /tmp/home.html || {
+            echo "Homepage did not contain PrintSahaj"
+            exit 1
+          }
