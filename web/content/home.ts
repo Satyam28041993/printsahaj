@@ -25,6 +25,12 @@ import { tools } from "./tools";
 export interface HomePillar {
   name: string;
   description: string;
+  /**
+   * Scannable form of `description`, for the pillar cards. Every entry is
+   * lifted from the sentence above it — this is the same claim set short
+   * enough to read at a glance, never a new claim.
+   */
+  highlights: string[];
 }
 
 export interface HomeProduct {
@@ -150,21 +156,41 @@ export const home: HomeContent = {
         name: "Software & Business Systems",
         description:
           "Business software designed around real workflows — from CRM and lead management to ERP, internal systems, dashboards and custom applications.",
+        highlights: [
+          "CRM and lead management",
+          "ERP and internal systems",
+          "Dashboards and custom applications",
+        ],
       },
       {
         name: "AI & Automation",
         description:
           "AI-powered assistants and automated workflows that reduce repetitive work, connect information and help teams move faster.",
+        highlights: [
+          "AI-powered assistants",
+          "Automated workflows",
+          "Reduce repetitive work",
+        ],
       },
       {
         name: "Digital Growth & Marketing",
         description:
           "Lead generation, high-conversion websites, branding, SEO, digital marketing, CRM integration and marketing automation designed to connect traffic with actual business growth.",
+        highlights: [
+          "Lead generation",
+          "High-conversion websites",
+          "CRM integration and marketing automation",
+        ],
       },
       {
         name: "Products & Industry Tools",
         description:
           "Purpose-built products, calculators and industry tools that solve focused problems and turn practical ideas into usable software.",
+        highlights: [
+          "Purpose-built products",
+          "Calculators and industry tools",
+          "Practical ideas as usable software",
+        ],
       },
     ],
   },
