@@ -690,3 +690,109 @@ body {
     transform: none !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Tinted feature cards
+   Each pillar carries its own hue so four cards in a row read as four
+   different things at a glance, the way a product screenshot would. The hue
+   is a wash over the elevated surface, never a flat fill — flat colour blocks
+   flatten the page and fight the CMYK mark.
+   --------------------------------------------------------------------------- */
+.feature-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background: var(--bg-elevated);
+  transition:
+    border-color 0.3s ease,
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 140% at 0% 0%, var(--tint-strong), transparent 58%),
+    radial-gradient(90% 120% at 100% 100%, var(--tint-weak), transparent 62%);
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.feature-card:hover {
+  border-color: var(--tint-line);
+  transform: translateY(-4px);
+  box-shadow:
+    var(--shadow-lift),
+    0 24px 60px -32px var(--tint-strong);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card--teal {
+  --tint-strong: rgba(20, 184, 166, 0.26);
+  --tint-weak: rgba(20, 184, 166, 0.11);
+  --tint-line: rgba(20, 184, 166, 0.4);
+  --tint-ink: #2dd4bf;
+}
+.feature-card--violet {
+  --tint-strong: rgba(109, 124, 255, 0.28);
+  --tint-weak: rgba(109, 124, 255, 0.12);
+  --tint-line: rgba(109, 124, 255, 0.42);
+  --tint-ink: #8b97ff;
+}
+.feature-card--cyan {
+  --tint-strong: rgba(0, 174, 239, 0.24);
+  --tint-weak: rgba(0, 174, 239, 0.1);
+  --tint-line: rgba(0, 174, 239, 0.4);
+  --tint-ink: #38bdf8;
+}
+.feature-card--magenta {
+  --tint-strong: rgba(236, 0, 140, 0.22);
+  --tint-weak: rgba(236, 0, 140, 0.09);
+  --tint-line: rgba(236, 0, 140, 0.38);
+  --tint-ink: #f472b6;
+}
+
+/* The icon chip that sits above each card's title. */
+.feature-chip {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--tint-line);
+  background: var(--tint-weak);
+  color: var(--tint-ink);
+}
+
+/* A scene is a real piece of product UI, cropped so it bleeds off the card. */
+.feature-scene {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 1rem 1rem 0 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)),
+    var(--bg-sunken);
+  box-shadow: var(--shadow-card);
+}
+
+@media (min-width: 1024px) {
+  .feature-scene {
+    border-radius: 1rem 0 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feature-card:hover {
+    transform: none;
+  }
+}
