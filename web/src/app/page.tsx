@@ -4,6 +4,7 @@ import HomeHero from "@/components/landing/HomeHero";
 import WhatIsPrintSahaj from "@/components/landing/WhatIsPrintSahaj";
 import Pillars from "@/components/landing/Pillars";
 import SelectedProducts from "@/components/landing/SelectedProducts";
+import CaseStudy from "@/components/landing/CaseStudy";
 import SelectedTools from "@/components/landing/SelectedTools";
 import DigitalGrowth from "@/components/landing/DigitalGrowth";
 import Specialization from "@/components/landing/Specialization";
@@ -25,6 +26,7 @@ export default function HomePage() {
         <WhatIsPrintSahaj />
         <Pillars />
         <SelectedProducts />
+        <CaseStudy />
         <SelectedTools />
         <DigitalGrowth />
         <Specialization />
