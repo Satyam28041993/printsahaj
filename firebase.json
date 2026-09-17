@@ -1,6 +1,7 @@
 {
   "hosting": [
     {
+      "target": "site",
       "public": "web/out",
       "cleanUrls": true,
       "ignore": [

@@ -18,6 +18,12 @@ spec:
           env:
             - name: PRINTSAHAJ_JOBS_ROOT
               value: /mnt/jobs
+            # A Firebase token only proves the caller has an account in the
+            # project, so the desk also checks the address. Empty means every
+            # request is refused; the deploy workflow fills it from the
+            # DESK_ALLOWED_EMAILS secret.
+            - name: PRINTSAHAJ_ALLOWED_EMAILS
+              value: ""
             - name: PRINTSAHAJ_GEMINI_API_KEY
               valueFrom:
                 secretKeyRef:

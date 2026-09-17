@@ -5,11 +5,13 @@
   "targets": {
     "printsahaj": {
       "hosting": {
+        "site": [
+          "printsahaj"
+        ],
         "tool": [
           "printsahaj-tool"
         ]
       }
     }
-  },
-  "etags": {}
+  }
 }

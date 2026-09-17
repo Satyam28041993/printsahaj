@@ -300,8 +300,14 @@
         const startJob = new URLSearchParams(location.search).get("job");
         if (startJob) return openJob(startJob);
       }).catch((err) => {
+        // On the cloud desk the server is plainly up — the account is simply
+        // not on the allow list. Sending that person to start-tool.bat only
+        // wastes their time.
+        const reason = authRequired
+          ? "This account is not cleared for the desk. Ask for the address to be added, then sign in again."
+          : "The tool server is not running. Double-click start-tool.bat.";
         document.getElementById("job-list").innerHTML =
-          '<div class="card"><p class="err">The tool server is not running. Double-click start-tool.bat.</p>' +
+          '<div class="card"><p class="err">' + escapeHtml(reason) + "</p>" +
           '<p class="muted">' + escapeHtml(err.message) + "</p></div>";
       });
     }
