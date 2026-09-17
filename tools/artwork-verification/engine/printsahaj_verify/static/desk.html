@@ -366,10 +366,20 @@
         .replace(/"/g, "&quot;");
     }
 
+    // Firebase Hosting drops a proxied request after 60 seconds and a full
+    // plate check takes longer than that, so when the desk is served from the
+    // custom domain it talks to Cloud Run directly instead of through the
+    // proxy. Locally and on *.run.app this stays empty, i.e. same origin.
+    const CLOUD_API_BASE = "https://artwork-verification-485728415345.asia-south1.run.app";
+    const API_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+      || location.hostname.endsWith(".run.app")
+      ? ""
+      : CLOUD_API_BASE;
+
     async function j(path, opts) {
       opts = opts || {};
       const headers = Object.assign({}, opts.headers || {}, await authHeader());
-      const res = await fetch(path, Object.assign({}, opts, { headers }));
+      const res = await fetch(API_BASE + path, Object.assign({}, opts, { headers }));
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       return data;
@@ -379,6 +389,31 @@
       return "/api/jobs/" + encodeURIComponent(currentId) + "/files/" +
         encodeURIComponent(role) + "/preview?page=" + page +
         (width ? "&width=" + width : "") + "&v=" + Date.now();
+    }
+
+    // An <img src> carries no Authorization header, so with the login gate on
+    // every preview came back 401. Fetch the bytes with the token instead and
+    // hand the image a blob it can show.
+    async function fillPreview(img, url) {
+      try {
+        const res = await fetch(API_BASE + url, { headers: await authHeader() });
+        if (!res.ok) throw new Error("Preview failed (" + res.status + ")");
+        if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl);
+        const blobUrl = URL.createObjectURL(await res.blob());
+        img.dataset.blobUrl = blobUrl;
+        img.src = blobUrl;
+      } catch (err) {
+        img.alt = err.message;
+      }
+    }
+
+    /** Load every <img data-preview="..."> inside *root* through fillPreview. */
+    function hydratePreviews(root) {
+      (root || document).querySelectorAll("img[data-preview]").forEach((img) => {
+        const url = img.dataset.preview;
+        delete img.dataset.preview;
+        fillPreview(img, url);
+      });
     }
 
     function stageLocked(stageId, defs, checked) {
@@ -467,6 +502,7 @@
           : "Gemini: OFF — paste the key in gemini-key.txt next to start-tool.bat, save, restart the black window.";
       document.getElementById("job-hint").textContent = (def ? def.hint + " " : "") + geminiHint;
       document.getElementById("stage-panel").innerHTML = renderStage(def, checked, defs);
+      hydratePreviews(document.getElementById("stage-panel"));
       bindStage(def, defs, checked);
     }
 
@@ -485,7 +521,7 @@
           Compare
         </label>
         <img class="preview" data-role="${role}" data-page="1" data-pages="${pages}"
-          src="${previewUrl(role, 1)}" alt="${copy[0]} preview" />
+          data-preview="${previewUrl(role, 1)}" alt="${copy[0]} preview" />
         <p class="muted">${escapeHtml(info.name)} · ${escapeHtml(info.kind)}${pages > 1 ? " · " + pages + " pages" : ""}</p>
         ${pages > 1 ? `<div class="preview-nav">
           <button type="button" class="ghost" data-preview-role="${role}" data-delta="-1">Prev</button>
@@ -648,7 +684,7 @@
       if (page < 1) page = max;
       if (page > max) page = 1;
       img.setAttribute("data-page", String(page));
-      img.src = previewUrl(role, page);
+      fillPreview(img, previewUrl(role, page));
       const label = document.querySelector('[data-page-label="' + role + '"]');
       if (label) label.textContent = "Page " + page + " / " + max;
     }
@@ -662,7 +698,7 @@
         const body = new FormData();
         body.append("role", role);
         body.append("file", file, file.name);
-        const res = await fetch("/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body, headers: await authHeader() });
+        const res = await fetch(API_BASE + "/api/jobs/" + encodeURIComponent(currentId) + "/files", { method: "POST", body, headers: await authHeader() });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         snapshot = await j("/api/jobs/" + encodeURIComponent(currentId));
@@ -692,7 +728,7 @@
         </div>
         <div class="viewer-stage" data-stage="${role}">
           <img class="viewer-img" data-viewer-img="${role}" data-page="${page}" data-pages="${pages}"
-            src="${previewUrl(role, page, VIEWER_WIDTH)}" alt="${escapeHtml(copy)} full preview" />
+            data-preview="${previewUrl(role, page, VIEWER_WIDTH)}" alt="${escapeHtml(copy)} full preview" />
           <div class="loupe hidden" data-loupe-lens="${role}"></div>
         </div>
       </div>`;
@@ -711,6 +747,7 @@
         <p class="muted">${many ? "Both files, side by side. Zoom in until the type is readable, or use the magnifying glass." : "Zoom in until the type is readable, or use the magnifying glass."}</p>
         <div class="viewer-grid${many ? "" : " one"}">${roles.map(viewerPane).join("")}</div>
       </div>`;
+      hydratePreviews(box);
       document.getElementById("close-viewer").onclick = closeViewer;
       box.onclick = (event) => { if (event.target === box) closeViewer(); };
       roles.forEach(bindViewerPane);
@@ -752,7 +789,7 @@
           if (page < 1) page = max;
           if (page > max) page = 1;
           img.setAttribute("data-page", String(page));
-          img.src = previewUrl(role, page, VIEWER_WIDTH);
+          fillPreview(img, previewUrl(role, page, VIEWER_WIDTH));
           const pageLabel = document.querySelector('[data-viewer-page-label="' + role + '"]');
           if (pageLabel) pageLabel.textContent = "Page " + page + " / " + max;
         };
