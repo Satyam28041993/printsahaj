@@ -31,7 +31,9 @@ from printsahaj_verify.vision import (
     claims_missing_coding_panel,
     composite_notes_from_payload,
     correct_composite_notes,
+    language_rule,
     plate_notes_from_payload,
+    set_output_language,
 )
 from tests.helpers import kalonji_spec
 from tests.test_stages import BIN_VENDOR_TEXT
@@ -403,6 +405,19 @@ class PlateTextReviewTests(unittest.TestCase):
         self.assertIn("text_on_plate", PLATE_REVIEW_PROMPT)
         self.assertIn("coding window", COMPOSITE_REVIEW_PROMPT)
         self.assertIn("blank", COMPOSITE_REVIEW_PROMPT.lower())
+        self.assertIn("Compare the SAME spot", COMPOSITE_REVIEW_PROMPT)
+        self.assertIn("not a damaged up", COMPOSITE_REVIEW_PROMPT)
+
+    def test_hindi_notes_are_asked_for_in_hinglish(self) -> None:
+        set_output_language("hi")
+        try:
+            rule = language_rule()
+        finally:
+            set_output_language("en")
+        self.assertIn("Hinglish", rule)
+        self.assertIn("no body copy", rule)
+        self.assertIn("WhatsApp", rule)
+        self.assertIn("Devanagari", rule)
 
     def test_payload_keeps_text_on_this_ink(self) -> None:
         notes = plate_notes_from_payload(
@@ -461,14 +476,57 @@ class PlateTextReviewTests(unittest.TestCase):
         vendor = next(item for item in review["stages"] if item["stage_id"] == "vendor")
         by_id = {item["id"]: item for item in vendor["items"]}
         detail = by_id["plate_1"]["detail"]
-        self.assertIn("Text on this ink:", detail)
-        self.assertIn("Ingredients", detail)
-        self.assertIn("Not on this ink:", detail)
-        self.assertIn("Images:", detail)
+        block = by_id["plate_1"]["text_block"]
+        self.assertIn("See details", detail)
+        self.assertNotIn("Text on this ink:", detail)
+        self.assertIn("Ingredients", block)
+        self.assertIn("Printed on other plates", block)
+        self.assertIn("Bin Faruq", block)
+        self.assertIn("Pictures on this plate", block)
         blob = str(review).upper()
         self.assertNotIn("PASS", blob)
         self.assertNotIn("APPROVED", blob)
         self.assertNotIn("FAIL", blob)
+
+    def test_photo_only_plate_does_not_claim_to_print_text(self) -> None:
+        from printsahaj_verify.models import CheckResult
+
+        look = check_plate_review(
+            DocumentText(
+                path=Path("s.pdf"),
+                pages=_pages(1),
+                page_colorants=["Cyan"],
+            ),
+            notes=(
+                PlateVisionNote(
+                    1,
+                    "Cyan",
+                    True,
+                    "bowl tonal values only",
+                    False,
+                    "no body copy",
+                    "brand words sit on gold",
+                    "bowl and glow",
+                ),
+            ),
+        )
+        review = build_review(
+            [
+                CheckResult(
+                    check_id="plate_count",
+                    title="Plate count",
+                    observations={"separation_pages": "1", "declared_units": "1"},
+                ),
+                look,
+            ],
+            ["vendor"],
+        )
+        vendor = next(item for item in review["stages"] if item["stage_id"] == "vendor")
+        by_id = {item["id"]: item for item in vendor["items"]}
+        self.assertIn("No text on this plate", by_id["plate_1"]["detail"])
+        self.assertNotIn("no body copy", by_id["plate_1"]["detail"].lower())
+        self.assertIn("No writing on this plate", by_id["plate_1"]["text_block"])
+        self.assertIn("bowl and glow", by_id["plate_1"]["text_block"])
 
 
 if __name__ == "__main__":

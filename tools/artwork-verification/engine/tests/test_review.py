@@ -5,6 +5,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import pymupdf
 
@@ -57,7 +58,8 @@ class ReviewTests(unittest.TestCase):
         self.assertNotIn("APPROVED", blob)
         self.assertNotIn("FAIL", blob)
 
-    def test_approval_logo_and_alignment_are_compare_by_eye(self) -> None:
+    @patch("printsahaj_verify.run.compare_label_previews", return_value=None)
+    def test_approval_logo_and_alignment_are_compare_by_eye(self, _vision) -> None:
         root = Path(tempfile.mkdtemp())
         folder = create_or_update_job(
             {"job_id": "R1", "file_name": "ART", "customer": "ACME"},

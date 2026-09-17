@@ -17,6 +17,7 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -43,6 +44,56 @@ GEMINI_MODEL_CANDIDATES: tuple[str, ...] = (
     "gemini-flash-latest",
     "gemini-1.5-flash",
 )
+
+# The desk can be read in any of these. A press operator picks one at the top
+# of the screen and the notes come back written that way.
+LANGUAGE_NAMES = {
+    "en": "simple English",
+    "hi": "Hinglish — Hindi written in English letters, the way people type on WhatsApp",
+    "mr": "Marathi",
+    "gu": "Gujarati",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "kn": "Kannada",
+    "bn": "Bengali",
+    "pa": "Punjabi",
+}
+DEFAULT_LANGUAGE = "en"
+_output_language: ContextVar[str] = ContextVar("output_language", default=DEFAULT_LANGUAGE)
+
+
+def set_output_language(code: str) -> None:
+    """Choose the language the notes come back in. Unknown codes fall back."""
+    _output_language.set(code if code in LANGUAGE_NAMES else DEFAULT_LANGUAGE)
+
+
+def output_language() -> str:
+    """The language code the notes are being written in right now."""
+    return _output_language.get()
+
+
+def language_rule() -> str:
+    """The instruction that puts the notes in the operator's language."""
+    code = output_language()
+    name = LANGUAGE_NAMES.get(code, LANGUAGE_NAMES[DEFAULT_LANGUAGE])
+    script = ""
+    if code == "hi":
+        script = (
+            "Hinglish means Hindi in Roman letters, like a WhatsApp message. "
+            'Example: "Bowl dono labels par center mein barabar hai." '
+            "Do not use Devanagari script.\n"
+        )
+    return (
+        f"\nWrite every note and explanation in {name}. {script}"
+        "Keep sentences short and plain, the way you would explain it to a "
+        "press operator who is not a designer. Do not use prepress jargon "
+        "without saying what it means.\n"
+        "JSON keys and booleans stay in English. If a plate has no readable "
+        "sentence, set text_on_plate to exactly: no body copy\n"
+        "Text printed ON the label stays exactly as printed. Never translate "
+        "the label's own words.\n"
+    )
+
 
 VISION_PROMPT = """You compare two pictures of the same printed label.
 Image 1 is the client artwork. Image 2 is the first-approval sheet
@@ -125,6 +176,15 @@ artwork has white.
 
 Read Batch / Pkd / M.R.P. from the close-up images when they are present,
 not from the small full-sheet view.
+
+You are given close-ups of more than one up. Compare the SAME spot on those
+close-ups before you call anything a defect. Photo grain, soft edges,
+banding, vertical lines in a glow / sunburst, and compression marks usually
+sit in the artwork image itself, so they repeat in the SAME place on every
+up. That is how the supplied picture looks, not a damaged up, and it prints
+the same on all of them — do not report it. Only name an up as damaged when
+it differs from the other ups: text missing, wrong text, a cropped or
+shifted element, or a mark that the other ups do not have in that place.
 
 Return JSON only:
 ups_count (number),
@@ -491,7 +551,7 @@ def _vision_body(client_png: bytes, approval_png: bytes) -> bytes:
             "contents": [
                 {
                     "parts": [
-                        {"text": VISION_PROMPT},
+                        {"text": VISION_PROMPT + language_rule()},
                         {
                             "inlineData": {
                                 "mimeType": "image/png",
@@ -654,7 +714,7 @@ def review_separation_plates(
             render_preview_png(separations, page, max_width_px=PLATE_PREVIEW_WIDTH_PX)
         )
     payload, _model = _generate_gemini_json(
-        _multi_image_body(PLATE_REVIEW_PROMPT.format(refs=refs), images),
+        _multi_image_body(PLATE_REVIEW_PROMPT.format(refs=refs) + language_rule(), images),
         PLATE_REVIEW_TIMEOUT_SEC,
     )
     return plate_notes_from_payload(payload)
@@ -716,31 +776,31 @@ def review_composite_ups(
     )
     frames = list_label_frames(composite, None, None)
     if frames:
-        images.append(
-            render_clip_png(
-                composite,
-                1,
-                frames[0],
-                max_width_px=CODING_PANEL_CLOSEUP_WIDTH_PX,
-            )
-        )
-        refs += (
-            " After the full composite, the next image is a close-up of the "
-            "first up. "
-        )
+        closeups = [frames[0]]
+        labels = ["the first up"]
+        if len(frames) >= 3:
+            closeups.append(frames[len(frames) // 2])
+            labels.append("a middle up")
         if len(frames) > 1:
+            closeups.append(frames[-1])
+            labels.append("the last up")
+        for frame in closeups:
             images.append(
                 render_clip_png(
                     composite,
                     1,
-                    frames[-1],
+                    frame,
                     max_width_px=CODING_PANEL_CLOSEUP_WIDTH_PX,
                 )
             )
-            refs += "The last image is a close-up of the last up. "
-        refs += "Read the Batch / Pkd / M.R.P. coding panel from the close-ups."
+        refs += (
+            " After the full composite, the next images are close-ups of "
+            + ", then ".join(labels)
+            + ". Compare the SAME spot on those close-ups. "
+            "Read the Batch / Pkd / M.R.P. coding panel from the close-ups."
+        )
     payload, _model = _generate_gemini_json(
-        _multi_image_body(COMPOSITE_REVIEW_PROMPT.format(refs=refs), images),
+        _multi_image_body(COMPOSITE_REVIEW_PROMPT.format(refs=refs) + language_rule(), images),
         PLATE_REVIEW_TIMEOUT_SEC,
     )
     return composite_notes_from_payload(payload)

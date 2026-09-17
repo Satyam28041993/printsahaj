@@ -56,6 +56,8 @@ class AuthGateTests(unittest.TestCase):
         status, payload = self._get("/api/health")
         self.assertEqual(status, 200)
         self.assertTrue(payload["auth_required"])
+        self.assertIn("hi", payload["languages"])
+        self.assertIn("en", payload["languages"])
 
     def test_job_list_without_a_token_is_refused(self) -> None:
         status, payload = self._get("/api/jobs")

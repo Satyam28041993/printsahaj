@@ -65,6 +65,39 @@
     .err { color: var(--issue); }
     .muted { color: var(--muted); font-size: 13px; }
     .review-row .muted { white-space: pre-wrap; }
+    /* Red is kept for a definite problem so it never competes with a maybe. */
+    .review-row.issue strong { color: var(--issue); }
+    .review-row.judge strong { color: var(--judge); }
+    .review-row.clear strong { color: var(--clear); }
+    .text-block {
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .top-actions {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lang-pick {
+      width: auto;
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 13px;
+      background: var(--card);
+    }
+    header { padding-right: 200px; }
     .hidden { display: none; }
     .preview { max-width: 100%; max-height: 280px; border: 1px solid var(--line); border-radius: 10px; background: #fff; display: block; cursor: zoom-in; }
     .uploading { color: var(--gold); font-weight: 600; margin: 12px 0 8px; }
@@ -187,6 +220,10 @@
   </style>
 </head>
 <body>
+  <div class="top-actions">
+    <button type="button" class="ghost" id="signout-btn" hidden>Sign out</button>
+    <select class="lang-pick" data-lang-pick aria-label="Language"></select>
+  </div>
   <section id="login-view" class="hidden" style="max-width:360px;margin:15vh auto;padding:0 16px;">
     <div class="kicker">PrintSahaj</div>
     <h1>PrintVerify</h1>
@@ -203,7 +240,6 @@
     <div class="kicker">PrintSahaj</div>
     <h1>PrintVerify</h1>
     <p>First approval, then vendor plates, then print. This is not the website. Start with start-tool.bat.</p>
-    <button type="button" class="ghost" id="signout-btn" hidden style="position:absolute;top:16px;right:16px;">Sign out</button>
   </header>
   <main>
     <section id="list-view">
@@ -287,6 +323,47 @@
       });
     }
 
+    // Nine languages. Hindi is written in English letters, the way people
+    // actually type it, rather than in Devanagari.
+    const LANGUAGES = [
+      ["en", "English"],
+      ["hi", "Hindi (Hinglish)"],
+      ["mr", "Marathi — मराठी"],
+      ["gu", "Gujarati — ગુજરાતી"],
+      ["ta", "Tamil — தமிழ்"],
+      ["te", "Telugu — తెలుగు"],
+      ["kn", "Kannada — ಕನ್ನಡ"],
+      ["bn", "Bengali — বাংলা"],
+      ["pa", "Punjabi — ਪੰਜਾਬੀ"],
+    ];
+    const LANG_KEY = "printverify.lang";
+
+    function currentLang() {
+      try {
+        return localStorage.getItem(LANG_KEY) || "en";
+      } catch (err) {
+        return "en";
+      }
+    }
+
+    function initLangPickers() {
+      const chosen = currentLang();
+      const picks = document.querySelectorAll("[data-lang-pick]");
+      picks.forEach((sel) => {
+        sel.innerHTML = LANGUAGES.map(([code, name]) =>
+          `<option value="${code}"${code === chosen ? " selected" : ""}>${escapeHtml(name)}</option>`
+        ).join("");
+        sel.onchange = () => {
+          try { localStorage.setItem(LANG_KEY, sel.value); } catch (err) {}
+          picks.forEach((other) => { other.value = sel.value; });
+          // Notes already on screen were written in the old language; the next
+          // check rewrites them.
+          const hint = document.getElementById("job-err");
+          if (hint) hint.textContent = "Language changed. Press Check this step again to get the notes in it.";
+        };
+      });
+    }
+
     async function authHeader() {
       if (!authRequired || !window.firebase || !firebase.auth().currentUser) return {};
       const token = await firebase.auth().currentUser.getIdToken();
@@ -313,9 +390,10 @@
     }
 
     async function initAuthGate() {
+      initLangPickers();
       let health = {};
       try {
-        health = await fetch("/api/health").then((res) => res.json());
+        health = await fetch(API_BASE + "/api/health").then((res) => res.json());
       } catch (err) {
         health = {};
       }
@@ -545,15 +623,22 @@
       return rows && rows.checked ? rows.items : [];
     }
 
-    function renderReviewRows(items) {
+    /** Review rows. *withText* adds the full matter, which only the detail
+     *  view shows — on the main screen it would bury everything else. */
+    function renderReviewRows(items, withText) {
       if (!items.length) {
         return '<p class="muted">Press Check this step for a point-wise review.</p>';
       }
-      return items.map((item) => `
-        <div class="review-row">
+      return items.map((item) => {
+        const block = withText && item.text_block
+          ? `<div class="text-block">${escapeHtml(item.text_block)}</div>`
+          : "";
+        return `
+        <div class="review-row ${item.state}">
           <div class="tick ${item.state}" title="${escapeHtml(item.state)}">${TICK[item.state] || "—"}</div>
-          <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div></div>
-        </div>`).join("");
+          <div><strong>${escapeHtml(item.title)}</strong><div class="muted">${escapeHtml(item.detail)}</div>${block}</div>
+        </div>`;
+      }).join("");
     }
 
     function renderStage(def, checked, defs) {
@@ -585,7 +670,7 @@
     function openReviewDetail(def) {
       const rows = ((review && review.stages) || []).find((s) => s.stage_id === def.stage_id);
       if (!rows || !rows.checked) return;
-      const skipped = (rows.not_checked || []).map((line) => `<li>${escapeHtml(line)}</li>`).join("");
+        const skipped = (rows.not_checked || []).map((line) => `<li>${escapeHtml(line)}</li>`).join("");
       const box = document.getElementById("review-modal");
       box.className = "modal-back is-open";
       box.hidden = false;
@@ -594,8 +679,8 @@
           <strong>${escapeHtml(rows.title)} — review detail</strong>
           <button type="button" class="ghost" id="close-review">Close</button>
         </div>
-        <p class="muted">A green tick means this check did not flag a problem. It is not a sign-off.</p>
-        ${renderReviewRows(rows.items)}
+        <p class="muted">Green tick = nothing wrong found here. Red = a definite problem only. Amber = please look yourself. This is not a sign-off.</p>
+        ${renderReviewRows(rows.items, true)}
         <div class="card">
           <strong>What this step did not check</strong>
           <ul class="muted">${skipped}</ul>
@@ -839,7 +924,7 @@
         const report = await j("/api/jobs/" + encodeURIComponent(currentId) + "/check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stage }),
+          body: JSON.stringify({ stage, lang: currentLang() }),
         });
         checklist = report.checklist;
         review = report.review;

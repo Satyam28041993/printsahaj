@@ -100,6 +100,11 @@ class ServerApiTests(unittest.TestCase):
         self.assertIn("Replace", home)
         self.assertIn("Delete all jobs", home)
         self.assertIn("See review detail", home)
+        self.assertIn("data-lang-pick", home)
+        self.assertIn("Hindi (Hinglish)", home)
+        self.assertIn("text-block", home)
+        self.assertIn("lang: currentLang()", home)
+        self.assertIn("Red = a definite problem only", home)
         self.assertNotIn("Issue found", home)
         self.assertNotIn("overall-bar", home)
         self.assertNotIn("This tool does not decide", home)
@@ -246,7 +251,7 @@ class ServerApiTests(unittest.TestCase):
         )
         with urllib.request.urlopen(create):
             pass
-        body = json.dumps({"stage": "approval"}).encode("utf-8")
+        body = json.dumps({"stage": "approval", "lang": "hi"}).encode("utf-8")
         check = urllib.request.Request(
             f"{self.base}/api/jobs/REV1/check",
             data=body,

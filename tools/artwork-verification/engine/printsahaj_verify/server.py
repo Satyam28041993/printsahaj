@@ -24,7 +24,13 @@ from printsahaj_verify.remarks import add_remark, load_remarks
 from printsahaj_verify.reporting.json_report import build_report
 from printsahaj_verify.reporting.terminal import format_report
 from printsahaj_verify.run import load_stages_checked, run_job, run_stage
-from printsahaj_verify.vision import gemini_banner_line, gemini_status
+from printsahaj_verify.vision import (
+    DEFAULT_LANGUAGE,
+    LANGUAGE_NAMES,
+    gemini_banner_line,
+    gemini_status,
+    set_output_language,
+)
 from printsahaj_verify.store import (
     create_or_update_job,
     delete_all_jobs,
@@ -339,6 +345,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                     "ok": True,
                     "tool": "artwork-verification",
                     "auth_required": auth_required(),
+                    "languages": sorted(LANGUAGE_NAMES),
                 }
                 payload.update(gemini_status())
                 _json(self, 200, payload)
@@ -433,18 +440,22 @@ class DeskHandler(BaseHTTPRequestHandler):
                 job_id = path[len("/api/jobs/") : -len("/check")]
                 payload = _read_json(self)
                 stage = str(payload.get("stage", "approval"))
-                spec, results, files, checked = run_stage(job_folder(job_id), stage)
-                report = build_report(
-                    spec, results, files, load_remarks(job_folder(job_id)), checked
-                )
-                slim = {
-                    "stage": stage,
-                    "checklist": report["checklist"],
-                    "review": report["review"],
-                    "counts": report["counts"],
-                    "stages_checked": checked,
-                }
-                save_last_review(job_id, slim)
+                set_output_language(str(payload.get("lang", DEFAULT_LANGUAGE)))
+                try:
+                    spec, results, files, checked = run_stage(job_folder(job_id), stage)
+                    report = build_report(
+                        spec, results, files, load_remarks(job_folder(job_id)), checked
+                    )
+                    slim = {
+                        "stage": stage,
+                        "checklist": report["checklist"],
+                        "review": report["review"],
+                        "counts": report["counts"],
+                        "stages_checked": checked,
+                    }
+                    save_last_review(job_id, slim)
+                finally:
+                    set_output_language(DEFAULT_LANGUAGE)
                 _json(self, 200, slim)
                 return
             if path.startswith("/api/jobs/") and path.endswith("/files"):

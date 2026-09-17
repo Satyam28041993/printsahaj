@@ -45,12 +45,16 @@ def _item(
     title: str,
     state: str,
     detail: str,
+    text_block: str = "",
 ) -> dict[str, str]:
+    """One review row. *text_block* is long matter the desk keeps behind a
+    scroll box in the detail view, so the main screen stays readable."""
     return {
         "id": item_id,
         "title": title,
         "state": state,
         "detail": detail,
+        "text_block": text_block,
     }
 
 
@@ -421,24 +425,28 @@ def _plate_matter_items(result: CheckResult | None) -> list[dict[str, str]]:
         name = result.observations.get(f"plate_{page}_name", "unnamed")
         flag = result.observations.get(f"plate_{page}_same", "unread")
         note = result.observations.get(f"plate_{page}_note", "")
-        title = f"Plate {page} {name} — text and images"
-        detail = _plate_text_detail(result.observations, page, note)
+        title = f"Plate {page} {name}"
+        summary = _plate_summary(result.observations, page, note)
+        block = _plate_text_block(result.observations, page)
         if flag == "match":
             items.append(
                 _item(
                     f"plate_{page}",
                     title,
                     STATE_CLEAR,
-                    detail
-                    or (
-                        "Wording and images on this ink match the client "
-                        "artwork and the first-approval label."
-                    ),
+                    f"Everything on this plate matches the artwork. {summary}",
+                    block,
                 )
             )
         elif flag == "mismatch":
             items.append(
-                _item(f"plate_{page}", title, STATE_JUDGE, detail or "Matter differs.")
+                _item(
+                    f"plate_{page}",
+                    title,
+                    STATE_JUDGE,
+                    f"Something on this plate does not match the artwork. {summary}",
+                    block,
+                )
             )
         else:
             items.append(
@@ -446,31 +454,55 @@ def _plate_matter_items(result: CheckResult | None) -> list[dict[str, str]]:
                     f"plate_{page}",
                     title,
                     STATE_WAIT,
-                    detail or result.observations.get("vision") or "Matter was not read.",
+                    summary or result.observations.get("vision") or "This plate was not read.",
+                    block,
                 )
             )
     return items
 
 
-def _plate_text_detail(
-    observations: dict[str, str],
-    page: int,
-    note: str,
-) -> str:
-    """Show text on this ink first, then images, then the short note."""
+NO_TEXT_PHRASES = ("no body copy", "no type", "no text", "none")
+NO_WRITING_ON_PLATE = (
+    "No writing on this plate. This ink only prints the photo / colour."
+)
+
+
+def _plate_has_writing(text_on: str) -> bool:
+    """False when Gemini used the English sentinel for a photo-only ink."""
+    cleaned = text_on.lower().strip(" .")
+    return bool(cleaned) and cleaned not in NO_TEXT_PHRASES
+
+
+def _plate_summary(observations: dict[str, str], page: int, note: str) -> str:
+    """One plain line for the main screen. The matter itself goes in the block."""
+    text_on = observations.get(f"plate_{page}_text", "").strip()
+    images = observations.get(f"plate_{page}_images", "").strip()
+    if _plate_has_writing(text_on):
+        line = "This plate prints text. Open See details to read all of it."
+    elif images:
+        line = f"No text on this plate. It prints only: {images}"
+    else:
+        line = "No text on this plate."
+    if note:
+        line = f"{line} {note}"
+    return line
+
+
+def _plate_text_block(observations: dict[str, str], page: int) -> str:
+    """Every word the plate carries, for the scroll box in the detail view."""
     parts: list[str] = []
-    text_on = observations.get(f"plate_{page}_text", "")
-    text_not = observations.get(f"plate_{page}_text_not", "")
-    images = observations.get(f"plate_{page}_images", "")
-    if text_on:
-        parts.append(f"Text on this ink: {text_on}")
+    text_on = observations.get(f"plate_{page}_text", "").strip()
+    text_not = observations.get(f"plate_{page}_text_not", "").strip()
+    images = observations.get(f"plate_{page}_images", "").strip()
+    if _plate_has_writing(text_on):
+        parts.append(f"Text printed on this plate:\n{text_on}")
+    elif text_on or images:
+        parts.append(NO_WRITING_ON_PLATE)
     if text_not:
-        parts.append(f"Not on this ink: {text_not}")
+        parts.append(f"Printed on other plates, not this one:\n{text_not}")
     if images:
-        parts.append(f"Images: {images}")
-    if note and note not in " ".join(parts):
-        parts.append(note)
-    return "\n".join(parts)
+        parts.append(f"Pictures on this plate:\n{images}")
+    return "\n\n".join(parts)
 
 
 def _print_items(by_id: dict[str, CheckResult]) -> list[dict[str, str]]:
