@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import PillarScene, { PILLAR_SCENES } from "./visuals/PillarScene";
+import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
 
 /**
@@ -68,6 +71,9 @@ function Tick() {
 
 export default function Pillars() {
   const { heading, items } = home.pillars;
+  // Cards are authored in their final state; the hook animates from, not to,
+  // so a failed JS load or reduced motion still shows a complete section.
+  const revealRef = useReveal<HTMLDivElement>({ start: "top 78%" });
 
   return (
     <section
@@ -79,10 +85,11 @@ export default function Pillars() {
           {heading}
         </h2>
 
-        <div className="mt-12 space-y-6">
+        <div ref={revealRef} className="mt-12 space-y-6">
           {items.map((pillar, index) => (
             <article
               key={pillar.name}
+              data-reveal
               className={`feature-card feature-card--${TINTS[index % TINTS.length]}`}
             >
               <div className="grid gap-8 lg:grid-cols-[1fr_minmax(0,22rem)] lg:gap-10">

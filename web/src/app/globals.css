@@ -446,22 +446,41 @@ body {
 }
 
 .cta-solid {
-  background: linear-gradient(180deg, #5eead4 0%, var(--accent) 42%, var(--accent-press) 100%);
+  /* Reads left to right, cyan into teal into emerald, so the arrow end of the
+     button is the bright end. A vertical ramp only looked like a bevel.
+     Text stays dark: white would match the reference more closely and fail
+     contrast on this teal — roughly 2.3:1 against 8:1 — so it does not. */
+  background: linear-gradient(100deg, #22d3ee 0%, var(--accent) 48%, #10b981 100%);
+  background-size: 128% 100%;
+  background-position: 0% 50%;
   color: var(--accent-contrast);
   border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.35),
+    0 0 0 1px rgba(45, 212, 191, 0.4),
     0 14px 36px -14px var(--accent-glow-strong),
+    0 0 26px -12px rgba(16, 185, 129, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease,
+    background-position 0.5s ease;
 }
 
 .cta-solid:hover,
 .cta-solid:focus-visible {
+  /* The ramp slides rather than the colour changing — it stays the same
+     button, it just catches the light. */
+  background-position: 100% 50%;
   transform: translateY(-2px);
   box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.55),
+    0 0 0 1px rgba(45, 212, 191, 0.6),
     0 22px 44px -12px var(--accent-glow-strong),
+    0 0 40px -10px rgba(16, 185, 129, 0.85),
     inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+.cta-solid:active {
+  transform: translateY(0);
+  transition-duration: 0.08s;
 }
 
 .cta-ghost {
@@ -500,6 +519,10 @@ body {
   background: var(--accent-weak);
   transform: translateY(-2px);
   box-shadow: 0 0 28px -10px var(--accent-glow-strong);
+}
+.cta-ghost:active {
+  transform: translateY(0);
+  transition-duration: 0.08s;
 }
 
 .cta-solid:focus-visible,
@@ -660,7 +683,9 @@ body {
 
   .surface-card:hover,
   .cta-solid:hover,
+  .cta-solid:active,
   .cta-ghost:hover,
+  .cta-ghost:active,
   .capability-chip:hover,
   .capability-chip:focus-visible {
     transform: none;
