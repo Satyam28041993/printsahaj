@@ -821,3 +821,16 @@ body {
     transform: none;
   }
 }
+
+/* The closing section is a destination, not another card: the grid is a floor
+   the page comes to rest on, rising from the bottom edge rather than sitting
+   inside a rounded panel. */
+.cta-floor {
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 68px 68px;
+  transform: perspective(900px) rotateX(64deg) scale(1.6);
+  transform-origin: center bottom;
+  mask-image: linear-gradient(to top, black 0%, transparent 72%);
+}
