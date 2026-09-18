@@ -15,14 +15,12 @@ function ArrowIcon() {
   );
 }
 
-/** Primary pill with a gradient ring that keeps turning. */
-export function RingButton({ href, children }: { href: string; children: React.ReactNode }) {
+/** Primary: a filled teal-to-green pill with a sweeping shine. */
+export function GlowButton({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="ring-btn">
-      <span className="ring-btn__label">
-        {children}
-        <ArrowIcon />
-      </span>
+    <Link href={href} className="glow-btn">
+      {children}
+      <ArrowIcon />
     </Link>
   );
 }

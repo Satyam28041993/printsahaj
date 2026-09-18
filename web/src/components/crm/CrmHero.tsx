@@ -1,5 +1,5 @@
 import React from "react";
-import { GlassButton, RingButton } from "@/components/landing/HeroButtons";
+import { GlassButton, GlowButton } from "@/components/landing/HeroButtons";
 import VideoFrame from "@/components/landing/VideoFrame";
 import { crmHero } from "@content/crm";
 
@@ -25,7 +25,7 @@ export default function CrmHero() {
           </p>
 
           <div className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <RingButton href={crmHero.primaryCta.href}>{crmHero.primaryCta.label}</RingButton>
+            <GlowButton href={crmHero.primaryCta.href}>{crmHero.primaryCta.label}</GlowButton>
             <GlassButton href={crmHero.secondaryCta.href}>
               {crmHero.secondaryCta.label}
             </GlassButton>

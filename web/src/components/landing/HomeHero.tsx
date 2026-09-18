@@ -1,5 +1,5 @@
 import React from "react";
-import { GlassButton, RingButton } from "./HeroButtons";
+import { GlassButton, GlowButton } from "./HeroButtons";
 import VideoFrame from "./VideoFrame";
 import { home } from "@content/home";
 
@@ -23,7 +23,7 @@ export default function HomeHero() {
           <p className="mx-auto mt-6 max-w-2xl text-body-lg text-muted">{hero.supporting}</p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <RingButton href={hero.primaryCta.href}>{hero.primaryCta.label}</RingButton>
+            <GlowButton href={hero.primaryCta.href}>{hero.primaryCta.label}</GlowButton>
             <GlassButton href={hero.secondaryCta.href}>{hero.secondaryCta.label}</GlassButton>
           </div>
           <p className="mt-6 text-sm text-faint">{hero.eyebrow}</p>
