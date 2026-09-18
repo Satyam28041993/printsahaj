@@ -1,17 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { home } from "@content/home";
 import { prefersReducedMotion } from "@/lib/motion";
-
-const SATELLITE_STYLE = [
-  { top: "6%", left: "0%" },
-  { top: "18%", right: "0%" },
-  { top: "44%", left: "0%" },
-  { top: "52%", right: "0%" },
-  { bottom: "18%", left: "4%" },
-  { bottom: "6%", right: "2%" },
-] as const;
 
 function SatelliteFace({ index }: { index: number }) {
   if (index === 0) {
@@ -76,8 +67,9 @@ function SatelliteFace({ index }: { index: number }) {
 
 export default function HeroSystem() {
   const { spine, satellites, ariaLabel } = home.hero.system;
-  const boardRef = useRef<HTMLDivElement>(null);
   const [live, setLive] = useState(0);
+  const left = satellites.filter((_, index) => index % 2 === 0);
+  const right = satellites.filter((_, index) => index % 2 === 1);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
@@ -87,55 +79,44 @@ export default function HeroSystem() {
     return () => window.clearInterval(id);
   }, [spine.length]);
 
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const board = boardRef.current;
-    if (!board) return;
-    if (prefersReducedMotion()) return;
-    if (!window.matchMedia("(pointer: fine)").matches) return;
-    const rect = board.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 10;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 8;
-    board.style.setProperty("--tilt-x", `${x.toFixed(1)}px`);
-    board.style.setProperty("--tilt-y", `${y.toFixed(1)}px`);
-  };
-
-  const onPointerLeave = () => {
-    boardRef.current?.style.setProperty("--tilt-x", "0px");
-    boardRef.current?.style.setProperty("--tilt-y", "0px");
-  };
-
   return (
-    <div
-      ref={boardRef}
-      onPointerMove={onPointerMove}
-      onPointerLeave={onPointerLeave}
-      className="system-board"
-      style={{ transform: "translate3d(var(--tilt-x, 0px), var(--tilt-y, 0px), 0)" }}
-      role="img"
-      aria-label={ariaLabel}
-    >
-      <ol className="system-spine mx-auto max-w-[16rem] space-y-5 py-6 lg:py-10">
-        {spine.map((step, index) => (
-          <li key={step.label} className={`system-step ${index <= live ? "is-live" : ""}`}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{step.hint}</p>
-            <p className="mt-1 font-display text-lg font-semibold text-primary">{step.label}</p>
-          </li>
-        ))}
-      </ol>
+    <div className="system-board" role="img" aria-label={ariaLabel}>
+      <div className="grid items-center gap-4 lg:grid-cols-[minmax(9rem,0.7fr)_minmax(0,1fr)_minmax(9rem,0.7fr)]">
+        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          {left.map((satellite, index) => {
+            const original = index * 2;
+            return (
+              <li key={satellite.label} className="system-satellite">
+                <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">{satellite.hint}</p>
+                <p className="mt-1 text-sm font-medium text-primary">{satellite.label}</p>
+                <SatelliteFace index={original} />
+              </li>
+            );
+          })}
+        </ul>
 
-      <ul className="mt-6 grid grid-cols-2 gap-3 lg:mt-0 lg:contents">
-        {satellites.map((satellite, index) => (
-          <li
-            key={satellite.label}
-            className="system-satellite"
-            style={SATELLITE_STYLE[index]}
-          >
-            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">{satellite.hint}</p>
-            <p className="mt-1 text-sm font-medium text-primary">{satellite.label}</p>
-            <SatelliteFace index={index} />
-          </li>
-        ))}
-      </ul>
+        <ol className="system-spine space-y-5 py-2">
+          {spine.map((step, index) => (
+            <li key={step.label} className={`system-step ${index <= live ? "is-live" : ""}`}>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{step.hint}</p>
+              <p className="mt-1 font-display text-lg font-semibold text-primary">{step.label}</p>
+            </li>
+          ))}
+        </ol>
+
+        <ul className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          {right.map((satellite, index) => {
+            const original = index * 2 + 1;
+            return (
+              <li key={satellite.label} className="system-satellite">
+                <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">{satellite.hint}</p>
+                <p className="mt-1 text-sm font-medium text-primary">{satellite.label}</p>
+                <SatelliteFace index={original} />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

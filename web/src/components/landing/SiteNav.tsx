@@ -48,7 +48,7 @@ export default function SiteNav({
         variant === "solid" ? "sticky" : "fixed"
       } inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ${
         solid
-          ? "border-b border-hairline bg-[color-mix(in_srgb,var(--bg-elevated)_88%,transparent)] shadow-[0_8px_30px_-24px_rgba(0,0,0,0.8)] backdrop-blur-md"
+          ? "border-b border-hairline bg-base"
           : "border-b border-transparent bg-gradient-to-b from-[var(--bg-base)] to-transparent"
       }`}
     >

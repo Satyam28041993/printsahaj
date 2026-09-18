@@ -20,7 +20,7 @@ export default function Founder() {
 
   return (
     <section aria-labelledby="founder-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
-      <div ref={revealRef} className="mx-auto grid max-w-7xl items-end gap-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
+      <div ref={revealRef} className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
         <div data-reveal>
           <FounderPhoto photo={copy.photo} name={copy.name} />
         </div>

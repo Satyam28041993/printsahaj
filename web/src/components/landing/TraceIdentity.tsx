@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useReveal } from "@/lib/useReveal";
 import { prefersReducedMotion } from "@/lib/motion";
 import { home } from "@content/home";
@@ -30,20 +30,31 @@ export default function TraceIdentity() {
   const copy = home.identity;
   const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
   const [active, setActive] = useState(0);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    const id = window.setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       setActive((current) => (current + 1) % copy.stages.length);
     }, 2600);
-    return () => window.clearInterval(id);
+    return () => {
+      if (timerRef.current !== null) window.clearInterval(timerRef.current);
+    };
   }, [copy.stages.length]);
+
+  const selectStage = (index: number) => {
+    if (timerRef.current !== null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setActive(index);
+  };
 
   const scanned = active >= 2;
   const found = active >= 3;
 
   return (
-    <section aria-labelledby="identity-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
+    <section aria-labelledby="identity-heading" className="relative scroll-mt-28 px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
       <div ref={revealRef} className="mx-auto max-w-7xl">
         <p data-reveal className="story-kicker">
           {copy.kicker}
@@ -67,8 +78,10 @@ export default function TraceIdentity() {
                 <li key={stage.label} className={`border-l py-4 pl-5 ${isActive ? "border-accent" : "border-hairline"}`}>
                   <button
                     type="button"
-                    onClick={() => setActive(index)}
-                    className="block w-full cursor-pointer text-left"
+                    onClick={() => selectStage(index)}
+                    aria-label={stage.label}
+                    aria-pressed={isActive}
+                    className="block min-h-11 w-full cursor-pointer text-left"
                   >
                     <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
                       {String(index + 1).padStart(2, "0")}

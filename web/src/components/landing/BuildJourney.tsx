@@ -10,7 +10,7 @@ export default function BuildJourney() {
   const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
 
   return (
-    <section aria-labelledby="journey-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
+    <section aria-labelledby="journey-heading" className="relative scroll-mt-28 px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
       <div ref={revealRef} className="mx-auto max-w-7xl">
         <p data-reveal className="story-kicker">
           {copy.kicker}

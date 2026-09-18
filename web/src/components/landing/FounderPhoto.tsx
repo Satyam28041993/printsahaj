@@ -16,7 +16,7 @@ export default function FounderPhoto({
     .join("");
 
   return (
-    <figure className={`portrait-editorial aspect-[4/5] w-full ${className}`}>
+    <figure className={`portrait-editorial aspect-[4/5] w-full max-w-md ${className}`}>
       {photo ? (
         // Static export ships images unoptimized; next/image is not used elsewhere on this site.
         // eslint-disable-next-line @next/next/no-img-element
