@@ -1568,3 +1568,121 @@ body {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Site footer: the night sky continues into it, an ink-gradient hairline
+   marks the top, links slide an arrow in on hover, and a large faded
+   wordmark closes the page.
+   --------------------------------------------------------------------------- */
+
+.site-footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(700px 260px at 50% 0%, var(--accent-glow), transparent 70%),
+    var(--bg-sunken);
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cyan) 20%,
+    var(--magenta) 50%,
+    var(--yellow) 80%,
+    transparent
+  );
+  opacity: 0.7;
+}
+
+.footer-heading {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-link svg {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.footer-link:hover svg,
+.footer-link:focus-visible svg {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent-hover);
+}
+
+.footer-card {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+/* The closing wordmark: huge, outlined in ink colours, fading into the floor. */
+.footer-wordmark {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(64px, 17vw, 240px);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  text-align: center;
+  user-select: none;
+  background: linear-gradient(180deg, var(--accent-glow-strong), transparent 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent-line);
+}
+
+.back-to-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-muted);
+  font-size: 13px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.back-to-top:hover,
+.back-to-top:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+}
