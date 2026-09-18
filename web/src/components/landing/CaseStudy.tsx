@@ -1,25 +1,28 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import CtaButton from "./CtaButton";
 import { useReveal } from "@/lib/useReveal";
-import { caseStudy } from "@content/caseStudy";
+import { caseStudies, caseStudiesIntro } from "@content/caseStudies";
 
 /**
- * The proof section.
+ * The proof strip.
  *
- * Every other section on this page describes what PrintSahaj can do. This one
- * shows a thing it did, on a real job, with the engine's own words. It sits
- * directly after the products because a claim is worth reading only next to
- * the evidence for it.
+ * Every other section on this page says what PrintSahaj can do. This one
+ * points at things it has done. It stays deliberately short: three lines and
+ * a link, because the homepage's job is to prove the claim is not empty, and
+ * the case studies page's job is to satisfy the person who now wants detail.
  *
- * The two columns are the whole argument: seven declared against six found.
- * The missing seventh is drawn as an empty slot rather than described, because
- * the gap is the story and a reader should see it before they read anything.
+ * The heading on each card is the class of error, not the job. A buyer scans
+ * for "can it catch the kind of thing that bites me", and one job's name
+ * answers that for nobody.
  */
+
+const TINTS = ["teal", "violet", "magenta"] as const;
+
 export default function CaseStudy() {
-  const copy = caseStudy;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
-  const who = copy.client ?? copy.clientFallback;
+  const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
 
   return (
     <section
@@ -31,162 +34,64 @@ export default function CaseStudy() {
           data-reveal
           className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent"
         >
-          {copy.eyebrow}
+          {caseStudiesIntro.eyebrow}
         </p>
         <h2
           data-reveal
           id="case-heading"
-          className="mt-5 max-w-3xl font-display text-display-xl font-bold text-primary text-balance"
+          className="mt-5 max-w-3xl font-display text-display-lg font-bold text-primary text-balance"
         >
-          {copy.heading}
+          {caseStudiesIntro.heading}
         </h2>
-        <p data-reveal className="mt-6 max-w-2xl text-body-lg text-muted">
-          {copy.standfirst}
+        <p data-reveal className="mt-5 max-w-2xl text-body-lg text-muted">
+          {caseStudiesIntro.standfirst}
         </p>
 
-        {/* Job identity, in the units the trade uses. */}
-        <dl
-          data-reveal
-          className="mt-10 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-hairline pt-6 sm:grid-cols-4"
-        >
-          {copy.job.map((row) => (
-            <div key={row.label}>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-                {row.label}
-              </dt>
-              <dd className="mt-1.5 font-mono text-sm text-primary">{row.value}</dd>
-            </div>
-          ))}
-          <div>
-            <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-faint">
-              Customer
-            </dt>
-            <dd className="mt-1.5 text-sm text-muted">{who}</dd>
-          </div>
-        </dl>
+        <ol className="mt-12 grid gap-5 lg:grid-cols-3">
+          {caseStudies.map((study, index) => (
+            <li key={study.slug} data-reveal>
+              <Link
+                href={`${caseStudiesIntro.cta.href}#${study.slug}`}
+                className={`feature-card feature-card--${TINTS[index % TINTS.length]} group flex h-full flex-col p-6 sm:p-7`}
+              >
+                <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--tint-ink)]">
+                  {study.errorClass}
+                </span>
+                <h3 className="mt-4 font-display text-display-md font-semibold text-primary">
+                  {study.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted">{study.teaser}</p>
 
-        {/* Seven against six. */}
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <div data-reveal className="feature-card feature-card--teal p-6 sm:p-8">
-            <h3 className="font-display text-display-md font-semibold text-primary">
-              {copy.declared.heading}
-            </h3>
-            <p className="mt-2 text-sm text-muted">{copy.declared.note}</p>
-            <ol className="mt-6 space-y-2.5">
-              {copy.declared.units.map((unit, index) => (
-                <li
-                  key={unit.name}
-                  className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
-                    unit.present
-                      ? "border-hairline bg-white/[0.03]"
-                      : "border-dashed border-[var(--miss-line)] bg-[var(--miss-weak)]"
-                  }`}
-                  style={
-                    unit.present
-                      ? undefined
-                      : ({
-                          "--miss-line": "rgba(236, 0, 140, 0.55)",
-                          "--miss-weak": "rgba(236, 0, 140, 0.08)",
-                        } as React.CSSProperties)
-                  }
-                >
-                  <span className="w-5 shrink-0 font-mono text-[10px] text-faint">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {unit.swatch ? (
-                    <span
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 rounded-[3px] border border-white/15"
-                      style={{ background: unit.swatch }}
-                    />
-                  ) : (
-                    <span
-                      aria-hidden="true"
-                      className="h-4 w-4 shrink-0 rounded-[3px] border border-dashed border-white/25"
-                    />
-                  )}
-                  <span className="text-sm text-primary">{unit.name}</span>
-                  {!unit.present && (
-                    <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.12em] text-[#f472b6]">
-                      no plate
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </div>
+                <ul className="mt-5 flex flex-wrap gap-1.5">
+                  {study.checks.map((check) => (
+                    <li
+                      key={check}
+                      className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-faint"
+                    >
+                      {check}
+                    </li>
+                  ))}
+                </ul>
 
-          <div data-reveal className="feature-card feature-card--magenta p-6 sm:p-8">
-            <h3 className="font-display text-display-md font-semibold text-primary">
-              {copy.found.heading}
-            </h3>
-            <p className="mt-2 text-sm text-muted">{copy.found.note}</p>
-
-            {/* Six pages present, the seventh slot left open. */}
-            <ol className="mt-6 grid grid-cols-4 gap-3">
-              {Array.from({ length: 7 }, (_, index) => {
-                const present = index < 6;
-                return (
-                  <li
-                    key={index}
-                    className={`flex aspect-[3/4] flex-col justify-between rounded-lg border p-2 ${
-                      present
-                        ? "border-hairline bg-white/[0.04]"
-                        : "border-dashed border-[rgba(236,0,140,0.55)] bg-[rgba(236,0,140,0.07)]"
-                    }`}
+                <p className="mt-6 pt-2 text-sm text-[var(--tint-ink)]">
+                  Read it{" "}
+                  <span
+                    aria-hidden="true"
+                    className="inline-block transition-transform duration-300 group-hover:translate-x-1"
                   >
-                    <span className="font-mono text-[9px] text-faint">
-                      {present ? `p${index + 1}` : "—"}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      className={`h-1 rounded-full ${present ? "bg-white/15" : "bg-[rgba(236,0,140,0.5)]"}`}
-                    />
-                  </li>
-                );
-              })}
-            </ol>
+                    →
+                  </span>
+                </p>
+              </Link>
+            </li>
+          ))}
+        </ol>
 
-            <p className="mt-6 text-body-lg text-muted">{copy.consequence}</p>
-          </div>
+        <div data-reveal className="mt-10">
+          <CtaButton href={caseStudiesIntro.cta.href} variant="ghost">
+            {caseStudiesIntro.cta.label}
+          </CtaButton>
         </div>
-
-        {/* The engine's own words, not a paraphrase of them. */}
-        <div data-reveal className="ui-frame mt-8 overflow-hidden rounded-2xl">
-          <div className="flex items-center gap-2 border-b border-hairline px-5 py-3">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">
-              {copy.output.heading}
-            </span>
-            <span className="ml-auto rounded-full border border-accent-line px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-accent">
-              {copy.output.certainty}
-            </span>
-          </div>
-          <div className="px-5 py-5">
-            <p className="font-mono text-sm leading-relaxed text-primary">
-              {copy.output.summary}
-            </p>
-            <dl className="mt-4 grid gap-2 sm:grid-cols-3">
-              {[
-                ["Expected", copy.output.expected],
-                ["Found", copy.output.foundLine],
-                ["Where", copy.output.location],
-              ].map(([term, value]) => (
-                <div key={term} className="border-t border-hairline pt-2">
-                  <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">
-                    {term}
-                  </dt>
-                  <dd className="mt-1 font-mono text-xs text-muted">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-
-        {/* Saying what it did not do is the point, not a disclaimer. */}
-        <p data-reveal className="mt-8 max-w-3xl border-l-2 border-accent-line pl-5 text-body-lg text-muted">
-          {copy.notDecided}
-        </p>
       </div>
     </section>
   );
