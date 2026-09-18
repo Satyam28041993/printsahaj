@@ -2342,6 +2342,7 @@ details[open] .faq-chevron {
 
 .about-section {
   padding-block: clamp(4.25rem, 12vw, 8.75rem);
+  scroll-margin-top: 5.5rem;
 }
 
 .about-section--quiet {
@@ -2876,13 +2877,17 @@ details[open] .faq-chevron {
 @media print {
   @page {
     size: A4;
-    margin: 14mm 16mm 16mm;
+    margin: 12mm 14mm 12mm;
   }
 
   html,
-  body {
+  body,
+  .about-page {
     background: #fff !important;
     color: #17181b !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   header.sticky,
@@ -2900,8 +2905,8 @@ details[open] .faq-chevron {
     display: block !important;
     color: #17181b;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: 10.5pt;
-    line-height: 1.45;
+    font-size: 10pt;
+    line-height: 1.4;
     background: #fff;
   }
 
@@ -2922,10 +2927,11 @@ details[open] .faq-chevron {
   }
 
   .about-print h2 {
-    margin: 16pt 0 8pt;
-    font-size: 13pt;
+    margin: 9pt 0 5pt;
+    font-size: 12pt;
     font-weight: 700;
     page-break-after: avoid;
+    break-after: avoid;
   }
 
   .about-print__page {
@@ -2993,8 +2999,10 @@ details[open] .faq-chevron {
   }
 
   .about-print__products li {
-    margin: 0 0 8pt;
+    margin: 0 0 5pt;
     break-inside: avoid;
+    font-size: 9.5pt;
+    line-height: 1.35;
   }
 
   .about-print__products span {
@@ -3062,7 +3070,7 @@ details[open] .faq-chevron {
   }
 
   .about-print__timeline li {
-    margin: 0 0 11pt;
+    margin: 0 0 5.5pt;
     break-inside: avoid;
   }
 
@@ -3085,7 +3093,7 @@ details[open] .faq-chevron {
   }
 
   .about-print__expertise li {
-    padding-block: 3pt;
+    padding-block: 2pt;
     border-bottom: 0.4pt solid #e5e7eb;
   }
 
@@ -3103,7 +3111,6 @@ details[open] .faq-chevron {
   }
 
   .about-print__cv li {
-    margin: 0 0 9pt;
-    break-inside: avoid;
+    margin: 0 0 4pt;
   }
 }

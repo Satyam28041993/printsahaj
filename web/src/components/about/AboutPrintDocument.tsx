@@ -53,26 +53,23 @@ export default function AboutPrintDocument() {
             <a href={founder.linkedin}>{founder.linkedin.replace(/^https?:\/\/(www\.)?/, "")}</a>
           </li>
         </ul>
-      </section>
 
-      <section className="about-print__page">
         <h2>What we build</h2>
-        <p className="about-print__muted">{products.supporting}</p>
         <ul className="about-print__products">
           <li>
             <strong>{products.featured.name}</strong>
-            <span>{products.featured.status}</span>
-            <p>{products.featured.description}</p>
+            <span>{products.featured.status}</span> — {products.featured.description}
           </li>
           {products.supportingItems.map((item) => (
             <li key={item.name}>
               <strong>{item.name}</strong>
-              <span>{item.status}</span>
-              <p>{item.description}</p>
+              <span>{item.status}</span> — {item.description}
             </li>
           ))}
         </ul>
+      </section>
 
+      <section className="about-print__page">
         <h2>{founder.timelineHeading}</h2>
         <ol className="about-print__timeline">
           {founder.timeline.map((item) => (
