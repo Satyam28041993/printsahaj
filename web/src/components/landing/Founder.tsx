@@ -1,10 +1,11 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import CareerTimeline from "./CareerTimeline";
+import FounderPhoto from "./FounderPhoto";
 import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
-
-const NODE_INKS = ["var(--cyan)", "var(--violet)", "var(--magenta)", "var(--yellow)", "var(--accent)"];
 
 function LinkedInIcon() {
   return (
@@ -14,40 +15,9 @@ function LinkedInIcon() {
   );
 }
 
-function FounderPhoto({ photo, name }: { photo: string | null; name: string }) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("");
-
-  if (!photo) {
-    return (
-      <div className="founder-photo-frame">
-        <div className="founder-photo-frame__glow" aria-hidden="true" />
-        <div className="founder-photo-frame__ring">
-          <div className="founder-photo-frame__img flex items-center justify-center">
-            <span className="font-display text-5xl font-bold text-primary">{initials}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="founder-photo-frame">
-      <div className="founder-photo-frame__glow" aria-hidden="true" />
-      <div className="founder-photo-frame__ring">
-        {/* Plain img: this static export already ships every other picture unoptimized. */}
-        <img className="founder-photo-frame__img" src={photo} alt={name} />
-      </div>
-    </div>
-  );
-}
-
 export default function Founder() {
   const copy = home.founder;
   const revealRef = useReveal<HTMLDivElement>({ start: "top 85%" });
-  const timelineRef = useReveal<HTMLDivElement>({ start: "top 88%", stagger: 0.12 });
 
   return (
     <section aria-labelledby="founder-heading" className="dots-section">
@@ -78,7 +48,7 @@ export default function Founder() {
               ))}
             </ul>
 
-            <div className="mt-7">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <a
                 href={copy.linkedin}
                 target="_blank"
@@ -88,45 +58,19 @@ export default function Founder() {
                 <LinkedInIcon />
                 Connect on LinkedIn
               </a>
+              <Link href="/about" className="founder-linkedin">
+                Full profile & resume →
+              </Link>
             </div>
           </div>
         </div>
 
-        <div ref={timelineRef} className="mt-20 lg:mt-28">
-          <h3 data-reveal className="font-display text-display-sm font-bold text-primary">
-            The path to PrintSahaj
-          </h3>
-
-          <div className="timeline mt-10 max-w-2xl">
-            <div className="timeline__rail" aria-hidden="true" />
-            {copy.timeline.map((item, i) => (
-              <div
-                key={`${item.period}-${item.role}`}
-                data-reveal
-                className={`timeline-item${item.current ? " timeline-item--current" : ""}`}
-              >
-                <span
-                  className="timeline-item__node"
-                  style={{ color: NODE_INKS[i % NODE_INKS.length] }}
-                  aria-hidden="true"
-                />
-                <div className="timeline-item__card">
-                  <p className="timeline-item__period">{item.period}</p>
-                  <h4 className="mt-1.5 font-display text-lg font-bold text-primary">
-                    {item.role}
-                    {item.current && <span className="timeline-item__now">Now</span>}
-                  </h4>
-                  <p className="text-sm font-medium text-muted">{item.org}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-muted">{item.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p data-reveal className="mt-8 max-w-2xl text-sm text-faint">
-            {copy.note}
-          </p>
-        </div>
+        <CareerTimeline
+          items={copy.timeline}
+          heading="The path to PrintSahaj"
+          className="mt-20 lg:mt-28"
+        />
+        <p className="mt-8 max-w-2xl text-sm text-faint">{copy.note}</p>
       </div>
     </section>
   );

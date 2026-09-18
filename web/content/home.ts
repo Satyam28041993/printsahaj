@@ -31,6 +31,17 @@ export interface FounderTimelineItem {
   current?: boolean;
 }
 
+export interface FounderEducation {
+  period: string;
+  qualification: string;
+  institute: string;
+}
+
+export interface FounderLanguage {
+  name: string;
+  level: string;
+}
+
 export interface HeroVideo {
   /** Path under web/public. Empty until the recording exists. */
   src: string;
@@ -127,10 +138,13 @@ export interface HomeContent {
     /** Path under web/public. Null shows the initials mark instead. */
     photo: string | null;
     linkedin: string;
+    contact: { phone: string; email: string };
     /** Short capability tags, shown as chips under the name. */
     focus: string[];
     timeline: FounderTimelineItem[];
     note: string;
+    education: FounderEducation[];
+    languages: FounderLanguage[];
   };
   toolsTeaser: {
     heading: string;
@@ -339,6 +353,7 @@ export const home: HomeContent = {
       "Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
     photo: "/images/satyam-singh.jpg",
     linkedin: "https://www.linkedin.com/in/satyam-singh-3b178883/",
+    contact: { phone: "+91 9650744197", email: "singhsatyam28@gmail.com" },
     focus: [
       "Marketing & Growth",
       "Printing & Packaging",
@@ -390,6 +405,33 @@ export const home: HomeContent = {
       },
     ],
     note: "Also pursuing an MBA in Logistics and Supply Chain Management (Suresh Gyan Vihar University, ongoing).",
+    education: [
+      {
+        period: "2023 – Ongoing",
+        qualification: "MBA, Logistics and Supply Chain Management",
+        institute: "Suresh Gyan Vihar University, Jaipur",
+      },
+      {
+        period: "2010 – 2013",
+        qualification: "B.Com",
+        institute: "Mumbai University",
+      },
+      {
+        period: "2008 – 2010",
+        qualification: "Higher Secondary, Maths & Information Technology",
+        institute: "Viva College, Virar",
+      },
+      {
+        period: "2007 – 2008",
+        qualification: "Secondary School, Maths & Science",
+        institute: "R.I.S., Nala Sopara",
+      },
+    ],
+    languages: [
+      { name: "Hindi", level: "Mother tongue" },
+      { name: "Marathi", level: "Proficient" },
+      { name: "English", level: "Independent user" },
+    ],
   },
   toolsTeaser: {
     heading: tools.heading,

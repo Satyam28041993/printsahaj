@@ -1923,3 +1923,85 @@ body {
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Resume page (/about): contact pills, a two-column education/languages
+   strip, and a print stylesheet so the page itself works as a sendable PDF.
+   --------------------------------------------------------------------------- */
+
+.resume-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.resume-contact:hover,
+.resume-contact:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.resume-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.resume-print-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-line);
+}
+
+@media print {
+  header,
+  .site-footer,
+  .resume-print-btn,
+  .star-field,
+  .star-field--far {
+    display: none !important;
+  }
+
+  .dots-section {
+    background: #fff !important;
+  }
+
+  body,
+  .dots-section {
+    color: #111 !important;
+  }
+
+  .founder-photo-frame__glow {
+    display: none;
+  }
+
+  .timeline-item__card,
+  .glow-card,
+  .resume-edu-card {
+    break-inside: avoid;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+}
