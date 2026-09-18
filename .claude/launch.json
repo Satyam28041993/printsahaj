@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "web", "run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "printverify-desk",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "printsahaj_verify", "--serve"],
+      "cwd": "tools/artwork-verification/engine",
+      "port": 8765
     }
   ]
 }

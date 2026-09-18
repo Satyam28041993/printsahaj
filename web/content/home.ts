@@ -22,6 +22,34 @@
 import { printSahajSite, type CtaLink, type PageIntent, type ProjectStatus } from "./site";
 import { tools } from "./tools";
 
+export interface FounderTimelineItem {
+  period: string;
+  role: string;
+  org: string;
+  description: string;
+  /** Marks the row that culminates the timeline, styled as the destination. */
+  current?: boolean;
+}
+
+export interface FounderEducation {
+  period: string;
+  qualification: string;
+  institute: string;
+}
+
+export interface FounderLanguage {
+  name: string;
+  level: string;
+}
+
+export interface HeroVideo {
+  /** Path under web/public. Empty until the recording exists. */
+  src: string;
+  /** Still frame shown before the video loads. Optional. */
+  poster: string;
+  label: string;
+}
+
 export interface HomePillar {
   name: string;
   description: string;
@@ -67,6 +95,7 @@ export interface HomeContent {
     specialization: string;
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
+    video: HeroVideo;
   };
   whatIsPrintSahaj: {
     heading: string;
@@ -106,8 +135,16 @@ export interface HomeContent {
     name: string;
     role: string;
     description: string;
-    /** CONTENT GAP — no verified photo yet. */
+    /** Path under web/public. Null shows the initials mark instead. */
     photo: string | null;
+    linkedin: string;
+    contact: { phone: string; email: string };
+    /** Short capability tags, shown as chips under the name. */
+    focus: string[];
+    timeline: FounderTimelineItem[];
+    note: string;
+    education: FounderEducation[];
+    languages: FounderLanguage[];
   };
   toolsTeaser: {
     heading: string;
@@ -136,6 +173,12 @@ export const home: HomeContent = {
     specialization: "Deep expertise in printing & packaging.",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
+    video: {
+      // Path under web/public, e.g. "/videos/crm-demo.mp4". Empty shows a placeholder.
+      src: "",
+      poster: "",
+      label: "PrintSahaj CRM walkthrough",
+    },
   },
   whatIsPrintSahaj: {
     heading: "Technology built around the way businesses actually work.",
@@ -303,12 +346,92 @@ export const home: HomeContent = {
     ],
   },
   founder: {
-    heading: "Built by someone who understands the work.",
+    heading: "Built by someone who has run the work, not just studied it.",
     name: "Satyam Singh",
-    role: "Founder, PrintSahaj",
+    role: "Founder, PrintSahaj · Sales & Marketing Manager, Prakruti Graphic Pvt Ltd",
     description:
-      "Technology builder focused on software, business systems, AI, automation and digital growth, with deep hands-on understanding of printing & packaging workflows.",
-    photo: null,
+      "Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
+    photo: "/images/satyam-singh.jpg",
+    linkedin: "https://www.linkedin.com/in/satyam-singh-3b178883/",
+    contact: { phone: "+91 9650744197", email: "singhsatyam28@gmail.com" },
+    focus: [
+      "Marketing & Growth",
+      "Printing & Packaging",
+      "Anti-Counterfeit & Track-Trace",
+      "Business Systems & Ops",
+    ],
+    timeline: [
+      {
+        period: "2013 – 2017",
+        role: "Senior Executive",
+        org: "IndiaMART Intermesh",
+        description:
+          "Client acquisition end to end — appointments, pitching the company's packages, and cold-calling follow-ups to get accounts on board.",
+      },
+      {
+        period: "2017 – 2020",
+        role: "Team Leader",
+        org: "V.K. Enterprises",
+        description: "Ran a ground sales team against daily targets and market cash collection.",
+      },
+      {
+        period: "2020 – 2022",
+        role: "Hub Manager",
+        org: "Khati Solution Pvt Ltd",
+        description:
+          "P&L owner for last-mile delivery hubs serving Big Basket Daily, JioMart, Dealshare, Flipkart Grocery, Grofers and Udaan. Built the driver-training program from scratch.",
+      },
+      {
+        period: "2022 – 2023",
+        role: "Business Development Manager",
+        org: "Jibz India System",
+        description:
+          "P&L owner for a city-wide vehicle-attachment project across Uber, Rapido and Ola — hiring, training and incentives for field executives and drivers.",
+      },
+      {
+        period: "2023 – Present",
+        role: "Sales & Marketing Manager",
+        org: "Prakruti Graphic Pvt Ltd",
+        description:
+          "Marketing and growth for label printing & packaging and security labels — digital campaigns, and hands-on work on anti-counterfeit R&D (holograms, microtext, tamper-evident design) and QR-based track & trace.",
+      },
+      {
+        period: "Building now",
+        role: "Founder",
+        org: "PrintSahaj",
+        description:
+          "Bringing that same operating discipline — logistics, last-mile ops and hands-on print & packaging marketing — into software, AI and automation for other businesses.",
+        current: true,
+      },
+    ],
+    note: "Also pursuing an MBA in Logistics and Supply Chain Management (Suresh Gyan Vihar University, ongoing).",
+    education: [
+      {
+        period: "2023 – Ongoing",
+        qualification: "MBA, Logistics and Supply Chain Management",
+        institute: "Suresh Gyan Vihar University, Jaipur",
+      },
+      {
+        period: "2010 – 2013",
+        qualification: "B.Com",
+        institute: "Mumbai University",
+      },
+      {
+        period: "2008 – 2010",
+        qualification: "Higher Secondary, Maths & Information Technology",
+        institute: "Viva College, Virar",
+      },
+      {
+        period: "2007 – 2008",
+        qualification: "Secondary School, Maths & Science",
+        institute: "R.I.S., Nala Sopara",
+      },
+    ],
+    languages: [
+      { name: "Hindi", level: "Mother tongue" },
+      { name: "Marathi", level: "Proficient" },
+      { name: "English", level: "Independent user" },
+    ],
   },
   toolsTeaser: {
     heading: tools.heading,

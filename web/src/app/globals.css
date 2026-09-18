@@ -834,3 +834,1182 @@ body {
   transform-origin: center bottom;
   mask-image: linear-gradient(to top, black 0%, transparent 72%);
 }
+
+/* ---------------------------------------------------------------------------
+   Video hero (homepage + /crm). A turning gradient ring on the primary
+   button and on the video frame, a frosted secondary button, a slow star
+   field, and a cloud of CMYK sparks that spills out past the frame edges.
+   --------------------------------------------------------------------------- */
+
+/* Registered so the ring angle interpolates smoothly instead of jumping. */
+@property --ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ring-rotate {
+  to {
+    --ring-angle: 360deg;
+  }
+}
+
+@keyframes star-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-120px, -60px, 0);
+  }
+}
+
+@keyframes star-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes play-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+/* The colour cloud breathes and slowly swaps which ink leads. */
+@keyframes spark-breathe {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+    filter: blur(38px) hue-rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: blur(44px) hue-rotate(25deg);
+  }
+}
+
+@keyframes spark-rise {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 -220px,
+      40px -260px,
+      -30px -200px,
+      20px -240px;
+  }
+}
+
+:root {
+  --star: rgba(255, 255, 255, 0.85);
+  --star-dim: rgba(255, 255, 255, 0.4);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-edge: rgba(255, 255, 255, 0.35);
+  --spark-strength: 1;
+}
+
+.light {
+  --star: rgba(20, 22, 26, 0.35);
+  --star-dim: rgba(20, 22, 26, 0.18);
+  --glass: rgba(10, 11, 13, 0.04);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --spark-strength: 0.55;
+}
+
+.hero-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(700px 360px at 50% 0%, var(--violet-weak), transparent 70%),
+    var(--bg-base);
+}
+
+/* Star field: small dots painted by tiled radial gradients, two layers at
+   different sizes and speeds so it reads as depth. */
+.star-field {
+  position: absolute;
+  inset: -120px;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.2px 1.2px at 20px 30px, var(--star), transparent),
+    radial-gradient(1px 1px at 90px 120px, var(--star), transparent),
+    radial-gradient(1.4px 1.4px at 160px 60px, var(--star), transparent),
+    radial-gradient(1px 1px at 210px 170px, var(--star), transparent);
+  background-size: 240px 200px;
+  animation:
+    star-drift 60s linear infinite alternate,
+    star-twinkle 5s ease-in-out infinite;
+}
+
+.star-field--far {
+  background-image:
+    radial-gradient(0.8px 0.8px at 40px 70px, var(--star-dim), transparent),
+    radial-gradient(0.8px 0.8px at 130px 20px, var(--star-dim), transparent),
+    radial-gradient(0.8px 0.8px at 70px 150px, var(--star-dim), transparent);
+  background-size: 180px 170px;
+  animation:
+    star-drift 90s linear infinite alternate-reverse,
+    star-twinkle 7s ease-in-out infinite;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-weak);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-accent-text {
+  background: linear-gradient(90deg, var(--accent-hover), var(--violet) 55%, var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Secondary: frosted glass pill with a thin highlight along the top edge. */
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 var(--glass-edge);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 15px;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.glass-btn:hover,
+.glass-btn:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.glass-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+/* ---- Video frame and its spark cloud ---------------------------------- */
+
+.video-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Soft colour behind the frame: one blob per ink, blurred, so it bleeds
+   out past every edge. */
+.spark-glow {
+  position: absolute;
+  inset: -12% -8% -10%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--spark-strength);
+  background:
+    radial-gradient(ellipse 38% 42% at 12% 22%, rgba(0, 174, 239, 0.55), transparent 70%),
+    radial-gradient(ellipse 36% 40% at 88% 18%, rgba(236, 0, 140, 0.5), transparent 70%),
+    radial-gradient(ellipse 34% 36% at 80% 92%, rgba(255, 242, 0, 0.32), transparent 70%),
+    radial-gradient(ellipse 40% 38% at 18% 88%, rgba(109, 124, 255, 0.45), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, var(--accent-glow-strong), transparent 75%);
+  animation: spark-breathe 9s ease-in-out infinite;
+}
+
+/* Sparks: tiny coloured dots that drift upward. A mask keeps them to a
+   band around the frame edges, so they spill out rather than cover it. */
+.spark-dust {
+  position: absolute;
+  inset: -70px -50px -50px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--spark-strength);
+  background-image:
+    radial-gradient(1.6px 1.6px at 12px 18px, #00aeef, transparent),
+    radial-gradient(1.4px 1.4px at 58px 74px, #ec008c, transparent),
+    radial-gradient(1.5px 1.5px at 96px 32px, #fff200, transparent),
+    radial-gradient(1.3px 1.3px at 140px 90px, #2dd4bf, transparent);
+  background-size: 160px 110px;
+  -webkit-mask-image: radial-gradient(ellipse 58% 60% at 50% 50%, transparent 62%, #000 76%, transparent 100%);
+  mask-image: radial-gradient(ellipse 58% 60% at 50% 50%, transparent 62%, #000 76%, transparent 100%);
+  animation:
+    spark-rise 14s linear infinite,
+    star-twinkle 3.2s ease-in-out infinite;
+}
+
+.spark-dust--fine {
+  background-image:
+    radial-gradient(1px 1px at 30px 40px, #ec008c, transparent),
+    radial-gradient(1px 1px at 80px 12px, #00aeef, transparent),
+    radial-gradient(1px 1px at 20px 96px, #fff200, transparent),
+    radial-gradient(1px 1px at 120px 60px, #6d7cff, transparent);
+  background-size: 110px 90px;
+  animation:
+    spark-rise 22s linear infinite reverse,
+    star-twinkle 4.4s ease-in-out infinite;
+}
+
+.video-frame {
+  position: relative;
+  border-radius: 22px;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--ring-angle),
+    var(--cyan),
+    var(--violet),
+    var(--magenta),
+    var(--yellow),
+    var(--cyan)
+  );
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 40px 120px -40px rgba(0, 0, 0, 0.8);
+  animation: ring-rotate 8s linear infinite;
+}
+
+.video-frame__inner {
+  overflow: hidden;
+  border-radius: 20.5px;
+  background: var(--bg-elevated);
+}
+
+.video-frame__bar {
+  display: flex;
+  gap: 7px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.video-frame__bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.video-frame__bar span:nth-child(1) {
+  background: var(--cyan);
+}
+
+.video-frame__bar span:nth-child(2) {
+  background: var(--magenta);
+}
+
+.video-frame__bar span:nth-child(3) {
+  background: var(--yellow);
+}
+
+.video-frame__video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--bg-sunken);
+}
+
+.video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  text-align: center;
+  background:
+    radial-gradient(420px 220px at 50% 45%, var(--accent-glow), transparent 70%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 44px 44px,
+    var(--bg-sunken);
+}
+
+.video-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  box-shadow: 0 0 40px -6px var(--accent-glow-strong);
+}
+
+.video-play svg {
+  margin-left: 4px;
+}
+
+.video-play::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  animation: play-pulse 2.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-field,
+  .star-field--far,
+  .video-frame,
+  .spark-glow,
+  .spark-dust,
+  .spark-dust--fine,
+  .video-play::after {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Homepage sections in the dark, dotted, glowing style: filled gradient
+   button, glow cards, the hub, the results panel and the FAQ.
+   --------------------------------------------------------------------------- */
+
+@keyframes sheen-pass {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  60%,
+  100% {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+
+@keyframes hub-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hub-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes hub-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 60px -10px var(--accent-glow-strong),
+      inset 0 0 60px -20px var(--accent-glow-strong);
+  }
+  50% {
+    box-shadow:
+      0 0 110px -10px var(--accent-glow-strong),
+      inset 0 0 80px -20px var(--accent-glow-strong);
+  }
+}
+
+@keyframes wire-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* Primary button: a filled teal-to-green pill with a band of light that
+   sweeps across it every few seconds. */
+.glow-btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  background: linear-gradient(100deg, #0e7c72 0%, #14b8a6 45%, #34d399 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.18),
+    0 10px 30px -10px rgba(20, 184, 166, 0.7);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+
+.glow-btn::after {
+  content: "";
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 38%;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  animation: sheen-pass 3.6s ease-in-out infinite;
+}
+
+.glow-btn svg {
+  transition: transform 0.25s ease;
+}
+
+.glow-btn:hover,
+.glow-btn:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.18),
+    0 16px 40px -10px rgba(20, 184, 166, 0.85);
+}
+
+.glow-btn:hover svg {
+  transform: translateX(3px);
+}
+
+.glow-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+/* A section that sits on the dotted night sky. */
+.dots-section {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.section-title {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  color: var(--text-primary);
+}
+
+/* Glow card: dark glass with a gradient edge that is brightest at the top,
+   and a soft light pooled behind the icon. */
+.glow-card {
+  position: relative;
+  height: 100%;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background:
+    radial-gradient(260px 140px at 22% 0%, var(--accent-glow), transparent 70%) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)) padding-box,
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    linear-gradient(170deg, var(--accent), var(--accent-line) 35%, var(--border) 70%) border-box;
+  box-shadow: var(--shadow-card);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.glow-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    var(--shadow-lift),
+    0 0 50px -18px var(--accent-glow-strong);
+}
+
+.glow-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  color: var(--accent-hover);
+  border: 1px solid var(--accent-line);
+  background: radial-gradient(circle at 50% 35%, rgba(20, 184, 166, 0.28), rgba(20, 184, 166, 0.06));
+  box-shadow: 0 0 26px -6px var(--accent-glow-strong);
+}
+
+.glow-card__tag {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The hub: concentric rings around the brand mark, one dotted ring turning
+   each way, a cloud of teal dust, and a slow breathing glow. */
+.hub {
+  position: relative;
+  width: min(360px, 78vw);
+  aspect-ratio: 1;
+  margin-inline: auto;
+}
+
+.hub__dust {
+  position: absolute;
+  inset: -18%;
+  border-radius: 999px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 10px 14px, var(--accent-hover), transparent),
+    radial-gradient(1px 1px at 40px 30px, var(--accent), transparent),
+    radial-gradient(1.2px 1.2px at 24px 48px, #34d399, transparent);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(circle, transparent 46%, #000 56%, transparent 72%);
+  mask-image: radial-gradient(circle, transparent 46%, #000 56%, transparent 72%);
+  opacity: calc(0.9 * var(--spark-strength));
+  animation: hub-spin 80s linear infinite;
+}
+
+.hub__core {
+  position: absolute;
+  inset: 8%;
+  border-radius: 999px;
+  border: 1px solid var(--accent-line);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(20, 184, 166, 0.18), transparent 62%),
+    var(--bg-sunken);
+  animation: hub-breathe 6s ease-in-out infinite;
+}
+
+.hub__ring {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid var(--accent-line);
+}
+
+.hub__ring--1 {
+  inset: 20%;
+}
+
+.hub__ring--2 {
+  inset: 32%;
+  border-style: dashed;
+  border-color: var(--accent);
+  opacity: 0.55;
+  animation: hub-spin 24s linear infinite;
+}
+
+.hub__ring--3 {
+  inset: 14%;
+  border-style: dotted;
+  border-width: 2px;
+  border-color: var(--accent-line);
+  animation: hub-spin-reverse 40s linear infinite;
+}
+
+.hub__mark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Wires from the card rows into the hub. */
+.hub-wire {
+  stroke: var(--accent-line);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.hub-wire--flow {
+  stroke: var(--accent);
+  stroke-dasharray: 4 8;
+  animation: wire-flow 1.6s linear infinite;
+}
+
+/* Results panel rows: tinted by how sure the check is. */
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.result-row__icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.result-row--ok {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.1), rgba(52, 211, 153, 0.02));
+}
+
+.result-row--warn {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.02));
+}
+
+.result-row--bad {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.38);
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.11), rgba(248, 113, 113, 0.02));
+}
+
+.light .result-row--ok {
+  color: #047857;
+}
+
+.light .result-row--warn {
+  color: #b45309;
+}
+
+.light .result-row--bad {
+  color: #b91c1c;
+}
+
+/* FAQ: each question is a dark rounded row; the chevron turns when open. */
+.faq-item {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    var(--bg-elevated);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.faq-item[open],
+.faq-item:hover {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 40px -22px var(--accent-glow-strong);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--text-primary);
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: 16px;
+}
+
+.faq-chevron {
+  flex: none;
+  transition: transform 0.3s ease;
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.faq-item__body {
+  padding: 0 26px 24px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-btn::after,
+  .hub__dust,
+  .hub__core,
+  .hub__ring--2,
+  .hub__ring--3,
+  .hub-wire--flow {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Site footer: the night sky continues into it, an ink-gradient hairline
+   marks the top, links slide an arrow in on hover, and a large faded
+   wordmark closes the page.
+   --------------------------------------------------------------------------- */
+
+.site-footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(700px 260px at 50% 0%, var(--accent-glow), transparent 70%),
+    var(--bg-sunken);
+}
+
+.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--cyan) 20%,
+    var(--magenta) 50%,
+    var(--yellow) 80%,
+    transparent
+  );
+  opacity: 0.7;
+}
+
+.footer-heading {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-link svg {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+.footer-link:hover svg,
+.footer-link:focus-visible svg {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--accent-hover);
+}
+
+.footer-card {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+/* The closing wordmark is an SVG so it always fits the container width,
+   flanked by circuit traces with light running along them. */
+.footer-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.footer-wordmark text {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.circuit-trace {
+  fill: none;
+  stroke: var(--border-hover);
+  stroke-width: 1.5;
+}
+
+.circuit-pulse {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 10 90;
+  animation: circuit-flow 3.2s linear infinite;
+}
+
+.circuit-node {
+  animation: node-blink 2.4s ease-in-out infinite;
+}
+
+@keyframes circuit-flow {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes node-blink {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-pulse,
+  .circuit-node {
+    animation: none;
+  }
+}
+
+.back-to-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-muted);
+  font-size: 13px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.back-to-top:hover,
+.back-to-top:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------------------
+   Founder section: a framed photo, focus tags, and a vertical timeline with
+   an ink-gradient rail running behind coloured nodes.
+   --------------------------------------------------------------------------- */
+
+.founder-photo-frame {
+  position: relative;
+  isolation: isolate;
+  width: min(280px, 62vw);
+  margin-inline: auto;
+}
+
+.founder-photo-frame__glow {
+  position: absolute;
+  inset: -14%;
+  z-index: -1;
+  border-radius: 28px;
+  background: conic-gradient(
+    from var(--ring-angle),
+    var(--cyan),
+    var(--violet),
+    var(--magenta),
+    var(--yellow),
+    var(--cyan)
+  );
+  filter: blur(26px);
+  opacity: 0.55;
+  animation: ring-rotate 10s linear infinite;
+}
+
+/* On the near-white light theme the same haze reads as a wash over the page. */
+.light .founder-photo-frame__glow {
+  opacity: 0.32;
+}
+
+.founder-photo-frame__ring {
+  border-radius: 24px;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--ring-angle),
+    var(--cyan),
+    var(--violet),
+    var(--magenta),
+    var(--yellow),
+    var(--cyan)
+  );
+  animation: ring-rotate 10s linear infinite;
+}
+
+.founder-photo-frame__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 21px;
+  background: var(--bg-sunken);
+}
+
+.founder-linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  /* Opaque base under the glass tint: these pills sit inside the photo's
+     blurred glow, and a translucent background lets it wash out the text. */
+  background: linear-gradient(var(--glass), var(--glass)), var(--bg-base);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.founder-linkedin:hover,
+.founder-linkedin:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.timeline {
+  position: relative;
+  padding-left: 42px;
+}
+
+.timeline__rail {
+  position: absolute;
+  left: 16px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--cyan),
+    var(--violet) 30%,
+    var(--magenta) 55%,
+    var(--yellow) 78%,
+    var(--accent)
+  );
+  opacity: 0.4;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item__node {
+  position: absolute;
+  left: -34px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 0 0 1.5px currentColor;
+}
+
+.timeline-item__node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.timeline-item--current .timeline-item__node {
+  width: 20px;
+  height: 20px;
+  left: -37px;
+  top: 0;
+}
+
+.timeline-item--current .timeline-item__node::after {
+  animation: play-pulse 2s ease-out infinite;
+  box-shadow: 0 0 16px 2px currentColor;
+}
+
+.timeline-item__period {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.timeline-item__card {
+  margin-top: 6px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.timeline-item__card:hover {
+  transform: translateX(4px);
+  border-color: var(--border-hover);
+}
+
+.timeline-item--current .timeline-item__card {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+    var(--bg-elevated);
+  box-shadow: 0 0 40px -20px var(--accent-glow-strong);
+}
+
+.timeline-item__now {
+  display: inline-flex;
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-weak);
+  color: var(--accent-hover);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .founder-photo-frame__glow,
+  .founder-photo-frame__ring,
+  .timeline-item--current .timeline-item__node::after {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Resume page (/about): contact pills, a two-column education/languages
+   strip, and a print stylesheet so the page itself works as a sendable PDF.
+   --------------------------------------------------------------------------- */
+
+.resume-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  /* Opaque base under the glass tint — see .founder-linkedin. */
+  background: linear-gradient(var(--glass), var(--glass)), var(--bg-base);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.resume-contact:hover,
+.resume-contact:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.resume-print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.resume-print-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-line);
+}
+
+@media print {
+  header,
+  .site-footer,
+  .resume-print-btn,
+  .star-field,
+  .star-field--far {
+    display: none !important;
+  }
+
+  .dots-section {
+    background: #fff !important;
+  }
+
+  body,
+  .dots-section {
+    color: #111 !important;
+  }
+
+  .founder-photo-frame__glow {
+    display: none;
+  }
+
+  .timeline-item__card,
+  .glow-card,
+  .resume-edu-card {
+    break-inside: avoid;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+  }
+}
