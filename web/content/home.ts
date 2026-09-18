@@ -22,6 +22,15 @@
 import { printSahajSite, type CtaLink, type PageIntent, type ProjectStatus } from "./site";
 import { tools } from "./tools";
 
+export interface FounderTimelineItem {
+  period: string;
+  role: string;
+  org: string;
+  description: string;
+  /** Marks the row that culminates the timeline, styled as the destination. */
+  current?: boolean;
+}
+
 export interface HeroVideo {
   /** Path under web/public. Empty until the recording exists. */
   src: string;
@@ -115,8 +124,13 @@ export interface HomeContent {
     name: string;
     role: string;
     description: string;
-    /** CONTENT GAP — no verified photo yet. */
+    /** Path under web/public. Null shows the initials mark instead. */
     photo: string | null;
+    linkedin: string;
+    /** Short capability tags, shown as chips under the name. */
+    focus: string[];
+    timeline: FounderTimelineItem[];
+    note: string;
   };
   toolsTeaser: {
     heading: string;
@@ -318,12 +332,64 @@ export const home: HomeContent = {
     ],
   },
   founder: {
-    heading: "Built by someone who understands the work.",
+    heading: "Built by someone who has run the work, not just studied it.",
     name: "Satyam Singh",
-    role: "Founder, PrintSahaj",
+    role: "Founder, PrintSahaj · Sales & Marketing Manager, Prakruti Graphic Pvt Ltd",
     description:
-      "Technology builder focused on software, business systems, AI, automation and digital growth, with deep hands-on understanding of printing & packaging workflows.",
-    photo: null,
+      "Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
+    photo: "/images/satyam-singh.jpg",
+    linkedin: "https://www.linkedin.com/in/satyam-singh-3b178883/",
+    focus: [
+      "Marketing & Growth",
+      "Printing & Packaging",
+      "Anti-Counterfeit & Track-Trace",
+      "Business Systems & Ops",
+    ],
+    timeline: [
+      {
+        period: "2013 – 2017",
+        role: "Senior Executive",
+        org: "IndiaMART Intermesh",
+        description:
+          "Client acquisition end to end — appointments, pitching the company's packages, and cold-calling follow-ups to get accounts on board.",
+      },
+      {
+        period: "2017 – 2020",
+        role: "Team Leader",
+        org: "V.K. Enterprises",
+        description: "Ran a ground sales team against daily targets and market cash collection.",
+      },
+      {
+        period: "2020 – 2022",
+        role: "Hub Manager",
+        org: "Khati Solution Pvt Ltd",
+        description:
+          "P&L owner for last-mile delivery hubs serving Big Basket Daily, JioMart, Dealshare, Flipkart Grocery, Grofers and Udaan. Built the driver-training program from scratch.",
+      },
+      {
+        period: "2022 – 2023",
+        role: "Business Development Manager",
+        org: "Jibz India System",
+        description:
+          "P&L owner for a city-wide vehicle-attachment project across Uber, Rapido and Ola — hiring, training and incentives for field executives and drivers.",
+      },
+      {
+        period: "2023 – Present",
+        role: "Sales & Marketing Manager",
+        org: "Prakruti Graphic Pvt Ltd",
+        description:
+          "Marketing and growth for label printing & packaging and security labels — digital campaigns, and hands-on work on anti-counterfeit R&D (holograms, microtext, tamper-evident design) and QR-based track & trace.",
+      },
+      {
+        period: "Building now",
+        role: "Founder",
+        org: "PrintSahaj",
+        description:
+          "Bringing that same operating discipline — logistics, last-mile ops and hands-on print & packaging marketing — into software, AI and automation for other businesses.",
+        current: true,
+      },
+    ],
+    note: "Also pursuing an MBA in Logistics and Supply Chain Management (Suresh Gyan Vihar University, ongoing).",
   },
   toolsTeaser: {
     heading: tools.heading,

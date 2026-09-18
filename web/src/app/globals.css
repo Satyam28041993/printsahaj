@@ -1729,3 +1729,197 @@ body {
   border-color: var(--accent-line);
   transform: translateY(-2px);
 }
+
+/* ---------------------------------------------------------------------------
+   Founder section: a framed photo, focus tags, and a vertical timeline with
+   an ink-gradient rail running behind coloured nodes.
+   --------------------------------------------------------------------------- */
+
+.founder-photo-frame {
+  position: relative;
+  isolation: isolate;
+  width: min(280px, 62vw);
+  margin-inline: auto;
+}
+
+.founder-photo-frame__glow {
+  position: absolute;
+  inset: -14%;
+  z-index: -1;
+  border-radius: 28px;
+  background: conic-gradient(
+    from var(--ring-angle),
+    var(--cyan),
+    var(--violet),
+    var(--magenta),
+    var(--yellow),
+    var(--cyan)
+  );
+  filter: blur(26px);
+  opacity: 0.55;
+  animation: ring-rotate 10s linear infinite;
+}
+
+.founder-photo-frame__ring {
+  border-radius: 24px;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--ring-angle),
+    var(--cyan),
+    var(--violet),
+    var(--magenta),
+    var(--yellow),
+    var(--cyan)
+  );
+  animation: ring-rotate 10s linear infinite;
+}
+
+.founder-photo-frame__img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 21px;
+  background: var(--bg-sunken);
+}
+
+.founder-linkedin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.founder-linkedin:hover,
+.founder-linkedin:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  color: var(--accent-hover);
+}
+
+.timeline {
+  position: relative;
+  padding-left: 42px;
+}
+
+.timeline__rail {
+  position: absolute;
+  left: 16px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: linear-gradient(
+    180deg,
+    var(--cyan),
+    var(--violet) 30%,
+    var(--magenta) 55%,
+    var(--yellow) 78%,
+    var(--accent)
+  );
+  opacity: 0.4;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item__node {
+  position: absolute;
+  left: -34px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 3px solid var(--bg-base);
+  box-shadow: 0 0 0 1.5px currentColor;
+}
+
+.timeline-item__node::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.timeline-item--current .timeline-item__node {
+  width: 20px;
+  height: 20px;
+  left: -37px;
+  top: 0;
+}
+
+.timeline-item--current .timeline-item__node::after {
+  animation: play-pulse 2s ease-out infinite;
+  box-shadow: 0 0 16px 2px currentColor;
+}
+
+.timeline-item__period {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.timeline-item__card {
+  margin-top: 6px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+.timeline-item__card:hover {
+  transform: translateX(4px);
+  border-color: var(--border-hover);
+}
+
+.timeline-item--current .timeline-item__card {
+  border-color: var(--accent-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
+    var(--bg-elevated);
+  box-shadow: 0 0 40px -20px var(--accent-glow-strong);
+}
+
+.timeline-item__now {
+  display: inline-flex;
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-weak);
+  color: var(--accent-hover);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .founder-photo-frame__glow,
+  .founder-photo-frame__ring,
+  .timeline-item--current .timeline-item__node::after {
+    animation: none;
+  }
+}
