@@ -103,37 +103,39 @@ export default function AboutPage() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
 
-              <CareerTimeline items={f.timeline} heading="Career history" className="mt-12" />
-              <p className="mt-8 max-w-2xl text-sm text-faint">{f.note}</p>
+          <div className="mt-16 border-t border-hairline pt-14">
+            <CareerTimeline items={f.timeline} heading="Career history" />
+            <p className="mt-8 max-w-2xl text-sm text-faint">{f.note}</p>
+          </div>
 
-              <div className="mt-14 grid gap-10 sm:grid-cols-2">
-                <div>
-                  <h3 className="font-display text-display-sm font-bold text-primary">Education</h3>
-                  <ul className="mt-6 space-y-4">
-                    {f.education.map((item) => (
-                      <li key={item.qualification} className="resume-edu-card timeline-item__card">
-                        <p className="timeline-item__period">{item.period}</p>
-                        <p className="mt-1.5 font-display font-bold text-primary">
-                          {item.qualification}
-                        </p>
-                        <p className="text-sm text-muted">{item.institute}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-display text-display-sm font-bold text-primary">Languages</h3>
-                  <ul className="mt-6 space-y-4">
-                    {f.languages.map((item) => (
-                      <li key={item.name} className="resume-edu-card timeline-item__card">
-                        <p className="font-display font-bold text-primary">{item.name}</p>
-                        <p className="text-sm text-muted">{item.level}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+          <div className="mt-16 grid gap-12 border-t border-hairline pt-14 sm:grid-cols-2">
+            <div>
+              <h3 className="font-display text-display-sm font-bold text-primary">Education</h3>
+              <ul className="mt-6 space-y-4">
+                {f.education.map((item) => (
+                  <li key={item.qualification} className="resume-edu-card timeline-item__card">
+                    <p className="timeline-item__period">{item.period}</p>
+                    <p className="mt-1.5 font-display font-bold text-primary">
+                      {item.qualification}
+                    </p>
+                    <p className="text-sm text-muted">{item.institute}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-display text-display-sm font-bold text-primary">Languages</h3>
+              <ul className="mt-6 space-y-4">
+                {f.languages.map((item) => (
+                  <li key={item.name} className="resume-edu-card timeline-item__card">
+                    <p className="font-display font-bold text-primary">{item.name}</p>
+                    <p className="text-sm text-muted">{item.level}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>

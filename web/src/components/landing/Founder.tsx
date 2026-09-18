@@ -2,7 +2,6 @@
 
 import React from "react";
 import Link from "next/link";
-import CareerTimeline from "./CareerTimeline";
 import FounderPhoto from "./FounderPhoto";
 import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
@@ -64,13 +63,6 @@ export default function Founder() {
             </div>
           </div>
         </div>
-
-        <CareerTimeline
-          items={copy.timeline}
-          heading="The path to PrintSahaj"
-          className="mt-20 lg:mt-28"
-        />
-        <p className="mt-8 max-w-2xl text-sm text-faint">{copy.note}</p>
       </div>
     </section>
   );
