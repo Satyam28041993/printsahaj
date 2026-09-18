@@ -22,6 +22,14 @@
 import { printSahajSite, type CtaLink, type PageIntent, type ProjectStatus } from "./site";
 import { tools } from "./tools";
 
+export interface HeroVideo {
+  /** Path under web/public. Empty until the recording exists. */
+  src: string;
+  /** Still frame shown before the video loads. Optional. */
+  poster: string;
+  label: string;
+}
+
 export interface HomePillar {
   name: string;
   description: string;
@@ -67,6 +75,7 @@ export interface HomeContent {
     specialization: string;
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
+    video: HeroVideo;
   };
   whatIsPrintSahaj: {
     heading: string;
@@ -136,6 +145,12 @@ export const home: HomeContent = {
     specialization: "Deep expertise in printing & packaging.",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
+    video: {
+      // Path under web/public, e.g. "/videos/crm-demo.mp4". Empty shows a placeholder.
+      src: "",
+      poster: "",
+      label: "PrintSahaj CRM walkthrough",
+    },
   },
   whatIsPrintSahaj: {
     heading: "Technology built around the way businesses actually work.",
