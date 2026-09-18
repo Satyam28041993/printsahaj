@@ -1648,20 +1648,63 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-/* The closing wordmark: huge, outlined in ink colours, fading into the floor. */
+/* The closing wordmark is an SVG so it always fits the container width,
+   flanked by circuit traces with light running along them. */
 .footer-wordmark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.footer-wordmark text {
   font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-weight: 700;
-  font-size: clamp(64px, 17vw, 240px);
-  line-height: 0.8;
-  letter-spacing: -0.04em;
-  text-align: center;
-  user-select: none;
-  background: linear-gradient(180deg, var(--accent-glow-strong), transparent 85%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-stroke: 1px var(--accent-line);
+  letter-spacing: -0.02em;
+}
+
+.circuit-trace {
+  fill: none;
+  stroke: var(--border-hover);
+  stroke-width: 1.5;
+}
+
+.circuit-pulse {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 10 90;
+  animation: circuit-flow 3.2s linear infinite;
+}
+
+.circuit-node {
+  animation: node-blink 2.4s ease-in-out infinite;
+}
+
+@keyframes circuit-flow {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes node-blink {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .circuit-pulse,
+  .circuit-node {
+    animation: none;
+  }
 }
 
 .back-to-top {

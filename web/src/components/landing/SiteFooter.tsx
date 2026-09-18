@@ -42,6 +42,81 @@ function Column({
   );
 }
 
+/** One side's traces; the right side draws the same set mirrored. */
+const TRACES = [
+  { d: "M0 40 H130 L160 70 H205", end: [205, 70], ink: "var(--cyan)", delay: "0s" },
+  { d: "M0 95 H70 L100 125 H200", end: [200, 125], ink: "var(--magenta)", delay: "0.8s" },
+  { d: "M10 165 H120 L150 135 H205", end: [205, 135], ink: "var(--yellow)", delay: "1.6s" },
+  { d: "M0 195 H170 L185 180", end: [185, 180], ink: "var(--accent-hover)", delay: "2.4s" },
+];
+
+function CircuitSide() {
+  return (
+    <g>
+      {TRACES.map((trace) => (
+        <g key={trace.d}>
+          <path className="circuit-trace" d={trace.d} />
+          <path
+            className="circuit-pulse"
+            d={trace.d}
+            pathLength={100}
+            stroke={trace.ink}
+            style={{ animationDelay: trace.delay }}
+          />
+          <circle
+            className="circuit-node"
+            cx={trace.end[0]}
+            cy={trace.end[1]}
+            r="4"
+            fill={trace.ink}
+            style={{ animationDelay: trace.delay }}
+          />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/**
+ * The closing wordmark, drawn in SVG so it scales to the container instead of
+ * to the viewport — a CSS font size tied to vw spilled past the edges on wide
+ * screens and cut the last letter off.
+ */
+function FooterWordmark({ name }: { name: string }) {
+  return (
+    <svg
+      className="footer-wordmark"
+      viewBox="0 0 1300 215"
+      role="img"
+      aria-label={name}
+    >
+      <defs>
+        <linearGradient id="footer-wordmark-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style={{ stopColor: "var(--accent)", stopOpacity: 0.45 }} />
+          <stop offset="1" style={{ stopColor: "var(--accent)", stopOpacity: 0.02 }} />
+        </linearGradient>
+      </defs>
+      <CircuitSide />
+      <g transform="translate(1300 0) scale(-1 1)">
+        <CircuitSide />
+      </g>
+      <text
+        x="650"
+        y="160"
+        textAnchor="middle"
+        fontSize="170"
+        textLength="860"
+        lengthAdjust="spacingAndGlyphs"
+        fill="url(#footer-wordmark-fill)"
+        stroke="var(--accent-line)"
+        strokeWidth="1.2"
+      >
+        {name}
+      </text>
+    </svg>
+  );
+}
+
 export default function SiteFooter() {
   const { brand, nav, footer } = printSahajSite;
   const toolLinks = tools.items.map((item) => ({ label: item.name, href: item.href }));
@@ -94,9 +169,9 @@ export default function SiteFooter() {
           </a>
         </div>
 
-        <p className="footer-wordmark mt-10" aria-hidden="true">
-          {brand.name}
-        </p>
+        <div className="mt-10 pb-10">
+          <FooterWordmark name={brand.name} />
+        </div>
       </div>
     </footer>
   );
