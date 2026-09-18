@@ -738,7 +738,6 @@
       await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
       await loadScript("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js");
       firebase.initializeApp(FIREBASE_CONFIG);
-      document.getElementById("signout-btn").hidden = false;
       document.getElementById("signout-btn").onclick = () => firebase.auth().signOut();
       document.getElementById("login-btn").onclick = async () => {
         const email = document.getElementById("login-email").value.trim();
@@ -752,6 +751,8 @@
         }
       };
       firebase.auth().onAuthStateChanged((user) => {
+        // Only offer Sign out to someone who is actually signed in.
+        document.getElementById("signout-btn").hidden = !user;
         if (user) {
           document.getElementById("login-view").classList.add("hidden");
           document.getElementById("app-root").classList.remove("hidden");
