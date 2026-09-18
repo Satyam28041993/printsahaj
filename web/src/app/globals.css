@@ -23,7 +23,9 @@
   /* Type */
   --text-primary: #f5f6f7;
   --text-muted: #9ba1aa;
-  --text-faint: #6b7178;
+  /* 4.93 on --bg-base, 4.53 on --bg-elevated. The previous #6b7178 measured
+     3.99 and 3.67, under the 4.5 needed for normal text. Same hue, lighter. */
+  --text-faint: #798088;
 
   /* Working colour */
   --accent: #14b8a6;
@@ -70,7 +72,9 @@
 
   --text-primary: #14161a;
   --text-muted: #5a616b;
-  --text-faint: #868d96;
+  /* 5.01 on white, 4.80 on --bg-base, 4.51 on --bg-sunken. The previous
+     #868d96 measured 3.35 / 3.21, well under 4.5. */
+  --text-faint: #697079;
 
   --accent: #0d9488;
   --accent-hover: #14b8a6;
@@ -371,13 +375,20 @@ body {
 
 .nav-link {
   position: relative;
+  /* The text alone measured 17px tall, under the 24x24 CSS px a pointer
+     target needs. Padding grows the hit area without moving the type. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding-block: 0.25rem;
 }
 
 .nav-link::after {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -6px;
+  /* Was -6px against an unpadded box; the padding now supplies 4px of it. */
+  bottom: -2px;
   width: 100%;
   height: 1px;
   background: var(--accent);
@@ -1612,6 +1623,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  /* Measured 20px tall, under the 24x24 CSS px a pointer target needs.
+     The list already spaces these, so growing the hit area costs no layout. */
+  min-height: 24px;
   color: var(--text-muted);
   transition:
     color 0.2s ease,
