@@ -122,9 +122,10 @@ export default function SiteNav({
         />
       ) : null}
 
+      {/* Above the z-40 scrim: it is there to dim the page, not the menu. */}
       <div
         id="mobile-nav"
-        className={`grid xl:hidden ${menuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} transition-[grid-template-rows] duration-300 ease-out`}
+        className={`relative z-50 grid xl:hidden ${menuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} transition-[grid-template-rows] duration-300 ease-out`}
       >
         <div className="overflow-hidden" inert={!menuOpen ? true : undefined} aria-hidden={!menuOpen}>
           <div className="border-t border-hairline bg-elevated px-5 pb-6 pt-2">
