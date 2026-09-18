@@ -834,3 +834,312 @@ body {
   transform-origin: center bottom;
   mask-image: linear-gradient(to top, black 0%, transparent 72%);
 }
+
+/* ---------------------------------------------------------------------------
+   CRM landing banner (/crm). Scoped to .crm-* so nothing else moves.
+   A rotating gradient ring on the primary button and on the video frame,
+   a frosted secondary button, and a slow star field behind it all.
+   --------------------------------------------------------------------------- */
+
+/* Registered so the ring's angle interpolates smoothly instead of jumping. */
+@property --crm-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes crm-rotate {
+  to {
+    --crm-angle: 360deg;
+  }
+}
+
+@keyframes crm-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-120px, -60px, 0);
+  }
+}
+
+@keyframes crm-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes crm-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+:root {
+  --crm-star: rgba(255, 255, 255, 0.85);
+  --crm-star-dim: rgba(255, 255, 255, 0.4);
+  --crm-glass: rgba(255, 255, 255, 0.06);
+  --crm-glass-edge: rgba(255, 255, 255, 0.35);
+}
+
+.light {
+  --crm-star: rgba(20, 22, 26, 0.35);
+  --crm-star-dim: rgba(20, 22, 26, 0.18);
+  --crm-glass: rgba(10, 11, 13, 0.04);
+  --crm-glass-edge: rgba(255, 255, 255, 0.9);
+}
+
+.crm-stage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(900px 480px at 50% 58%, var(--accent-glow-strong), transparent 70%),
+    radial-gradient(700px 360px at 50% 0%, var(--violet-weak), transparent 70%),
+    var(--bg-base);
+}
+
+/* Star field: small dots painted by tiled radial gradients, two layers at
+   different sizes and speeds so it reads as depth. */
+.crm-stars {
+  position: absolute;
+  inset: -120px;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.2px 1.2px at 20px 30px, var(--crm-star), transparent),
+    radial-gradient(1px 1px at 90px 120px, var(--crm-star), transparent),
+    radial-gradient(1.4px 1.4px at 160px 60px, var(--crm-star), transparent),
+    radial-gradient(1px 1px at 210px 170px, var(--crm-star), transparent);
+  background-size: 240px 200px;
+  animation:
+    crm-drift 60s linear infinite alternate,
+    crm-twinkle 5s ease-in-out infinite;
+}
+
+.crm-stars--far {
+  background-image:
+    radial-gradient(0.8px 0.8px at 40px 70px, var(--crm-star-dim), transparent),
+    radial-gradient(0.8px 0.8px at 130px 20px, var(--crm-star-dim), transparent),
+    radial-gradient(0.8px 0.8px at 70px 150px, var(--crm-star-dim), transparent);
+  background-size: 180px 170px;
+  animation:
+    crm-drift 90s linear infinite alternate-reverse,
+    crm-twinkle 7s ease-in-out infinite;
+}
+
+.crm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-weak);
+  color: var(--accent-hover);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.crm-heading-accent {
+  background: linear-gradient(90deg, var(--accent-hover), var(--violet) 55%, var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Primary: a pill with a gradient ring that keeps turning. The fill paints
+   the padding box, the gradient paints the border box, so only the 1.5px
+   edge shows the gradient. */
+.crm-ring-btn {
+  position: relative;
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    conic-gradient(
+        from var(--crm-angle),
+        var(--accent),
+        var(--violet),
+        var(--magenta),
+        var(--accent-hover),
+        var(--accent)
+      )
+      border-box;
+  box-shadow: 0 0 28px -8px var(--accent-glow-strong);
+  animation: crm-rotate 3.5s linear infinite;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.crm-ring-btn__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 26px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.crm-ring-btn__label svg {
+  transition: transform 0.25s ease;
+}
+
+.crm-ring-btn:hover,
+.crm-ring-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 36px -6px var(--accent-glow-strong),
+    0 0 60px -20px var(--violet);
+}
+
+.crm-ring-btn:hover .crm-ring-btn__label svg {
+  transform: translateX(3px);
+}
+
+/* Secondary: frosted glass pill with a thin highlight along the top edge. */
+.crm-glass-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 26px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--crm-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 var(--crm-glass-edge);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 15px;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.crm-glass-btn:hover,
+.crm-glass-btn:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--border-hover);
+  background: var(--surface-hover);
+}
+
+.crm-ring-btn:focus-visible,
+.crm-glass-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+/* Video frame: the same turning ring, slower and teal-led, plus a glow
+   that spills onto the stage. */
+.crm-frame {
+  position: relative;
+  border-radius: 22px;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--crm-angle),
+    var(--accent-line),
+    var(--accent),
+    var(--violet),
+    var(--accent-line) 40%,
+    var(--accent-line)
+  );
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 30px 120px -40px var(--accent-glow-strong),
+    0 0 80px -30px var(--accent-glow-strong);
+  animation: crm-rotate 8s linear infinite;
+}
+
+.crm-frame__inner {
+  overflow: hidden;
+  border-radius: 20.5px;
+  background: var(--bg-elevated);
+}
+
+.crm-frame__bar {
+  display: flex;
+  gap: 7px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.crm-frame__bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border-hover);
+}
+
+.crm-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--bg-sunken);
+}
+
+.crm-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  text-align: center;
+  background:
+    radial-gradient(420px 220px at 50% 45%, var(--accent-glow), transparent 70%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 44px 44px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 44px 44px,
+    var(--bg-sunken);
+}
+
+.crm-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  box-shadow: 0 0 40px -6px var(--accent-glow-strong);
+}
+
+.crm-play svg {
+  margin-left: 4px;
+}
+
+.crm-play::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  animation: crm-pulse 2.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crm-stars,
+  .crm-stars--far,
+  .crm-ring-btn,
+  .crm-frame,
+  .crm-play::after {
+    animation: none;
+  }
+}
