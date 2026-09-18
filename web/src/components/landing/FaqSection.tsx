@@ -1,5 +1,6 @@
 import React from "react";
-import { faq } from "@content/faq";
+import { home, type HomeFaqContent } from "@content/home";
+import { faq as printverifyFaq } from "@content/faq";
 
 function Chevron() {
   return (
@@ -24,28 +25,36 @@ function Chevron() {
  * Built on <details>, so it opens and closes with no JavaScript, works from
  * the keyboard, and screen readers announce the open state on their own.
  */
-export default function FaqSection() {
-  return (
-    <section id="faq" className="dots-section" aria-labelledby="faq-heading">
-      <div className="star-field" aria-hidden="true" />
+export default function FaqSection({
+  content,
+}: {
+  content?: HomeFaqContent;
+}) {
+  const copy = content ?? home.faq;
 
-      <div className="relative mx-auto w-full max-w-4xl px-5 py-24 sm:px-8">
-        <h2 id="faq-heading" className="section-title text-center text-4xl sm:text-5xl">
-          {faq.heading}
+  return (
+    <section id="faq" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8" aria-labelledby="faq-heading">
+      <div className="mx-auto w-full max-w-4xl">
+        <h2 id="faq-heading" className="font-display text-display-lg font-bold text-primary">
+          {copy.heading}
         </h2>
 
-        <div className="mt-12 space-y-4">
-          {faq.items.map((item, i) => (
-            <details key={item.question} className="faq-item" open={i === 0}>
-              <summary>
+        <div className="mt-10 divide-y divide-hairline border-y border-hairline">
+          {copy.items.map((item, i) => (
+            <details key={item.question} className="group py-5" open={i === 0}>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-title font-semibold text-primary">
                 {item.question}
                 <Chevron />
               </summary>
-              <p className="faq-item__body">{item.answer}</p>
+              <p className="mt-3 max-w-2xl text-body-lg text-muted">{item.answer}</p>
             </details>
           ))}
         </div>
       </div>
     </section>
   );
+}
+
+export function PrintVerifyFaqSection() {
+  return <FaqSection content={printverifyFaq} />;
 }

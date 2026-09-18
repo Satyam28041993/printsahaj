@@ -2,13 +2,12 @@ import SiteNav from "@/components/landing/SiteNav";
 import ScrollProgress from "@/components/landing/ScrollProgress";
 import HomeHero from "@/components/landing/HomeHero";
 import WhatIsPrintSahaj from "@/components/landing/WhatIsPrintSahaj";
+import BuildJourney from "@/components/landing/BuildJourney";
 import Pillars from "@/components/landing/Pillars";
+import TraceIdentity from "@/components/landing/TraceIdentity";
 import HubShowcase from "@/components/landing/HubShowcase";
-import ResultsPanel from "@/components/landing/ResultsPanel";
+import ProductProof from "@/components/landing/ProductProof";
 import CaseStudy from "@/components/landing/CaseStudy";
-import DigitalGrowth from "@/components/landing/DigitalGrowth";
-import Specialization from "@/components/landing/Specialization";
-import SelectedWork from "@/components/landing/SelectedWork";
 import Founder from "@/components/landing/Founder";
 import FaqSection from "@/components/landing/FaqSection";
 import HomeFinalCta from "@/components/landing/HomeFinalCta";
@@ -25,13 +24,12 @@ export default function HomePage() {
       <main id="main">
         <HomeHero />
         <WhatIsPrintSahaj />
+        <BuildJourney />
         <Pillars />
+        <TraceIdentity />
         <HubShowcase />
-        <ResultsPanel />
+        <ProductProof />
         <CaseStudy />
-        <DigitalGrowth />
-        <Specialization />
-        <SelectedWork />
         <Founder />
         <FaqSection />
         <HomeFinalCta />

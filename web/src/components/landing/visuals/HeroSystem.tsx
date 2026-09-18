@@ -1,111 +1,141 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { home } from "@content/home";
+import { prefersReducedMotion } from "@/lib/motion";
 
-const MODULES = [
-  { id: "software", label: "Software", hint: "Systems", x: "50%", y: "7%", delay: "0s" },
-  { id: "ai", label: "AI", hint: "Automation", x: "86%", y: "50%", delay: "0.4s" },
-  { id: "growth", label: "Growth", hint: "Demand", x: "50%", y: "93%", delay: "0.8s" },
-  { id: "tools", label: "Tools", hint: "Products", x: "14%", y: "50%", delay: "1.2s" },
+const SATELLITE_STYLE = [
+  { top: "6%", left: "0%" },
+  { top: "18%", right: "0%" },
+  { top: "44%", left: "0%" },
+  { top: "52%", right: "0%" },
+  { bottom: "18%", left: "4%" },
+  { bottom: "6%", right: "2%" },
 ] as const;
 
-const PARTICLES = [
-  { top: "18%", left: "22%", delay: "0s" },
-  { top: "28%", left: "72%", delay: "1.1s" },
-  { top: "62%", left: "18%", delay: "2s" },
-  { top: "70%", left: "78%", delay: "0.6s" },
-  { top: "42%", left: "12%", delay: "1.6s" },
-  { top: "48%", left: "88%", delay: "2.4s" },
-  { top: "14%", left: "54%", delay: "0.3s" },
-  { top: "84%", left: "40%", delay: "1.8s" },
-];
+function SatelliteFace({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <ul className="mt-2 space-y-1.5" aria-hidden="true">
+        {["Open", "Quote", "Follow-up"].map((row) => (
+          <li key={row} className="flex items-center justify-between gap-2">
+            <span className="h-1 w-8 rounded-full bg-hairline" />
+            <span className="font-mono text-[8px] uppercase tracking-[0.12em] text-faint">{row}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  if (index === 1) {
+    return (
+      <div className="mt-2 grid grid-cols-5 gap-0.5" aria-hidden="true">
+        {Array.from({ length: 25 }, (_, cell) => (
+          <span
+            key={cell}
+            className={`h-1.5 ${cell % 3 === 0 || cell % 7 === 0 ? "bg-primary" : "bg-transparent"}`}
+          />
+        ))}
+      </div>
+    );
+  }
+  if (index === 2) {
+    return (
+      <p className="mt-2 font-mono text-[9px] leading-relaxed text-muted">
+        Declared 7 units
+        <br />
+        Found 6 plates
+      </p>
+    );
+  }
+  if (index === 3) {
+    return (
+      <svg className="mt-2 h-10 w-full text-accent" viewBox="0 0 80 28" fill="none" aria-hidden="true">
+        <path d="M4 14h16M20 14c8 0 8-10 16-10M20 14c8 0 8 10 16 10" stroke="currentColor" />
+        <circle cx="56" cy="4" r="2.5" fill="currentColor" />
+        <circle cx="56" cy="14" r="2.5" fill="currentColor" />
+        <circle cx="56" cy="24" r="2.5" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (index === 4) {
+    return (
+      <div className="mt-2 flex h-8 items-end gap-1" aria-hidden="true">
+        {[40, 62, 48, 78, 55].map((height, bar) => (
+          <span key={bar} className="flex-1 bg-accent/70" style={{ height: `${height}%` }} />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 space-y-1" aria-hidden="true">
+      <span className="block h-4 rounded-sm border border-hairline bg-sunken" />
+      <span className="ml-3 block h-4 rounded-sm border border-accent-line bg-accent-weak" />
+    </div>
+  );
+}
 
 export default function HeroSystem() {
-  const stageRef = useRef<HTMLDivElement>(null);
+  const { spine, satellites, ariaLabel } = home.hero.system;
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(0);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const id = window.setInterval(() => {
+      setLive((current) => (current + 1) % spine.length);
+    }, 2200);
+    return () => window.clearInterval(id);
+  }, [spine.length]);
 
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const board = boardRef.current;
+    if (!board) return;
+    if (prefersReducedMotion()) return;
     if (!window.matchMedia("(pointer: fine)").matches) return;
-
-    const rect = stage.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 16;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 12;
-    stage.style.setProperty("--tilt-x", `${x.toFixed(1)}px`);
-    stage.style.setProperty("--tilt-y", `${y.toFixed(1)}px`);
+    const rect = board.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 10;
+    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 8;
+    board.style.setProperty("--tilt-x", `${x.toFixed(1)}px`);
+    board.style.setProperty("--tilt-y", `${y.toFixed(1)}px`);
   };
 
   const onPointerLeave = () => {
-    stageRef.current?.style.setProperty("--tilt-x", "0px");
-    stageRef.current?.style.setProperty("--tilt-y", "0px");
+    boardRef.current?.style.setProperty("--tilt-x", "0px");
+    boardRef.current?.style.setProperty("--tilt-y", "0px");
   };
 
   return (
     <div
-      ref={stageRef}
+      ref={boardRef}
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
-      className="relative mx-auto aspect-square w-full max-w-[520px] overflow-hidden"
-      style={{
-        transform: "translate3d(var(--tilt-x, 0px), var(--tilt-y, 0px), 0)",
-        transition: "transform 220ms ease",
-      }}
-      aria-hidden="true"
+      className="system-board"
+      style={{ transform: "translate3d(var(--tilt-x, 0px), var(--tilt-y, 0px), 0)" }}
+      role="img"
+      aria-label={ariaLabel}
     >
-      <div className="hero-perspective pointer-events-none absolute inset-[-12%] opacity-70" />
-      <div className="ambient-sweep pointer-events-none absolute inset-0 rounded-full opacity-80" />
-      <div
-        className="glow-breathe pointer-events-none absolute left-1/2 top-1/2 h-[58%] w-[58%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, var(--accent-glow-strong) 0%, transparent 68%)",
-        }}
-      />
+      <ol className="system-spine mx-auto max-w-[16rem] space-y-5 py-6 lg:py-10">
+        {spine.map((step, index) => (
+          <li key={step.label} className={`system-step ${index <= live ? "is-live" : ""}`}>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{step.hint}</p>
+            <p className="mt-1 font-display text-lg font-semibold text-primary">{step.label}</p>
+          </li>
+        ))}
+      </ol>
 
-      {PARTICLES.map((particle) => (
-        <span
-          key={`${particle.top}-${particle.left}`}
-          className="particle"
-          style={{
-            top: particle.top,
-            left: particle.left,
-            animationDelay: particle.delay,
-          }}
-        />
-      ))}
-
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" fill="none">
-        <line className="dash-flow" x1="50" y1="50" x2="50" y2="16" stroke="var(--accent-line)" strokeWidth="0.35" />
-        <line className="dash-flow" x1="50" y1="50" x2="84" y2="50" stroke="var(--accent-line)" strokeWidth="0.35" />
-        <line className="dash-flow" x1="50" y1="50" x2="50" y2="84" stroke="var(--accent-line)" strokeWidth="0.35" />
-        <line className="dash-flow" x1="50" y1="50" x2="16" y2="50" stroke="var(--accent-line)" strokeWidth="0.35" />
-        <circle cx="50" cy="50" r="11" stroke="var(--accent-line)" strokeWidth="0.35" />
-      </svg>
-
-      <div className="absolute left-1/2 top-1/2 z-10 flex h-[7.5rem] w-[7.5rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-accent-line bg-elevated/90 shadow-[0_0_40px_-12px_var(--accent-glow-strong)]">
-        <span className="flex gap-1">
-          <span className="h-2 w-2 rounded-full bg-[var(--cyan)]" />
-          <span className="h-2 w-2 rounded-full bg-[var(--magenta)]" />
-          <span className="h-2 w-2 rounded-full bg-[var(--yellow)]" />
-        </span>
-        <span className="mt-2 font-mono text-[9px] uppercase tracking-[0.18em] text-primary">
-          System
-        </span>
-      </div>
-
-      {MODULES.map((mod, index) => (
-        <div
-          key={mod.id}
-          className={`absolute z-10 w-[6.75rem] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-hairline bg-elevated/90 px-3 py-2.5 shadow-[var(--shadow-card)] ${
-            index % 2 === 0 ? "float-slow" : "float-slower"
-          }`}
-          style={{ left: mod.x, top: mod.y, animationDelay: mod.delay }}
-        >
-          <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">{mod.hint}</p>
-          <p className="mt-1 text-xs font-medium text-primary">{mod.label}</p>
-        </div>
-      ))}
+      <ul className="mt-6 grid grid-cols-2 gap-3 lg:mt-0 lg:contents">
+        {satellites.map((satellite, index) => (
+          <li
+            key={satellite.label}
+            className="system-satellite"
+            style={SATELLITE_STYLE[index]}
+          >
+            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-accent">{satellite.hint}</p>
+            <p className="mt-1 text-sm font-medium text-primary">{satellite.label}</p>
+            <SatelliteFace index={index} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
