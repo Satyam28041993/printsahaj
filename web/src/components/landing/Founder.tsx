@@ -19,48 +19,33 @@ export default function Founder() {
   const revealRef = useReveal<HTMLDivElement>({ start: "top 85%" });
 
   return (
-    <section aria-labelledby="founder-heading" className="dots-section">
-      <div className="star-field star-field--far" aria-hidden="true" />
-
-      <div className="relative mx-auto max-w-6xl px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
-        <div
-          ref={revealRef}
-          className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.62fr)_minmax(0,1.38fr)]"
-        >
-          <div data-reveal>
-            <FounderPhoto photo={copy.photo} name={copy.name} />
-          </div>
-          <div data-reveal>
-            <p className="hero-eyebrow">Founder</p>
-            <h2 id="founder-heading" className="mt-5 font-display text-display-lg font-bold text-primary">
-              {copy.heading}
-            </h2>
-            <p className="mt-8 font-display text-display-md font-semibold text-primary">{copy.name}</p>
-            <p className="mt-2 text-sm text-muted">{copy.role}</p>
-            <p className="mt-6 max-w-xl text-body-lg text-muted">{copy.description}</p>
-
-            <ul className="mt-6 flex flex-wrap gap-2">
-              {copy.focus.map((item) => (
-                <li key={item} className="glow-card__tag">
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a
-                href={copy.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="founder-linkedin"
-              >
-                <LinkedInIcon />
-                Connect on LinkedIn
-              </a>
-              <Link href="/about" className="founder-linkedin">
-                Full profile & resume →
-              </Link>
-            </div>
+    <section aria-labelledby="founder-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
+      <div ref={revealRef} className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
+        <div data-reveal>
+          <FounderPhoto photo={copy.photo} name={copy.name} />
+        </div>
+        <div data-reveal>
+          <p className="story-kicker">Founder</p>
+          <h2 id="founder-heading" className="mt-5 max-w-[16ch] font-display text-display-lg font-bold text-primary text-balance">
+            {copy.heading}
+          </h2>
+          <p className="mt-8 font-display text-display-md font-semibold text-primary">{copy.name}</p>
+          <p className="mt-2 text-sm text-muted">{copy.role}</p>
+          <p className="mt-6 max-w-xl text-body-lg text-muted">{copy.description}</p>
+          <p className="mt-8 max-w-lg font-display text-title text-primary">{copy.throughline}</p>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <a
+              href={copy.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="founder-linkedin"
+            >
+              <LinkedInIcon />
+              Connect on LinkedIn
+            </a>
+            <Link href="/about" className="founder-linkedin">
+              Full profile & resume →
+            </Link>
           </div>
         </div>
       </div>

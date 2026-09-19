@@ -146,6 +146,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
   background-color: var(--bg-base);
   color: var(--text-primary);
   -webkit-text-size-adjust: 100%;
@@ -1997,6 +1998,12 @@ body {
   border-color: var(--accent-line);
 }
 
+/* ---------------------------------------------------------------------------
+   Homepage V2 — editorial storytelling.
+   Typography, composition and product UI carry the page. Glow, stars and
+   repeated glass cards stay off this story unless a state truly needs them.
+   --------------------------------------------------------------------------- */
+
 .story-kicker {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
   font-size: 11px;
@@ -2004,6 +2011,311 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+.hero-split {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.hero-split::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: min(52%, 720px);
+  height: 480px;
+  background: radial-gradient(closest-side, var(--accent-glow), transparent 74%);
+  pointer-events: none;
+}
+
+.system-board {
+  position: relative;
+}
+
+.system-spine {
+  position: relative;
+  z-index: 2;
+}
+
+.system-step {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.system-step::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-line);
+}
+
+.system-step.is-live::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.system-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1.2rem;
+  bottom: -1.15rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.system-step.is-live:not(:last-child)::after {
+  background: linear-gradient(to bottom, var(--accent), var(--border));
+}
+
+.system-satellite {
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.fragment-board {
+  position: relative;
+  min-height: 28rem;
+}
+
+.fragment-chip {
+  position: absolute;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transform: rotate(var(--tilt, 0deg));
+}
+
+.fragment-chip.is-quiet {
+  color: var(--text-muted);
+  background: var(--bg-sunken);
+}
+
+.connected-panel {
+  border: 1px solid var(--accent-line);
+  background: color-mix(in srgb, var(--accent-weak) 70%, var(--bg-elevated));
+}
+
+.journey-visual {
+  min-height: 22rem;
+  border: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+
+.identity-phone {
+  width: min(100%, 18rem);
+  margin-inline: auto;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.identity-phone__screen {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 9 / 16;
+  background: var(--bg-sunken);
+}
+
+.qr-mark {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 3px;
+  width: 8.5rem;
+  aspect-ratio: 1;
+}
+
+.qr-mark span {
+  background: var(--text-primary);
+}
+
+.qr-mark span.is-gap {
+  background: transparent;
+}
+
+.scan-beam {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow-strong);
+  animation: scan-sweep 2.4s ease-in-out infinite;
+}
+
+@keyframes scan-sweep {
+  0%,
+  100% {
+    top: 22%;
+    opacity: 0.2;
+  }
+  50% {
+    top: 72%;
+    opacity: 1;
+  }
+}
+
+.eco-canvas {
+  position: relative;
+  min-height: 36rem;
+}
+
+.eco-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 9.5rem;
+  height: 9.5rem;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.eco-node {
+  position: absolute;
+  z-index: 3;
+  width: min(16rem, 42vw);
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.evidence-figure {
+  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+}
+
+.evidence-sheet {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.portrait-editorial {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-sunken);
+}
+
+.portrait-editorial img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 12%;
+  transform: scale(1.08);
+  filter: grayscale(0.22) contrast(1.06) saturate(0.86);
+}
+
+.cta-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.cta-spine span {
+  position: relative;
+  padding-left: 1.5rem;
+  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.cta-spine span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.cta-spine span:not(:last-child) {
+  padding-bottom: 1.25rem;
+}
+
+.cta-spine span:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 3.5px;
+  top: 1.35em;
+  bottom: 0;
+  width: 1px;
+  background: var(--accent-line);
+}
+
+@media (max-width: 1023px) {
+  .system-board,
+  .fragment-board,
+  .eco-canvas {
+    min-height: 0;
+  }
+
+  .fragment-board,
+  .eco-canvas {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .fragment-chip,
+  .eco-hub,
+  .eco-node {
+    position: static;
+    translate: none;
+    transform: none;
+    width: auto;
+  }
+
+  .fragment-chip {
+    white-space: normal;
+  }
+
+  .eco-hub {
+    height: auto;
+    width: 100%;
+    padding: 1.5rem;
+  }
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-beam {
+    animation: none;
+    top: 48%;
+    opacity: 1;
+  }
+
+  .portrait-editorial img {
+    transform: none;
+  }
 }
 
 /* ---------------------------------------------------------------------------

@@ -86,6 +86,98 @@ export interface CurrentlyBuildingItem {
   public: boolean;
 }
 
+export interface HomeSystemStep {
+  label: string;
+  hint: string;
+}
+
+export interface HomeProblemContent {
+  kicker: string;
+  statement: string;
+  statementSecond: string;
+  supporting: string;
+  fragments: string[];
+  bridge: string;
+  connected: string;
+  connectedHint: string;
+}
+
+export interface HomeJourneyStage {
+  number: string;
+  title: string;
+  summary: string;
+  visual: "problem" | "understand" | "build" | "automate" | "grow";
+}
+
+export interface HomeJourneyContent {
+  kicker: string;
+  heading: string;
+  supporting: string;
+  stages: HomeJourneyStage[];
+}
+
+export interface HomeIdentityStage {
+  label: string;
+  detail: string;
+}
+
+export interface HomeIdentityField {
+  label: string;
+  value: string;
+}
+
+export interface HomeIdentityContent {
+  kicker: string;
+  heading: string;
+  supporting: string;
+  stages: HomeIdentityStage[];
+  scanLabel: string;
+  resultLabel: string;
+  fields: HomeIdentityField[];
+  note: string;
+}
+
+export interface HomeEcosystemNode {
+  name: string;
+  kind: "product" | "tool";
+  tag: string;
+  description: string;
+  href: string;
+}
+
+export interface HomeEcosystemContent {
+  heading: string;
+  supporting: string;
+  hub: string;
+  hubLine: string;
+  products: HomeEcosystemNode[];
+  tools: HomeEcosystemNode[];
+}
+
+export interface HomeProofItem {
+  name: string;
+  status: ProjectStatus | null;
+  caption: string;
+  href: string;
+  visual: "printverify" | "flexora" | "crm" | "tools";
+}
+
+export interface HomeProofContent {
+  heading: string;
+  supporting: string;
+  items: HomeProofItem[];
+}
+
+export interface HomeFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface HomeFaqContent {
+  heading: string;
+  items: HomeFaqItem[];
+}
+
 export interface HomeContent {
   intent: PageIntent[];
   hero: {
@@ -96,16 +188,28 @@ export interface HomeContent {
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
     video: HeroVideo;
+    system: {
+      ariaLabel: string;
+      spine: HomeSystemStep[];
+      satellites: HomeSystemStep[];
+    };
   };
+  problem: HomeProblemContent;
   whatIsPrintSahaj: {
     heading: string;
     paragraphs: string[];
     principleLines: string[];
   };
+  journey: HomeJourneyContent;
   pillars: {
     heading: string;
+    supporting: string;
     items: HomePillar[];
   };
+  identity: HomeIdentityContent;
+  ecosystem: HomeEcosystemContent;
+  proof: HomeProofContent;
+  faq: HomeFaqContent;
   selectedProducts: {
     heading: string;
     supporting: string;
@@ -141,6 +245,7 @@ export interface HomeContent {
     contact: { phone: string; email: string };
     /** Short capability tags, shown as chips under the name. */
     focus: string[];
+    throughline: string;
     timeline: FounderTimelineItem[];
     note: string;
     education: FounderEducation[];
@@ -160,6 +265,7 @@ export interface HomeContent {
     supporting: string;
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
+    flow: string[];
   };
 }
 
@@ -167,9 +273,9 @@ export const home: HomeContent = {
   intent: ["Business Solution", "Product", "Digital Growth & Marketing", "Custom Project"],
   hero: {
     eyebrow: "Technology, AI & digital solutions for modern businesses.",
-    headline: "We build technology for businesses.",
+    headline: "We turn business problems into working systems.",
     supporting:
-      "Software, AI, automation and digital growth systems — built around real business problems.",
+      "Software, AI, automation and digital growth — connected so the work actually moves.",
     specialization: "Deep expertise in printing & packaging.",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
@@ -179,6 +285,42 @@ export const home: HomeContent = {
       poster: "",
       label: "PrintSahaj CRM walkthrough",
     },
+    system: {
+      ariaLabel: "How PrintSahaj turns a business problem into a working system",
+      spine: [
+        { label: "Business problem", hint: "The work as it runs today" },
+        { label: "Understand", hint: "See the real workflow" },
+        { label: "System", hint: "Build around that work" },
+        { label: "Automation", hint: "Connect the repetitive steps" },
+        { label: "Result", hint: "A system people can use" },
+      ],
+      satellites: [
+        { label: "CRM", hint: "Records" },
+        { label: "QR", hint: "Identity" },
+        { label: "Verification", hint: "Checks" },
+        { label: "Workflow", hint: "Routing" },
+        { label: "Analytics", hint: "Reporting" },
+        { label: "Automation", hint: "Follow-up" },
+      ],
+    },
+  },
+  problem: {
+    kicker: "The problem",
+    statement: "Businesses don't need more software.",
+    statementSecond: "They need systems that fit the way the work actually happens.",
+    supporting:
+      "Most teams already have tools. The work still lives in fragments — messages, sheets, paper, and follow-up that never quite meet.",
+    fragments: [
+      "WhatsApp",
+      "Email",
+      "Excel",
+      "Paper",
+      "Manual follow-up",
+      "Disconnected data",
+    ],
+    bridge: "PrintSahaj system",
+    connected: "Connected workflow",
+    connectedHint: "Information, people and next steps in one path.",
   },
   whatIsPrintSahaj: {
     heading: "Technology built around the way businesses actually work.",
@@ -192,8 +334,47 @@ export const home: HomeContent = {
       "Make the work simpler.",
     ],
   },
+  journey: {
+    kicker: "How PrintSahaj builds",
+    heading: "Understand the problem. Build the system. Make the work simpler.",
+    supporting:
+      "The public philosophy stays the same. The work behind it is a sequence: see the problem, understand it, build the system, automate what should not be manual, then help the business grow.",
+    stages: [
+      {
+        number: "01",
+        title: "Problem",
+        summary: "The work is already happening — in messages, sheets, paper and follow-up that do not meet.",
+        visual: "problem",
+      },
+      {
+        number: "02",
+        title: "Understand",
+        summary: "We start by understanding the work, not by picking a tool. The system has to fit how the job actually runs.",
+        visual: "understand",
+      },
+      {
+        number: "03",
+        title: "Build",
+        summary: "Software around real workflows — CRM, internal systems, dashboards, custom applications, and focused products.",
+        visual: "build",
+      },
+      {
+        number: "04",
+        title: "Automate",
+        summary: "AI-powered assistants and automated workflows that reduce repetitive work and connect information.",
+        visual: "automate",
+      },
+      {
+        number: "05",
+        title: "Grow",
+        summary: "Traffic, landing pages, leads, CRM and follow-up as one path — not marketing sitting beside the business.",
+        visual: "grow",
+      },
+    ],
+  },
   pillars: {
     heading: "What we build.",
+    supporting: "Four parts of one ecosystem — not four separate service menus.",
     items: [
       {
         name: "Software & Business Systems",
@@ -311,6 +492,168 @@ export const home: HomeContent = {
     closing:
       "That specialization shapes how we build — but it does not define the limits of who we can build for.",
   },
+  identity: {
+    kicker: "Digital identity",
+    heading: "From a product to a verified identity.",
+    supporting:
+      "A physical product can carry a unique code. A scan can open a record. That record can be checked, traced, and connected to the data behind it. This is the kind of identity system PrintSahaj builds — from QR-based track and trace work already done in the field, not a generic code generator.",
+    stages: [
+      { label: "Product", detail: "The physical item or label." },
+      { label: "Unique QR", detail: "A code that belongs to that item." },
+      { label: "Scan", detail: "A camera reads the code." },
+      { label: "Verify", detail: "The record is checked against what should be there." },
+      { label: "Trace", detail: "The path of that identity can be followed." },
+      { label: "Data", detail: "Batch, events and history sit behind the scan." },
+    ],
+    scanLabel: "Scan",
+    resultLabel: "Identity found",
+    fields: [
+      { label: "Product identity", value: "Unique record" },
+      { label: "Batch", value: "Linked to the scan" },
+      { label: "Trace event", value: "Scan recorded" },
+      { label: "Verification history", value: "Previous checks kept" },
+    ],
+    note: "This demonstrates the flow. It is not a live customer scan, and it does not grade a printed code.",
+  },
+  ecosystem: {
+    heading: "A connected PrintSahaj ecosystem.",
+    supporting:
+      "The company sits in the middle. Products and tools around it are the ones that exist in this site today.",
+    hub: "PrintSahaj",
+    hubLine: "Software, AI, automation, digital growth and tools — connected.",
+    products: [
+      {
+        name: "PrintVerify",
+        kind: "product",
+        tag: "Building",
+        description:
+          "A pre-production verification product for checking important artwork and separation information before production.",
+        href: "/products/printverify",
+      },
+      {
+        name: "Flexora",
+        kind: "product",
+        tag: "Building",
+        description: "ERP + HRMS platform designed for flexographic label printing workflows.",
+        href: "/products/flexora",
+      },
+      {
+        name: "CRM",
+        kind: "product",
+        tag: "Lead management",
+        description: "Enquiries, quotes and follow-ups for a customer, kept in one place.",
+        href: "/crm/",
+      },
+    ],
+    tools: [
+      {
+        name: "Label Rate & Matrix Costing",
+        kind: "tool",
+        tag: "Live",
+        description: "Roll-label costing from size, gaps, ₹/sqm paper rate, ink, varnish and wastage.",
+        href: "/calculators/?tab=label-rate",
+      },
+      {
+        name: "Flexo Cylinder Repeat",
+        kind: "tool",
+        tag: "Live",
+        description: "Teeth to repeat for 1/8 inch circular pitch. Repeat (mm) = Teeth × 3.175.",
+        href: "/calculators/?tab=gear-repeat",
+      },
+      {
+        name: "Indian Sheet Ups Planner",
+        kind: "tool",
+        tag: "Live",
+        description: "Mono carton layout optimizer for Demy, Crown, Royal and other Indian sheet sizes.",
+        href: "/calculators/?tab=sheet-ups",
+      },
+      {
+        name: "GSM to Ream & Sheet Weight",
+        kind: "tool",
+        tag: "Live",
+        description: "Indian ream formula: (Length in × Width in × GSM) ÷ 3100 for 500 sheets.",
+        href: "/calculators/?tab=gsm-weight",
+      },
+      {
+        name: "Corrugated Bursting Strength",
+        kind: "tool",
+        tag: "Live",
+        description: "3-ply board bursting strength estimator with 1.45 flute take-up.",
+        href: "/calculators/?tab=corrugated-bf",
+      },
+    ],
+  },
+  proof: {
+    heading: "We don't just talk about systems. We build them.",
+    supporting:
+      "Interface fragments below follow the products and tools that already exist. They are not screenshots of unshipped work, and they do not invent modules.",
+    items: [
+      {
+        name: "PrintVerify",
+        status: "Building",
+        caption:
+          "Artwork, approval sheet and plate files held together. Findings say how sure they are — not approved or rejected.",
+        href: "/products/printverify",
+        visual: "printverify",
+      },
+      {
+        name: "Flexora",
+        status: "Building",
+        caption: "ERP + HRMS shaped around order, job and system — still being built, so this page does not list unshipped modules.",
+        href: "/products/flexora",
+        visual: "flexora",
+      },
+      {
+        name: "CRM",
+        status: null,
+        caption: "A customer record: enquiry, quote and follow-up in one window.",
+        href: "/crm/",
+        visual: "crm",
+      },
+      {
+        name: "Industry tools",
+        status: "Live",
+        caption: "Label rate, cylinder repeat, sheet ups, GSM weight and bursting strength — calculators that already run.",
+        href: "/tools",
+        visual: "tools",
+      },
+    ],
+  },
+  faq: {
+    heading: "Questions about PrintSahaj",
+    items: [
+      {
+        question: "What does PrintSahaj build?",
+        answer:
+          "PrintSahaj is a technology company. We build software and business systems, AI and automation, digital growth and marketing systems, and products and industry tools — around real business problems.",
+      },
+      {
+        question: "Do you build custom software?",
+        answer:
+          "Yes. CRM, ERP, internal systems, dashboards and custom applications are part of Software & Business Systems. The starting point is the work, not a template.",
+      },
+      {
+        question: "Can you automate an existing workflow?",
+        answer:
+          "Yes. We look at the repetitive steps first — follow-up, routing, document handling, connecting information — and build automation around the workflow you already run.",
+      },
+      {
+        question: "Can you build internal tools?",
+        answer:
+          "Yes. Internal systems, dashboards, calculators and focused industry tools are a core part of the work. Some of those tools are already public on this site.",
+      },
+      {
+        question: "Do you work with existing systems?",
+        answer:
+          "We start from the work you already do. New software is only useful if it fits that work. What can be connected, and how, depends on the systems in front of us — we do not claim a universal integration list.",
+      },
+      {
+        question: "Do you only work in one industry?",
+        answer:
+          "No. Printing and packaging is our strongest domain expertise. It shapes how we build, but it does not define the limits of who we can build for.",
+      },
+    ],
+  },
   selectedWork: {
     heading: "Built for real businesses.",
     supporting:
@@ -360,6 +703,7 @@ export const home: HomeContent = {
       "Anti-Counterfeit & Track-Trace",
       "Business Systems & Ops",
     ],
+    throughline: "Real-world experience → understanding workflows → building systems.",
     timeline: [
       {
         period: "2013 – 2017",
@@ -444,9 +788,9 @@ export const home: HomeContent = {
   },
   finalCta: {
     heading: "Have a business problem worth solving?",
-    supporting:
-      "Tell us what you're trying to improve. We'll help you figure out whether the answer is software, automation, marketing, or something else.",
+    supporting: "Tell us what you're trying to improve.",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
+    flow: ["Problem", "System", "Automation", "Growth"],
   },
 };

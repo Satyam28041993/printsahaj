@@ -1,6 +1,6 @@
 import React from "react";
 
-/** The ring-framed photo used on the homepage Founder section and /about. */
+/** Editorial portrait used on the homepage Founder section and /about. */
 export default function FounderPhoto({
   photo,
   name,
@@ -16,18 +16,16 @@ export default function FounderPhoto({
     .join("");
 
   return (
-    <div className={`founder-photo-frame ${className}`}>
-      <div className="founder-photo-frame__glow" aria-hidden="true" />
-      <div className="founder-photo-frame__ring">
-        {photo ? (
-          // Plain img: this static export already ships every other picture unoptimized.
-          <img className="founder-photo-frame__img" src={photo} alt={name} />
-        ) : (
-          <div className="founder-photo-frame__img flex items-center justify-center">
-            <span className="font-display text-5xl font-bold text-primary">{initials}</span>
-          </div>
-        )}
-      </div>
-    </div>
+    <figure className={`portrait-editorial aspect-[4/5] w-full max-w-md ${className}`}>
+      {photo ? (
+        // Static export ships images unoptimized; next/image is not used elsewhere on this site.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt={name} width={800} height={1000} />
+      ) : (
+        <div className="flex h-full items-center justify-center">
+          <span className="font-display text-5xl font-bold text-primary">{initials}</span>
+        </div>
+      )}
+    </figure>
   );
 }

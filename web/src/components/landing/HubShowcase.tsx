@@ -1,91 +1,113 @@
 import React from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
-import ShowcaseIcon from "./ShowcaseIcon";
-import { showcase, type ShowcaseCard } from "@content/showcase";
+import ToolVisual from "./visuals/ToolVisual";
+import { home } from "@content/home";
+import { tools } from "@content/tools";
 
-function Card({ card }: { card: ShowcaseCard }) {
+function ProductFace({ name }: { name: string }) {
+  if (name === "PrintVerify") {
+    return (
+      <p className="mt-3 font-mono text-[11px] leading-relaxed text-muted">
+        Artwork · plates · job sheet
+      </p>
+    );
+  }
+  if (name === "Flexora") {
+    return (
+      <div className="mt-3 flex gap-2" aria-hidden="true">
+        {["Order", "Job", "System"].map((row) => (
+          <span key={row} className="flex-1 border border-hairline px-2 py-1 text-center font-mono text-[9px] uppercase tracking-[0.12em] text-faint">
+            {row}
+          </span>
+        ))}
+      </div>
+    );
+  }
   return (
-    <Link href={card.href} className="glow-card group block p-6">
-      <span className="glow-card__icon">
-        <ShowcaseIcon name={card.icon} />
-      </span>
-      <h3 className="mt-5 font-display text-xl font-bold text-primary">{card.name}</h3>
-      <span className="glow-card__tag mt-2">{card.tag}</span>
-      <p className="mt-4 text-sm leading-relaxed text-muted">{card.description}</p>
-    </Link>
-  );
-}
-
-/**
- * Wires from a row of three cards into the hub (or out of it). Drawn in a
- * 300 x 60 box that stretches to the row width; each wire leaves a card's
- * centre and bends into the hub's centre.
- */
-function Wires({ flip = false }: { flip?: boolean }) {
-  const ends = [50, 150, 250];
-  return (
-    <svg
-      className="hidden h-16 w-full md:block"
-      viewBox="0 0 300 60"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-      style={flip ? { transform: "scaleY(-1)" } : undefined}
-    >
-      {ends.map((x) => {
-        const d = `M${x} 0 V24 Q${x} 34 ${x + (150 - x) * 0.3} 34 H${150 - (150 - x) * 0.3} Q150 34 150 44 V60`;
-        const path = x === 150 ? "M150 0 V60" : d;
-        return (
-          <g key={x}>
-            <path className="hub-wire" d={path} vectorEffect="non-scaling-stroke" />
-            <path className="hub-wire hub-wire--flow" d={path} vectorEffect="non-scaling-stroke" />
-          </g>
-        );
-      })}
-    </svg>
+    <ul className="mt-3 space-y-1.5" aria-hidden="true">
+      {["Enquiry", "Quote", "Follow-up"].map((row) => (
+        <li key={row} className="flex items-center justify-between gap-3 text-xs text-muted">
+          <span>{row}</span>
+          <span className="h-1 w-10 bg-hairline" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
 export default function HubShowcase() {
+  const copy = home.ecosystem;
+  const calculatorVisual = Object.fromEntries(tools.items.map((item) => [item.name, item.visual]));
+
   return (
-    <section className="dots-section" aria-labelledby="showcase-heading">
-      <div className="star-field" aria-hidden="true" />
-      <div className="star-field star-field--far" aria-hidden="true" />
+    <section className="band-sunken relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8" aria-labelledby="ecosystem-heading">
+      <div className="mx-auto max-w-7xl">
+        <h2 id="ecosystem-heading" className="max-w-3xl font-display text-display-lg font-bold text-primary text-balance">
+          {copy.heading}
+        </h2>
+        <p className="mt-5 max-w-2xl text-body-lg text-muted">{copy.supporting}</p>
 
-      <div className="relative mx-auto w-full max-w-6xl px-5 py-24 sm:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 id="showcase-heading" className="section-title text-balance text-4xl sm:text-5xl">
-            {showcase.heading}
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-muted">{showcase.supporting}</p>
-        </div>
+        <div className="relative mt-14">
+          <svg
+            className="pointer-events-none absolute inset-x-[8%] top-[4.5rem] hidden h-24 w-[84%] lg:block"
+            viewBox="0 0 100 40"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path className="dash-flow" d="M8 32 C 20 8, 30 8, 50 20" stroke="var(--border)" strokeWidth="0.6" fill="none" />
+            <path className="dash-flow" d="M50 20 C 70 8, 80 8, 92 32" stroke="var(--border)" strokeWidth="0.6" fill="none" />
+            <path className="dash-flow" d="M50 20 V38" stroke="var(--border)" strokeWidth="0.6" fill="none" />
+          </svg>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-3">
-          {showcase.products.map((card) => (
-            <Card key={card.name} card={card} />
-          ))}
-        </div>
+          <div className="grid items-start gap-6 lg:grid-cols-3">
+            <Link href={copy.products[0]?.href ?? "/products"} className="border border-hairline bg-elevated p-5 lg:mt-16">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{copy.products[0]?.tag}</p>
+              <h3 className="mt-2 font-display text-title font-semibold text-primary">{copy.products[0]?.name}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{copy.products[0]?.description}</p>
+              <ProductFace name={copy.products[0]?.name ?? ""} />
+            </Link>
 
-        <Wires />
-        <div className="my-8 md:my-0">
-          <div className="hub">
-            <div className="hub__dust" />
-            <div className="hub__core" />
-            <div className="hub__ring hub__ring--3" />
-            <div className="hub__ring hub__ring--1" />
-            <div className="hub__ring hub__ring--2" />
-            <div className="hub__mark">
-              <Logo showWordmark={false} size="xl" instance="hub-mark" />
+            <div className="flex flex-col items-center justify-center border border-hairline bg-base px-6 py-10 text-center">
+              <Logo showWordmark={false} size="xl" instance="eco-mark" />
+              <p className="mt-4 font-display text-title font-semibold text-primary">{copy.hub}</p>
+              <p className="mt-2 max-w-[18ch] text-sm text-muted">{copy.hubLine}</p>
             </div>
-          </div>
-        </div>
-        <Wires flip />
 
-        <div className="grid gap-5 md:grid-cols-3">
-          {showcase.tools.map((card) => (
-            <Card key={card.name} card={card} />
-          ))}
+            <Link href={copy.products[1]?.href ?? "/products"} className="border border-hairline bg-elevated p-5 lg:mt-16">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{copy.products[1]?.tag}</p>
+              <h3 className="mt-2 font-display text-title font-semibold text-primary">{copy.products[1]?.name}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{copy.products[1]?.description}</p>
+              <ProductFace name={copy.products[1]?.name ?? ""} />
+            </Link>
+          </div>
+
+          {copy.products[2] ? (
+            <div className="mt-6 flex justify-center">
+              <Link href={copy.products[2].href} className="w-full max-w-xl border border-hairline bg-elevated p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{copy.products[2].tag}</p>
+                <h3 className="mt-2 font-display text-title font-semibold text-primary">{copy.products[2].name}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{copy.products[2].description}</p>
+                <ProductFace name={copy.products[2].name} />
+              </Link>
+            </div>
+          ) : null}
         </div>
+
+        <ul className="mt-12 flex snap-x gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-5 lg:overflow-visible">
+          {copy.tools.map((node) => {
+            const visual = calculatorVisual[node.name];
+            return (
+              <li key={node.name} className="min-w-[13.5rem] snap-start lg:min-w-0">
+                <Link href={node.href} className="block h-full border border-hairline bg-elevated p-3">
+                  {visual ? <ToolVisual kind={visual} /> : null}
+                  <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{node.tag}</p>
+                  <h3 className="mt-1 text-sm font-semibold text-primary">{node.name}</h3>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

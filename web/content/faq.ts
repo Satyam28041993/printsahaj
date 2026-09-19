@@ -1,4 +1,7 @@
-/** Section 7 — frequently asked questions. */
+/**
+ * PrintVerify product FAQ.
+ * Homepage company questions live in content/home.ts (`home.faq`).
+ */
 
 export interface FaqItem {
   question: string;
@@ -11,7 +14,7 @@ export interface FaqContent {
 }
 
 export const faq: FaqContent = {
-  heading: "Frequently asked questions",
+  heading: "PrintVerify questions",
   items: [
     {
       question: "Does my customer's artwork leave my premises?",

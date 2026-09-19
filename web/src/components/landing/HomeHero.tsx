@@ -1,40 +1,33 @@
 import React from "react";
-import { GlassButton, GlowButton } from "./HeroButtons";
-import VideoFrame from "./VideoFrame";
+import CtaButton from "./CtaButton";
+import HeroSystem from "./visuals/HeroSystem";
 import { home } from "@content/home";
 
 export default function HomeHero() {
   const { hero } = home;
 
   return (
-    <section id="top" aria-labelledby="hero-heading" className="hero-stage">
-      <div className="star-field" aria-hidden="true" />
-      <div className="star-field star-field--far" aria-hidden="true" />
-
-      <div className="relative mx-auto w-full max-w-6xl px-5 pb-24 pt-[clamp(120px,14vw,168px)] sm:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="hero-eyebrow">{hero.specialization}</p>
+    <section id="top" aria-labelledby="hero-heading" className="hero-split">
+      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-5 pb-20 pt-[clamp(112px,14vw,160px)] sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16 lg:pb-28">
+        <div>
+          <p className="story-kicker">{hero.eyebrow}</p>
           <h1
             id="hero-heading"
-            className="mt-6 text-balance font-display text-display-xl font-bold text-primary"
+            className="mt-6 max-w-[14ch] text-balance font-display text-display-xl font-bold text-primary"
           >
             {hero.headline}
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-body-lg text-muted">{hero.supporting}</p>
-
-          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <GlowButton href={hero.primaryCta.href}>{hero.primaryCta.label}</GlowButton>
-            <GlassButton href={hero.secondaryCta.href}>{hero.secondaryCta.label}</GlassButton>
+          <p className="mt-6 max-w-xl text-body-lg text-muted">{hero.supporting}</p>
+          <div className="mt-10 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <CtaButton href={hero.primaryCta.href} size="lg">
+              {hero.primaryCta.label}
+            </CtaButton>
+            <CtaButton href={hero.secondaryCta.href} size="lg" variant="ghost">
+              {hero.secondaryCta.label}
+            </CtaButton>
           </div>
-          <p className="mt-6 text-sm text-faint">{hero.eyebrow}</p>
         </div>
-
-        <VideoFrame
-          className="mt-16 sm:mt-20"
-          src={hero.video.src}
-          poster={hero.video.poster}
-          label={hero.video.label}
-        />
+        <HeroSystem />
       </div>
     </section>
   );
