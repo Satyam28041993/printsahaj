@@ -23,7 +23,7 @@ export const crmHero: CrmHeroContent = {
   headingAccent: "In one window.",
   standfirst:
     "Follow a customer from the first call to dispatch — built for the way printing and packaging teams actually work.",
-  primaryCta: { label: "Book a demo", href: "/contact/" },
+  primaryCta: { label: "Book a demo", href: "/contact/#book-crm-demo" },
   secondaryCta: { label: "See how it works", href: "#crm-demo" },
   videoSrc: "",
   posterSrc: "",

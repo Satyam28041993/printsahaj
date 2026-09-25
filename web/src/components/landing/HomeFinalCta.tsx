@@ -15,12 +15,7 @@ export default function HomeFinalCta() {
       aria-labelledby="final-cta-heading"
       className="band-sunken relative px-5 py-[clamp(96px,14vw,180px)] sm:px-8"
     >
-      <div ref={revealRef} className="relative mx-auto grid max-w-7xl items-end gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <div data-reveal className="cta-spine" aria-hidden="true">
-          {copy.flow.map((step) => (
-            <span key={step}>{step}</span>
-          ))}
-        </div>
+      <div ref={revealRef} className="relative mx-auto max-w-3xl">
         <div>
           <h2
             data-reveal
@@ -35,9 +30,6 @@ export default function HomeFinalCta() {
           <div data-reveal className="mt-12 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
             <CtaButton href={copy.primaryCta.href} size="lg">
               {copy.primaryCta.label}
-            </CtaButton>
-            <CtaButton href={copy.secondaryCta.href} size="lg" variant="ghost">
-              {copy.secondaryCta.label}
             </CtaButton>
           </div>
           <div data-reveal className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">

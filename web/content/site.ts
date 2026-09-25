@@ -97,6 +97,7 @@ export const printSahajSite: PrintSahajSite = {
     links: [
       { label: "Solutions", href: "/solutions" },
       { label: "Products", href: "/products" },
+      { label: "CRM", href: "/crm" },
       { label: "Tools", href: "/tools" },
       { label: "Work", href: "/work" },
       { label: "Insights", href: "/insights" },

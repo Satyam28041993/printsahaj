@@ -33,15 +33,39 @@ export default function CaseStudy() {
           {lead.standfirst}
         </p>
 
-        <div data-reveal className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div className="space-y-8">
-            <p className="evidence-figure text-primary">7</p>
-            <p className="font-display text-display-md text-primary">units declared</p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">↓</p>
-            <p className="evidence-figure text-primary">6</p>
-            <p className="font-display text-display-md text-primary">plates found</p>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">↓</p>
-            <p className="evidence-figure text-accent">Varnish missing</p>
+        <div data-reveal className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+          <div className="evidence-sheet p-6 sm:p-8">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Declared units</p>
+            {lead.declared.units ? (
+              <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {lead.declared.units.map((unit) => (
+                  <li
+                    key={unit.name}
+                    className={`plate-chip ${unit.present ? "" : "is-missing"}`}
+                  >
+                    <span
+                      className="plate-chip__swatch"
+                      style={{ background: unit.swatch ?? "transparent" }}
+                    />
+                    <span>{unit.name}</span>
+                    {unit.present ? null : <span className="plate-chip__miss">Missing</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-hairline pt-6">
+              <p>
+                <span className="evidence-figure text-primary">7</span>
+                <span className="mt-2 block text-sm text-muted">units declared</span>
+              </p>
+              <p>
+                <span className="evidence-figure text-primary">6</span>
+                <span className="mt-2 block text-sm text-muted">plates found</span>
+              </p>
+              <p>
+                <span className="mt-2 block font-display text-xl font-semibold text-accent sm:text-2xl">Varnish missing</span>
+              </p>
+            </div>
           </div>
 
           <div className="evidence-sheet p-6 sm:p-8">
@@ -59,21 +83,6 @@ export default function CaseStudy() {
                 </div>
               ))}
             </dl>
-            {lead.declared.units ? (
-              <ul className="mt-6 flex flex-wrap gap-2">
-                {lead.declared.units.map((unit) => (
-                  <li
-                    key={unit.name}
-                    className={`px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${
-                      unit.present ? "border border-hairline text-muted" : "border border-accent-line text-accent"
-                    }`}
-                  >
-                    {unit.name}
-                    {unit.present ? "" : " — missing"}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
             <p className="mt-6 text-sm text-muted">{lead.consequence}</p>
           </div>
         </div>

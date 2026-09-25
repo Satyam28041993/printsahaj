@@ -1,6 +1,6 @@
 import React from "react";
 import CtaButton from "./CtaButton";
-import HeroSystem from "./visuals/HeroSystem";
+import CrmWindow from "./visuals/CrmWindow";
 import { home } from "@content/home";
 
 export default function HomeHero() {
@@ -8,7 +8,7 @@ export default function HomeHero() {
 
   return (
     <section id="top" aria-labelledby="hero-heading" className="hero-split">
-      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-5 pb-20 pt-[clamp(112px,14vw,160px)] sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16 lg:pb-28">
+      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-5 pb-16 pt-[clamp(112px,14vw,148px)] sm:px-8 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-12 lg:pb-24">
         <div>
           <p className="story-kicker">{hero.eyebrow}</p>
           <h1
@@ -22,12 +22,12 @@ export default function HomeHero() {
             <CtaButton href={hero.primaryCta.href} size="lg">
               {hero.primaryCta.label}
             </CtaButton>
-            <CtaButton href={hero.secondaryCta.href} size="lg" variant="ghost">
-              {hero.secondaryCta.label}
+            <CtaButton href="/crm/" size="lg" variant="ghost">
+              See the CRM
             </CtaButton>
           </div>
         </div>
-        <HeroSystem />
+        <CrmWindow sequence />
       </div>
     </section>
   );

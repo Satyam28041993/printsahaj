@@ -1,12 +1,11 @@
 import SiteNav from "@/components/landing/SiteNav";
 import ScrollProgress from "@/components/landing/ScrollProgress";
 import HomeHero from "@/components/landing/HomeHero";
-import WhatIsPrintSahaj from "@/components/landing/WhatIsPrintSahaj";
-import BuildJourney from "@/components/landing/BuildJourney";
+import CrmShowcase from "@/components/landing/CrmShowcase";
+import ProductChapters from "@/components/landing/ProductChapters";
+import LiveTool from "@/components/landing/LiveTool";
 import Pillars from "@/components/landing/Pillars";
-import TraceIdentity from "@/components/landing/TraceIdentity";
 import HubShowcase from "@/components/landing/HubShowcase";
-import ProductProof from "@/components/landing/ProductProof";
 import CaseStudy from "@/components/landing/CaseStudy";
 import Founder from "@/components/landing/Founder";
 import FaqSection from "@/components/landing/FaqSection";
@@ -23,12 +22,11 @@ export default function HomePage() {
       <SiteNav variant="overlay" />
       <main id="main">
         <HomeHero />
-        <WhatIsPrintSahaj />
-        <BuildJourney />
-        <Pillars />
-        <TraceIdentity />
+        <CrmShowcase />
+        <ProductChapters />
+        <LiveTool />
         <HubShowcase />
-        <ProductProof />
+        <Pillars />
         <CaseStudy />
         <Founder />
         <FaqSection />

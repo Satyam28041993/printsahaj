@@ -31,8 +31,9 @@ export default function Founder() {
           </h2>
           <p className="mt-8 font-display text-display-md font-semibold text-primary">{copy.name}</p>
           <p className="mt-2 text-sm text-muted">{copy.role}</p>
-          <p className="mt-6 max-w-xl text-body-lg text-muted">{copy.description}</p>
-          <p className="mt-8 max-w-lg font-display text-title text-primary">{copy.throughline}</p>
+          <p className="mt-6 max-w-xl text-body-lg text-muted">
+            Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company.
+          </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
               href={copy.linkedin}
