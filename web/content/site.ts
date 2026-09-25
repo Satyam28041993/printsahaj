@@ -77,9 +77,8 @@ export interface PrintSahajSite {
     description: string;
   };
   contact: {
-    /** CONTENT GAP — unconfirmed. Do not render until verified. */
     email: string | null;
-    /** CONTENT GAP — placeholder number must not be used publicly. */
+    /** Digits only, used as https://wa.me/{whatsappNumber}. Null until confirmed. */
     whatsappNumber: string | null;
     emailPublic: boolean;
     whatsappPublic: boolean;
@@ -140,10 +139,10 @@ export const printSahajSite: PrintSahajSite = {
       "Software, AI, automation and digital growth systems built around real business problems, with deep expertise in printing & packaging.",
   },
   contact: {
-    email: null,
-    whatsappNumber: null,
-    emailPublic: false,
-    whatsappPublic: false,
+    email: "singhsatyam28@gmail.com",
+    whatsappNumber: "919650744197",
+    emailPublic: true,
+    whatsappPublic: true,
   },
 };
 

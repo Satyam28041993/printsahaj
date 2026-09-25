@@ -20,9 +20,23 @@ export default function ContactPage() {
         A short note is enough: what you are trying to improve, how the work happens today, and
         whether you think the answer is software, automation, marketing, or something else.
       </p>
-      <p className="mt-4 text-sm leading-relaxed text-faint">
-        A confirmed public email and WhatsApp number are not listed here yet.
-      </p>
+      <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        {printSahajSite.contact.emailPublic && printSahajSite.contact.email ? (
+          <a href={`mailto:${printSahajSite.contact.email}`} className="founder-linkedin">
+            {printSahajSite.contact.email}
+          </a>
+        ) : null}
+        {printSahajSite.contact.whatsappPublic && printSahajSite.contact.whatsappNumber ? (
+          <a
+            href={`https://wa.me/${printSahajSite.contact.whatsappNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="founder-linkedin"
+          >
+            WhatsApp
+          </a>
+        ) : null}
+      </div>
       <div className="mt-10">
         <CtaButton href={printSahajSite.ctas.secondary.href} variant="ghost">
           {printSahajSite.ctas.secondary.label}

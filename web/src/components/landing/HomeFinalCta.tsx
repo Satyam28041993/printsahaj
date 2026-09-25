@@ -4,6 +4,7 @@ import React from "react";
 import CtaButton from "./CtaButton";
 import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
+import { printSahajSite } from "@content/site";
 
 export default function HomeFinalCta() {
   const copy = home.finalCta;
@@ -38,6 +39,23 @@ export default function HomeFinalCta() {
             <CtaButton href={copy.secondaryCta.href} size="lg" variant="ghost">
               {copy.secondaryCta.label}
             </CtaButton>
+          </div>
+          <div data-reveal className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {printSahajSite.contact.emailPublic && printSahajSite.contact.email ? (
+              <a href={`mailto:${printSahajSite.contact.email}`} className="founder-linkedin">
+                {printSahajSite.contact.email}
+              </a>
+            ) : null}
+            {printSahajSite.contact.whatsappPublic && printSahajSite.contact.whatsappNumber ? (
+              <a
+                href={`https://wa.me/${printSahajSite.contact.whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="founder-linkedin"
+              >
+                WhatsApp
+              </a>
+            ) : null}
           </div>
         </div>
       </div>
