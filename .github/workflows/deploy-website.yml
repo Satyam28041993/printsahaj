@@ -51,6 +51,12 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
+          # The previous sync-state file listed a /_next build folder that no
+          # longer exists on the server, so every deploy since 25 Sep 2026
+          # died deleting it (FTP 550). A new state name makes the action
+          # upload everything once and delete nothing; old unused chunks stay
+          # behind harmlessly. Later deploys diff against this file as usual.
+          state-name: .ftp-deploy-sync-state-v2.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
