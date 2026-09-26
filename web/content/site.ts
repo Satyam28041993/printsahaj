@@ -60,7 +60,8 @@ export interface PrintSahajSite {
   };
   nav: {
     links: NavLink[];
-    primaryCta: CtaLink;
+    /** The header button. A tel: link so a tap on a phone dials straight away. */
+    callCta: { label: string; href: string; number: string };
   };
   intents: IntentDefinition[];
   ctas: {
@@ -103,7 +104,7 @@ export const printSahajSite: PrintSahajSite = {
       { label: "Insights", href: "/insights" },
       { label: "About", href: "/about" },
     ],
-    primaryCta: { label: "Start a Project", href: "/contact" },
+    callCta: { label: "Call Now", href: "tel:+919650744197", number: "+91 96507 44197" },
   },
   intents: [
     { id: "Product", label: "Product" },

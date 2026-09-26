@@ -118,9 +118,10 @@ function FooterWordmark({ name }: { name: string }) {
 }
 
 export default function SiteFooter() {
-  const { brand, nav, footer } = printSahajSite;
+  const { brand, nav, footer, ctas } = printSahajSite;
   const toolLinks = tools.items.map((item) => ({ label: item.name, href: item.href }));
-  const exploreLinks = [...nav.links, nav.primaryCta];
+  // The header now calls instead; the footer keeps the way into the project form.
+  const exploreLinks = [...nav.links, ctas.primary];
 
   return (
     <footer className="site-footer">
