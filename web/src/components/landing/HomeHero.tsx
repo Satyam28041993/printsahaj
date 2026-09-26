@@ -1,6 +1,6 @@
 import React from "react";
 import CtaButton from "./CtaButton";
-import CrmWindow from "./visuals/CrmWindow";
+import HeroOrb from "./visuals/HeroOrb";
 import { home } from "@content/home";
 
 export default function HomeHero() {
@@ -8,7 +8,7 @@ export default function HomeHero() {
 
   return (
     <section id="top" aria-labelledby="hero-heading" className="hero-split">
-      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-5 pb-16 pt-[clamp(112px,14vw,148px)] sm:px-8 lg:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] lg:gap-12 lg:pb-24">
+      <div className="relative mx-auto grid w-full max-w-7xl items-center gap-10 px-5 pb-16 pt-[clamp(112px,14vw,148px)] sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-12 lg:pb-24">
         <div>
           <p className="story-kicker">{hero.eyebrow}</p>
           <h1
@@ -27,7 +27,9 @@ export default function HomeHero() {
             </CtaButton>
           </div>
         </div>
-        <CrmWindow sequence />
+        <div className="lg:order-first">
+          <HeroOrb src={hero.visual.src} alt={hero.visual.alt} />
+        </div>
       </div>
     </section>
   );

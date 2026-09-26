@@ -188,6 +188,8 @@ export interface HomeContent {
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
     video: HeroVideo;
+    /** Circular banner artwork on the left of the hero. */
+    visual: { src: string; alt: string };
     system: {
       ariaLabel: string;
       spine: HomeSystemStep[];
@@ -284,6 +286,10 @@ export const home: HomeContent = {
       src: "",
       poster: "",
       label: "PrintSahaj CRM walkthrough",
+    },
+    visual: {
+      src: "/assets/hero-ecosystem.webp",
+      alt: "PrintSahaj at the centre, connected to CRM, ERP, business automation tools, websites and business growth with technology.",
     },
     system: {
       ariaLabel: "How PrintSahaj turns a business problem into a working system",
