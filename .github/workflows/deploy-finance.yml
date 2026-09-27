@@ -1,0 +1,79 @@
+name: Family Finance — test and deploy
+
+# The private finance app lives in finance/ and deploys to its own folder
+# (public_html/finance → finance.printsahaj.com). It never touches the website.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "finance/**"
+      - ".github/workflows/deploy-finance.yml"
+  pull_request:
+    paths:
+      - "finance/**"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: fftest
+          MYSQL_USER: ff
+          MYSQL_PASSWORD: ffpass
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          extensions: pdo_mysql, curl, mbstring
+      - name: Lint PHP
+        run: for f in $(find finance -name '*.php'); do php -l "$f" >/dev/null || exit 1; done
+      - name: API tests
+        env:
+          FF_DB_HOST: 127.0.0.1
+          FF_DB_NAME: fftest
+          FF_DB_USER: ff
+          FF_DB_PASS: ffpass
+        run: php finance/tests/api_test.php
+
+  deploy:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Same Hostinger FTP account as the website; that user is jailed to
+      # public_html, so "finance/" is public_html/finance. The real config
+      # (with the database password) sits above public_html and is never
+      # uploaded or deleted by this step.
+      - name: Deploy to Hostinger via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: finance/site/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}finance/
+          state-name: .ftp-deploy-sync-state-finance.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            config.php
+      - name: Check the app answers and hides its source
+        run: |
+          set -eu
+          code=$(curl -sS -o /tmp/ff.html -w "%{http_code}" --max-time 30 https://finance.printsahaj.com/)
+          echo "App HTTP $code"; [ "$code" = "200" ] && grep -q "Family Finance" /tmp/ff.html
+          src=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://finance.printsahaj.com/src/lib.php)
+          echo "Source HTTP $src"; [ "$src" = "404" ] || [ "$src" = "403" ]
+          main=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://printsahaj.com/finance/)
+          echo "printsahaj.com/finance/ HTTP $main"; [ "$main" = "404" ]

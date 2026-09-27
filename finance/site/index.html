@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0e9f8e">
+  <title>Family Finance</title>
+  <link rel="stylesheet" href="assets/app.css">
+  <script src="assets/vendor/chart.umd.min.js" defer></script>
+  <script src="assets/app.js" defer></script>
+</head>
+<body>
+  <div id="boot" class="loading">Loading…</div>
+
+  <section id="view-login" class="auth" hidden>
+    <form class="auth-card" id="login-form" novalidate>
+      <div class="logo" aria-hidden="true">₹</div>
+      <h1>Family Finance</h1>
+      <p class="lead">Private. Sign in to continue.</p>
+      <label class="field"><span>Username</span>
+        <input name="username" autocomplete="username" autocapitalize="none" required>
+      </label>
+      <label class="field"><span>Password</span>
+        <input name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="error" role="alert"></p>
+      <button class="btn primary block" type="submit">Sign in</button>
+    </form>
+  </section>
+
+  <section id="view-setup" class="auth" hidden>
+    <form class="auth-card" id="setup-form" novalidate>
+      <div class="logo" aria-hidden="true">₹</div>
+      <h1>First-time setup</h1>
+      <p class="lead">Create the two accounts. This page works only once, and only with the setup code from the private config file.</p>
+      <label class="field"><span>Setup code</span>
+        <input name="token" type="password" autocomplete="off" required>
+      </label>
+      <label class="field"><span>Family name</span>
+        <input name="familyName" placeholder="e.g. Our family" required>
+      </label>
+      <div class="member-block">
+        <h3>Member 1</h3>
+        <label class="field"><span>Name</span><input name="name0" required></label>
+        <label class="field"><span>Username</span><input name="username0" autocapitalize="none" required></label>
+        <label class="field"><span>Password (10+ characters)</span><input name="password0" type="password" autocomplete="new-password" required></label>
+      </div>
+      <div class="member-block">
+        <h3>Member 2</h3>
+        <label class="field"><span>Name</span><input name="name1" required></label>
+        <label class="field"><span>Username</span><input name="username1" autocapitalize="none" required></label>
+        <label class="field"><span>Password (10+ characters)</span><input name="password1" type="password" autocomplete="new-password" required></label>
+      </div>
+      <p class="error" role="alert"></p>
+      <button class="btn primary block" type="submit">Create accounts</button>
+    </form>
+  </section>
+
+  <div id="app" class="shell" hidden>
+    <nav class="nav" aria-label="Main">
+      <a href="#dashboard" data-view="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Home</a>
+      <a href="#expenses" data-view="expenses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Spending</a>
+      <a href="#income" data-view="income"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Income</a>
+      <a href="#loans" data-view="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6"/><path d="M5 10v9M9 10v9M15 10v9M19 10v9M3 21h18"/></svg>Loans</a>
+      <a href="#settings" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Settings</a>
+    </nav>
+    <header class="topbar">
+      <div class="title">
+        <h1 id="view-title">Home</h1>
+        <small id="who"></small>
+      </div>
+      <input id="month" class="month-input" type="month" aria-label="Month">
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <button id="fab" class="btn primary fab" type="button">+ Spending</button>
+  </div>
+
+  <dialog id="dialog" aria-labelledby="dialog-title">
+    <div class="dialog-head">
+      <h2 id="dialog-title"></h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="dialog-body" id="dialog-body"></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

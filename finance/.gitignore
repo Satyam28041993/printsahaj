@@ -1,0 +1,3 @@
+# The real config holds the database password. It lives on the server only.
+site/config.php
+finance-config.php

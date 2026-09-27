@@ -1,0 +1,38 @@
+# Family Finance on Hostinger (Apache/LiteSpeed).
+# This folder is public_html/finance, so it is also reachable as
+# printsahaj.com/finance/. It must answer only on its own subdomain.
+
+DirectoryIndex index.html
+Options -Indexes -MultiViews
+ErrorDocument 404 "Not found"
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Only finance.printsahaj.com. printsahaj.com/finance/ gets a plain 404.
+  RewriteCond %{HTTP_HOST} !^finance\.printsahaj\.com$ [NC]
+  RewriteRule ^ - [R=404,L]
+
+  # HTTPS only (LiteSpeed and proxies may report it either way).
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # Source, tests and config are never served.
+  RewriteRule ^(src|tests)(/|$) - [R=404,L]
+  RewriteRule (^|/)(config|config\.example)\.php$ - [R=404,L]
+  RewriteRule (^|/)\. - [R=404,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "no-referrer"
+  Header always set X-Robots-Tag "noindex, nofollow"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+  <FilesMatch "\.(html|php)$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>
