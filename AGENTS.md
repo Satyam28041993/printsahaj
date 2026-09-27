@@ -18,7 +18,7 @@ PrintSahaj must NOT be described as a "verification system for India's printing 
 |---|---|
 | `web/` | Marketing website (Next.js). Not PrintVerify. |
 | `tools/artwork-verification/` | PrintVerify engine, desk, and samples. |
-| `docs/` | Policies and planning notes. |
+| `docs/` | Policies and planning notes. Parked homepage plan: `docs/planning/homepage-what-we-built.md` — resume it when Satyam says "agla container ka planning pe baat karte hai". |
 
 Website work follows `.cursor/rules/website-architecture.mdc` and the `print-sahaj-website` skill. Do not apply PrintVerify Phase 0 ("no UI / no server") to `web/`. Planned copy split: `web/content/site.ts` (chrome) and `web/content/home.ts` (homepage). Do not create routes or rewrite UI until implementation is approved.
 
