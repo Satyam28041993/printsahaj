@@ -157,7 +157,14 @@ main {
   padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
 }
 
+/* Phones: six tabs below, Settings behind the gear at the top. */
+.gear { display: inline-grid; place-items: center; }
+@media (max-width: 899px) {
+  .nav a[data-view="settings"] { display: none; }
+}
+
 @media (min-width: 900px) {
+  .gear { display: none; }
   .shell { display: grid; grid-template-columns: 220px 1fr; }
   .nav {
     position: sticky;
@@ -404,3 +411,15 @@ table.compare tbody th { font-weight: 650; }
 .loan-picks { display: grid; gap: 4px; margin-bottom: 14px; }
 .loan-picks .check { margin: 0; min-height: 40px; }
 .chart-box.tall { height: 260px; }
+
+/* Goals */
+.goal-card .amounts { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 10px 0 8px; }
+.goal-card .amounts .of { color: var(--muted); }
+.progress { position: relative; height: 12px; border-radius: 999px; background: var(--surface-2); overflow: visible; }
+.progress > span { display: block; height: 100%; border-radius: inherit; background: var(--brand); }
+.progress .mark { position: absolute; top: -4px; width: 2px; height: 20px; background: var(--warn); border-radius: 2px; }
+.goal-card .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; margin: 14px 0; font-size: 13.5px; }
+@media (min-width: 600px) { .goal-card .meta { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.goal-card .meta dt { color: var(--muted); font-size: 12px; }
+.goal-card .meta dd { margin: 0; font-weight: 650; }
+.goal-card.emergency { border-color: color-mix(in srgb, var(--brand) 40%, var(--line)); }

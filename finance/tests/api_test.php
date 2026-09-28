@@ -274,6 +274,49 @@ expectStatus('refinance refuses a loan without rate', $a->post('plan/refinance',
 expectStatus('refinance needs the offered rate', $a->post('plan/refinance', ['loan_ids' => [$gold['id']], 'tenure_months' => 12]), 422);
 check('refinance changed nothing', $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn() === $before);
 
+echo "Goals and emergency fund\n";
+$ef = expectStatus('emergency fund', $a->post('goals', ['kind' => 'emergency', 'name' => 'Emergency fund', 'target' => '75000', 'target_min' => '50000', 'monthly' => '5000']), 200);
+check('empty fund is on track with a monthly amount', ($ef['state'] ?? '') === 'on_track' && ($ef['current_paise'] ?? null) === 0, $ef);
+check('projected in 15 months (75,000 / 5,000)', ($ef['projected_month'] ?? null) === date('Y-m', strtotime('first day of +15 months')), $ef['projected_month'] ?? null);
+expectStatus('only one emergency fund', $a->post('goals', ['kind' => 'emergency', 'name' => 'Second', 'target' => '10000']), 422);
+expectStatus('zero target refused', $a->post('goals', ['kind' => 'custom', 'name' => 'X', 'target' => '0']), 422);
+expectStatus('lower target above full target refused', $a->post("goals/{$ef['id']}/update", ['name' => 'Emergency fund', 'target' => '75000', 'target_min' => '80000', 'monthly' => '5000']), 422);
+$e1 = expectStatus('put 20,000 in', $a->post("goals/{$ef['id']}/entries", ['amount' => '20000', 'entry_on' => $today]), 200);
+check('holds 20,000 (26%)', ($e1['current_paise'] ?? null) === 2000000 && ($e1['progress_pct'] ?? null) === 26, $e1);
+check('below the 50,000 lower target', ($e1['reached_min'] ?? null) === false, $e1);
+expectStatus('cannot take out more than it holds', $a->post("goals/{$ef['id']}/entries", ['amount' => '25000', 'direction' => 'out', 'entry_on' => $today]), 422);
+$e2 = expectStatus('take 5,000 out', $b->post("goals/{$ef['id']}/entries", ['amount' => '5000', 'direction' => 'out', 'entry_on' => $today, 'notes' => 'doctor']), 200);
+check('holds 15,000', ($e2['current_paise'] ?? null) === 1500000, $e2);
+$entries = $a->get("goals/{$ef['id']}/entries")[1];
+$in = array_values(array_filter($entries, fn ($x) => $x['direction'] === 'in'))[0];
+$out = array_values(array_filter($entries, fn ($x) => $x['direction'] === 'out'))[0];
+expectStatus('undoing the deposit would go below zero', $a->post("goal-entries/{$in['id']}/delete"), 422);
+$u = expectStatus('undo the withdrawal', $a->post("goal-entries/{$out['id']}/delete"), 200);
+check('back to 20,000', ($u['current_paise'] ?? null) === 2000000, $u);
+$d = $a->get("dashboard&month=$month")[1];
+check('dashboard: 20,000 set aside this month', ($d['saved_to_goals_paise'] ?? null) === 2000000, $d['saved_to_goals_paise'] ?? null);
+check('dashboard: free after goals', ($d['free_after_goals_paise'] ?? null) === $d['available_paise'] - 2000000, [$d['free_after_goals_paise'] ?? null, $d['available_paise'] ?? null]);
+check('dashboard: emergency fund shown', ($d['emergency']['current_paise'] ?? null) === 2000000, $d['emergency'] ?? null);
+
+$trip = expectStatus('goal with a date and no monthly amount', $a->post('goals', ['kind' => 'vacation', 'name' => 'Trip', 'target' => '12000', 'target_date' => date('Y-m-d', strtotime('first day of +6 months'))]), 200);
+check('needs 2,000 a month to make the date', ($trip['required_monthly_paise'] ?? null) === 200000, $trip);
+check('behind without a monthly amount', ($trip['state'] ?? '') === 'behind', $trip);
+$trip = expectStatus('add a monthly amount', $a->post("goals/{$trip['id']}/update", ['name' => 'Trip', 'target' => '12000', 'target_date' => $trip['target_date'], 'monthly' => '2000']), 200);
+check('now on track', ($trip['state'] ?? '') === 'on_track', $trip);
+
+$secret = expectStatus('private goal', $a->post('goals', ['kind' => 'custom', 'name' => 'Surprise', 'target' => '5000', 'visibility' => 'private']), 200);
+$rg = array_column($b->get('goals')[1], 'name');
+check('Ravi sees the family fund, not the private goal', in_array('Emergency fund', $rg, true) && !in_array('Surprise', $rg, true), $rg);
+expectStatus('Ravi cannot add to the private goal', $b->post("goals/{$secret['id']}/entries", ['amount' => '1', 'entry_on' => $today]), 404);
+
+$lg = expectStatus('loan-closure goal', $a->post('goals', ['kind' => 'loan_closure', 'name' => 'Close Gold A', 'loan_id' => $gold['id']]), 200);
+check('starts at the loan balance, 0% done', ($lg['target_now_paise'] ?? null) === 20000000 && ($lg['progress_pct'] ?? null) === 0, $lg);
+check('projected close from the planner', ($lg['projected_month'] ?? null) !== null, $lg);
+expectStatus('no money entries on a loan goal', $a->post("goals/{$lg['id']}/entries", ['amount' => '10', 'entry_on' => $today]), 422);
+$a->post("loans/{$gold['id']}/payments", ['principal' => '10000', 'paid_on' => $today]);
+$lg2 = array_values(array_filter($a->get('goals')[1], fn ($g) => $g['id'] === $lg['id']))[0];
+check('principal payment moves the goal (10,000 = 5%)', $lg2['current_paise'] === 1000000 && $lg2['progress_pct'] === 5, $lg2);
+
 echo "Guards\n";
 $other = new Client($base, 'printsahaj.com');
 expectStatus('wrong host answers 404', $other->get('session'), 404);

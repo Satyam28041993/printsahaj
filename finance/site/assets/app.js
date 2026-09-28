@@ -64,6 +64,9 @@
     const d = new Date(iso + 'T00:00:00');
     return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
   }
+  function fullDate(iso) {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
   function monthLabel(ym) {
     const d = new Date(ym + '-01T00:00:00');
     return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
@@ -208,7 +211,7 @@
 
   function route() {
     const view = location.hash.replace('#', '') || 'dashboard';
-    state.view = ['dashboard', 'expenses', 'income', 'loans', 'plan', 'settings'].includes(view) ? view : 'dashboard';
+    state.view = ['dashboard', 'expenses', 'income', 'loans', 'goals', 'plan', 'settings'].includes(view) ? view : 'dashboard';
     for (const a of document.querySelectorAll('.nav a')) {
       if (a.dataset.view === state.view) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
@@ -218,13 +221,13 @@
 
   async function render() {
     if (!state.user) return;
-    const titles = { dashboard: 'Home', expenses: 'Spending', income: 'Income', loans: 'Loans', plan: 'Plan', settings: 'Settings' };
+    const titles = { dashboard: 'Home', expenses: 'Spending', income: 'Income', loans: 'Loans', goals: 'Goals', plan: 'Plan', settings: 'Settings' };
     $('#view-title').textContent = titles[state.view];
-    $('#month').hidden = ['settings', 'loans', 'plan'].includes(state.view);
+    $('#month').hidden = ['settings', 'loans', 'goals', 'plan'].includes(state.view);
     const main = $('#main');
     main.replaceChildren(h('div', { class: 'loading', text: 'Loading…' }));
     try {
-      const views = { dashboard: viewDashboard, expenses: viewExpenses, income: viewIncome, loans: viewLoans, plan: viewPlan, settings: viewSettings };
+      const views = { dashboard: viewDashboard, expenses: viewExpenses, income: viewIncome, loans: viewLoans, goals: viewGoals, plan: viewPlan, settings: viewSettings };
       const node = await views[state.view]();
       main.replaceChildren(node);
     } catch (e) {
@@ -298,7 +301,9 @@
       h('div', { class: 'row between' }, h('span', { class: 'muted', text: `Left for ${monthLabel(d.month)}` }), h('span', { class: `chip ${status[0]}`, text: status[1] })),
       h('div', { class: 'big-money', text: fmt(available) }),
       h('p', { class: 'formula', text: `${fmt(pool)} family pool + ${fmt(d.variable_income_paise)} extra income − ${fmt(d.expenses_paise)} spent − ${fmt(d.scheduled_debt_paise)} loan payments` }),
+      d.saved_to_goals_paise ? h('p', { class: 'formula', text: `${fmt(d.saved_to_goals_paise)} put into goals this month · ${fmt(d.free_after_goals_paise)} still free` }) : null,
     ));
+    root.append(emergencyMini(d.emergency));
 
     const notes = [];
     if (d.contributions_missing) notes.push(h('p', { class: 'notice' }, 'Family pool is not set for everyone. ', h('a', { href: '#settings', text: 'Set monthly contributions' }), '.'));
@@ -323,6 +328,19 @@
     root.append(grid);
     root.append(debtCard(d.loans));
     return root;
+  }
+
+  function emergencyMini(ef) {
+    if (!ef) {
+      return h('section', { class: 'card row between' },
+        h('div', {}, h('h3', { text: 'Emergency fund' }), h('p', { class: 'muted small', text: 'Not set up yet. Money kept aside for emergencies, never used for loan plans.' })),
+        h('a', { class: 'btn small', href: '#goals', text: 'Set up' }));
+    }
+    return h('section', { class: 'card' },
+      h('div', { class: 'row between' }, h('h3', { text: 'Emergency fund' }), goalChip(ef)),
+      h('div', { class: 'amounts row', style: 'margin:8px 0' }, h('span', { class: 'money', text: fmt(ef.current_paise) }), h('span', { class: 'muted small', text: `of ${goalTargetText(ef)}` })),
+      progressBar(ef),
+    );
   }
 
   function dueChip(u) {
@@ -801,6 +819,169 @@
     openDialog(`Payments — ${l.name}`, body);
   }
 
+  // ---------- goals ----------
+  const GOAL_KIND = {
+    emergency: 'Emergency fund', loan_closure: 'Close a loan', home_prepayment: 'Home loan prepayment', vacation: 'Vacation',
+    education: "Children's education", car: 'Car', investment: 'Investment', custom: 'Other',
+  };
+
+  function goalTargetText(g) {
+    return g.target_min_paise ? `${fmt(g.target_min_paise)}–${fmt(g.target_now_paise)}` : fmt(g.target_now_paise);
+  }
+  function goalChip(g) {
+    const map = { done: ['good', 'Done'], on_track: ['info', 'On track'], behind: ['warn', 'Behind'], no_plan: ['', 'No monthly amount'] };
+    const [cls, text] = map[g.state] || ['', g.state];
+    return h('span', { class: `chip ${cls}`, text: g.kind === 'emergency' && g.reached_min && g.state !== 'done' ? 'Minimum reached' : text });
+  }
+  function progressBar(g) {
+    const bar = h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(g.progress_pct) },
+      h('span', { style: `width:${Math.max(g.progress_pct, g.current_paise > 0 ? 2 : 0)}%` }));
+    if (g.target_min_paise && g.target_now_paise) {
+      bar.append(h('i', { class: 'mark', style: `left:${Math.round((g.target_min_paise / g.target_now_paise) * 100)}%`, title: 'Lower target' }));
+    }
+    return bar;
+  }
+
+  async function viewGoals() {
+    const goals = await get('goals');
+    const root = h('div', { class: 'stack' });
+    const ef = goals.find((g) => g.kind === 'emergency' && g.status === 'active');
+    root.append(h('button', { class: 'btn primary', type: 'button', onclick: () => openGoalForm(), text: '+ New goal' }));
+    if (!ef) {
+      root.append(h('section', { class: 'card goal-card emergency' },
+        h('h2', { text: 'Emergency fund' }),
+        h('p', { class: 'muted', style: 'margin:6px 0 14px', text: 'Money kept aside for a medical bill, a job gap or a repair — so an emergency never becomes a new loan. Loan plans never use it.' }),
+        h('button', { class: 'btn primary', type: 'button', text: 'Set up emergency fund', onclick: () => openGoalForm(null, 'emergency') }),
+      ));
+    }
+    root.append(h('div', { class: 'loan-grid' }, goals.map(goalCard)));
+    if (!goals.length) root.append(h('p', { class: 'faint', text: 'Goals can be savings (vacation, education, car) or closing a loan. A loan goal moves by itself when you record principal payments.' }));
+    return root;
+  }
+
+  function goalCard(g) {
+    const facts = [];
+    if (g.kind === 'loan_closure') {
+      facts.push(['Loan left', g.loan ? fmt(g.loan.outstanding_paise) : '—']);
+      facts.push(['Paid down', fmt(g.current_paise)]);
+      facts.push(['Expected to end', g.projected_month ? monthLabel(g.projected_month) : g.state === 'done' ? 'Closed' : 'Never at today’s payments']);
+      facts.push(['Extra per month', g.monthly_paise ? fmt(g.monthly_paise) : 'None']);
+    } else {
+      facts.push(['Still needed', fmt(g.remaining_paise)]);
+      facts.push(['Per month', g.monthly_paise ? fmt(g.monthly_paise) : 'Not set']);
+      facts.push(['Expected by', g.state === 'done' ? 'Reached' : g.projected_month ? monthLabel(g.projected_month) : '—']);
+      facts.push(['Target date', g.target_date ? fullDate(g.target_date) : '—']);
+    }
+    const notes = [];
+    if (g.required_monthly_paise && g.state === 'behind') {
+      notes.push(h('p', { class: 'notice', text: `To reach it by ${fullDate(g.target_date)}, put in about ${fmt(g.required_monthly_paise)} a month.` }));
+    }
+    if (g.kind === 'emergency') notes.push(h('p', { class: 'faint', text: 'Loan plans never touch this money.' }));
+    if (g.kind === 'loan_closure') notes.push(h('p', { class: 'faint', text: 'Moves when you record a principal payment on the loan. “Expected to end” assumes freed EMIs and the extra go to this loan first.' }));
+
+    return h('article', { class: `card goal-card${g.kind === 'emergency' ? ' emergency' : ''}` },
+      h('div', { class: 'row between' },
+        h('div', {}, h('h3', { text: g.name }), h('p', { class: 'faint', text: `${GOAL_KIND[g.kind] || g.kind}${g.visibility === 'private' ? ' · private' : ''}` })),
+        goalChip(g),
+      ),
+      h('div', { class: 'amounts' }, h('span', { class: 'big-money', style: 'font-size:28px', text: fmt(g.current_paise) }), h('span', { class: 'of', text: `of ${goalTargetText(g)} · ${g.progress_pct}%` })),
+      progressBar(g),
+      h('dl', { class: 'meta' }, facts.map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { text: v })))),
+      notes.length ? h('div', { class: 'stack', style: 'gap:8px;margin-bottom:12px' }, notes) : null,
+      h('div', { class: 'row' },
+        g.kind !== 'loan_closure' && g.status === 'active' ? h('button', { class: 'btn primary small', type: 'button', text: 'Add money', onclick: () => openGoalEntry(g, 'in') }) : null,
+        g.kind !== 'loan_closure' && g.current_paise > 0 ? h('button', { class: 'btn small', type: 'button', text: 'Take out', onclick: () => openGoalEntry(g, 'out') }) : null,
+        g.kind !== 'loan_closure' ? h('button', { class: 'btn small', type: 'button', text: 'History', onclick: () => openGoalHistory(g) }) : null,
+        h('button', { class: 'btn small', type: 'button', text: 'Edit', onclick: () => openGoalForm(g) }),
+      ),
+    );
+  }
+
+  async function openGoalForm(item, presetKind) {
+    const loans = (await get('loans')).filter((l) => l.group !== 'closed');
+    let kind = item ? item.kind : (presetKind || 'custom');
+    const kindSelect = select('kind', state.meta.goal_kinds.map((k) => [k, GOAL_KIND[k]]), kind);
+    if (item) kindSelect.disabled = true;
+    const loanField = field('Which loan', select('loan_id', loans.map((l) => [String(l.id), `${l.name} — ${fmt(l.outstanding_paise)}`]), item && item.loan_id ? String(item.loan_id) : ''));
+    if (item) loanField.querySelector('select').disabled = true;
+    const target = field('Target amount (₹)', moneyInput('target', item ? toInput(item.target_paise) : (kind === 'emergency' ? '75000' : '')));
+    const targetMin = field('Lower target (₹)', moneyInput('target_min', item ? toInput(item.target_min_paise) : (kind === 'emergency' ? '50000' : '')), 'Optional — the “at least” amount');
+    const name = input('name', item ? item.name : (kind === 'emergency' ? 'Emergency fund' : ''), { maxlength: 80, required: true });
+    const monthlyLabel = h('span', {});
+    const sync = () => {
+      kind = kindSelect.value;
+      loanField.hidden = kind !== 'loan_closure';
+      target.hidden = kind === 'loan_closure';
+      targetMin.hidden = kind !== 'emergency';
+      monthlyLabel.textContent = kind === 'loan_closure' ? 'Extra per month for this loan (₹)' : 'Put in each month (₹)';
+      if (!item && !name.value && kind !== 'custom') name.value = GOAL_KIND[kind];
+    };
+    kindSelect.addEventListener('change', sync);
+    const monthly = h('label', { class: 'field' }, monthlyLabel, moneyInput('monthly', item ? toInput(item.monthly_paise) : ''));
+    sync();
+    const form = formShell(async (fd) => {
+      const body = {
+        kind, name: fd.get('name'), target: fd.get('target'), target_min: fd.get('target_min'), loan_id: fd.get('loan_id'),
+        target_date: fd.get('target_date'), monthly: fd.get('monthly'), notes: fd.get('notes'), visibility: visibilityOf(fd),
+        status: fd.get('done') ? 'done' : 'active', member_id: state.user.id,
+      };
+      if (item) await post(`goals/${item.id}/update`, body);
+      else await post('goals', body);
+      dialog.close();
+      toast('Saved');
+      render();
+    }, item ? 'Save changes' : 'Create goal',
+      field('Type', kindSelect), field('Name', name), loanField,
+      h('div', { class: 'grid-2' }, target, targetMin),
+      h('div', { class: 'grid-2' }, monthly, field('Target date', input('target_date', item ? item.target_date || '' : '', { type: 'date' }), 'Optional')),
+      field('Note', input('notes', item ? item.notes : '', { maxlength: 500, placeholder: 'Optional' })),
+      item ? check('done', 'Mark as done', item.status === 'done') : null,
+      privateBox(item),
+    );
+    if (item) form.append(deleteButton(`goals/${item.id}/delete`));
+    openDialog(item ? `Edit ${item.name}` : 'New goal', form);
+  }
+
+  function openGoalEntry(g, direction) {
+    const form = formShell(async (fd) => {
+      await post(`goals/${g.id}/entries`, { direction, amount: fd.get('amount'), entry_on: fd.get('entry_on'), member_id: fd.get('member_id'), notes: fd.get('notes') });
+      dialog.close();
+      toast(direction === 'in' ? 'Added' : 'Taken out');
+      render();
+    }, direction === 'in' ? 'Add money' : 'Take out',
+      h('p', { class: 'muted small', style: 'margin-bottom:12px', text: `${g.name} holds ${fmt(g.current_paise)}.` }),
+      field('Amount (₹)', moneyInput('amount', direction === 'in' && g.monthly_paise ? toInput(g.monthly_paise) : '', { class: 'amount-input', required: true })),
+      h('div', { class: 'grid-2' }, field('Date', input('entry_on', todayIso(), { type: 'date', required: true })), field(direction === 'in' ? 'Put in by' : 'Taken by', memberSelect())),
+      field(direction === 'in' ? 'Note' : 'What for?', input('notes', '', { maxlength: 500, placeholder: direction === 'in' ? 'Optional' : 'e.g. hospital bill' })),
+    );
+    openDialog(direction === 'in' ? `Add to ${g.name}` : `Take out of ${g.name}`, form);
+  }
+
+  async function openGoalHistory(g) {
+    const rows = await get(`goals/${g.id}/entries`);
+    const body = h('div', {});
+    if (!rows.length) body.append(h('p', { class: 'empty', text: 'Nothing added yet.' }));
+    else {
+      body.append(h('ul', { class: 'list' }, rows.map((r) => h('li', {},
+        h('span', { class: 'icon', text: r.direction === 'in' ? '＋' : '－' }),
+        h('div', { class: 'main' }, h('div', { class: 't', text: `${r.direction === 'in' ? 'Added' : 'Taken out'} ${fmt(r.amount_paise)}` }), h('div', { class: 's', text: [dayLabel(r.entry_on), r.member_name, r.notes || null].filter(Boolean).join(' · ') })),
+        h('button', {
+          class: 'btn small danger', type: 'button', text: 'Undo',
+          onclick: async () => {
+            if (!confirm('Undo this entry?')) return;
+            try {
+              await post(`goal-entries/${r.id}/delete`);
+              toast('Removed');
+              dialog.close();
+              render();
+            } catch (e) { toast(e.message); }
+          },
+        }),
+      ))));
+    }
+    openDialog(`History — ${g.name}`, body);
+  }
+
   // ---------- plan ----------
   const STRATEGY = {
     none: "Today's payments only",
@@ -1077,7 +1258,7 @@
         },
       }),
     ));
-    root.append(h('p', { class: 'faint', text: 'Coming next: emergency fund and goals, then AI suggestions.' }));
+    root.append(h('p', { class: 'faint', text: 'Coming next: AI suggestions on top of these numbers.' }));
     return root;
   }
 

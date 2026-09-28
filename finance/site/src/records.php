@@ -554,7 +554,11 @@ final class Dashboard
         usort($upcoming, fn ($a, $b) => [$a['paid'], $a['due_on']] <=> [$b['paid'], $b['due_on']]);
 
         $available = $pool + $variable - $expenses - $scheduled;
+        $goals = Goals::summary($user, $from, $to);
         return [
+            'saved_to_goals_paise' => $goals['saved_to_goals_paise'],
+            'free_after_goals_paise' => $available - $goals['saved_to_goals_paise'],
+            'emergency' => $goals['emergency'],
             'month' => $month,
             'members' => array_map(fn ($m) => $m + ['contribution_paise' => $contrib[(int) $m['id']] ?? null], $members),
             'contribution_pool_paise' => $pool,

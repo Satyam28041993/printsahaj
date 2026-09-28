@@ -19,7 +19,7 @@ stays in the Hostinger database.
 | `site/` | Everything uploaded to `public_html/finance/` |
 | `site/index.html`, `site/assets/` | The app (one page, hash routes) |
 | `site/api/index.php` | The only PHP entry point (`?r=/route`) |
-| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php`, `planner.php` |
+| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php`, `planner.php`, `goals.php` |
 | `site/src/migrations/` | SQL, applied automatically in order |
 | `site/config.example.php` | Template for the private config |
 | `tests/api_test.php` | End-to-end API test against a throwaway MySQL DB |
@@ -37,6 +37,7 @@ stays in the Hostinger database.
 5. What someone earns (income) and what they put into the family pool (contributions) are stored separately.
 6. Private rows are seen only by their owner; family rows by both. All reads go through `Scope`.
 7. Deletes are soft (`deleted_at`); every change is written to `audit_log`.
+9. The emergency fund and other goals are separate money; payoff plans never use them.
 8. Unknown numbers stay empty (NULL), never 0; the app flags them instead of guessing.
 
 ## One-time Hostinger setup
@@ -69,6 +70,9 @@ FF_DB_HOST=127.0.0.1 FF_DB_NAME=fftest FF_DB_USER=ff FF_DB_PASS=ffpass php finan
   costliest-first (avalanche), smallest-first (snowball) and a chosen loan first, with extra monthly
   money and expected lump sums (incentive, CRM). Freed EMIs roll into the next loan. Refinance check:
   new loan vs paying the same EMI into the current loans. Neither changes saved data.
-- **Next:** emergency fund, goals.
+- **Goals (done):** emergency fund (one per family, optional lower target, e.g. 50k–75k) and savings
+  goals with money in/out entries, monthly amount, target date, "needs ₹X/month" and expected month.
+  Loan-closure goals follow a loan's balance and use the planner for the expected end. Loan planning
+  never reads or spends goal money. The dashboard shows money put into goals and what is still free.
 - **V4:** AI explanations on top of the calculated numbers (server-side key; AI never writes data).
 - **V5:** backups, monitoring, security review.
