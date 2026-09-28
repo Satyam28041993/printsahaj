@@ -1163,24 +1163,263 @@
   }
 
   // ---------- plan ----------
-  const STRATEGY = {
-    none: "Today's payments only",
-    avalanche: 'Costliest loan first',
-    snowball: 'Smallest loan first',
-    custom: 'My choice first',
+  // The Plan screen speaks plain Hinglish, Hindi or English (the viewer's choice).
+  const PLAN_LANGS = [['hinglish', 'Hinglish'], ['hi', 'हिंदी'], ['en', 'English']];
+  state.lang = (() => {
+    try {
+      const v = localStorage.getItem('ff-lang');
+      return PLAN_LANGS.some(([k]) => k === v) ? v : 'hinglish';
+    } catch { return 'hinglish'; }
+  })();
+
+  const T = {
+    hinglish: {
+      lakh: 'lakh', crore: 'crore', per_month: '/mahina', never: 'Kabhi nahi',
+      dur_ym: '{y} saal {m} mahine', dur_y: '{y} saal', dur_m: '{m} mahine',
+      plan_notice: 'Yahan kuch bhi try karo — aapki asli entries nahi badlengi.',
+      no_loans: 'Pehle Loans tab me apne loan daalo, fir yahan plan dekho.',
+      ask_title: 'Paise ke baare me poochho', ai_off: 'AI abhi band hai. Server par finance-config.php me gemini_api_key daalne se chalu hoga.',
+      ai_intro: 'Hisaab app karta hai, AI sirf samjhata hai. AI kuch badal nahi sakta, aur naam/notes bheje nahi jaate.',
+      ai_placeholder: 'Poochho — jaise gold loan kab band hoga?', ai_ask: 'Poochho', ai_working: 'Hisaab lag raha hai…', ai_need_q: 'Pehle sawaal likho.',
+      ai_earlier: 'Pehle ke sawaal', ai_none: 'Abhi koi nahi.',
+      ai_facts: 'Pakka hisaab', ai_assumptions: 'Maan ke chale', ai_estimates: 'Andaaza', ai_suggestions: 'Sujhav',
+
+      po_title: 'Loan jaldi kaise khatam karein?',
+      po_intro: 'Seedha niyam: har mahine loans me utna hi paisa do jitna aaj dete ho. Jab ek loan khatam ho, uski EMI band mat karo — wahi paisa agle loan me daal do.',
+      po_extra_label: 'Har mahine extra kitna de sakte ho? (₹)', po_extra_hint: 'Nahi hai to khali chhodo.',
+      po_more: 'Aur options (bonus / pehle kaunsa loan)',
+      po_lumps_label: 'Beech me extra paisa aayega? (incentive, bonus)', po_add_lump: '+ Extra paisa jodo',
+      lump_amount: 'Kitna (₹)', lump_month: 'Kab se', lump_every: 'Har kitne mahine', lump_every_hint: '0 = sirf ek baar', lump_times: 'Kitni baar', lump_remove: 'Hatao',
+      po_first_label: 'Koi loan sabse pehle band karna hai?', po_first_none: 'Nahi — app khud best tarika chune',
+      po_submit: 'Plan dikhao',
+
+      left_out: 'Ye loan plan me nahi hain (number missing): {list}',
+      approx_note: '{names} ka byaaj % nahi dala hai, isliye inka byaaj hisaab me nahi hai. Loans tab me rate daalo to plan aur sahi banega.',
+      res_today: 'Abhi jaise chal raha hai', res_today_sub: 'Jo EMI aaj dete ho, wahi dete raho',
+      res_best: 'App ka best plan', res_best_sub: 'Khatam hue loan ki EMI agle loan me',
+      res_custom: 'Aapka chuna plan', res_custom_sub: '{name} sabse pehle',
+      res_all_done: 'Saare loan khatam', res_gold_done: 'Gold loan khatam', res_interest: 'Kul byaaj doge', res_monthly: 'Har mahine loans me',
+      verdict_never: 'Best plan se saare loan {date} tak khatam ho jaayenge — aur lagbhag {amount} byaaj bachega.',
+      verdict_early: 'Best plan se lagbhag {amount} byaaj bachega aur loan {time} pehle khatam honge.',
+      verdict_saved: 'Best plan se lagbhag {amount} byaaj bachega.',
+      verdict_stuck: 'Aaj ke paise se saare loan khatam nahi ho rahe. Har mahine thoda extra daal ke dekho.',
+      verdict_nochange: 'Aapka abhi ka tarika hi theek hai — koi bada fark nahi.',
+      today_never_note: 'Abhi wale tarike me gold loan kabhi khatam nahi hota (sirf byaaj jaata hai), isliye uska byaaj 40 saal tak joda gaya hai.',
+      custom_vs_best: 'Note: app ka best tarika (sabse mehenga loan pehle) {amount} aur bachata.',
+      steps_title: 'Kya karna hai — step by step',
+      step1: 'Har mahine loans me kul {amount} do.', step1_extra: 'Har mahine loans me kul {amount} do (isme {extra} extra shaamil hai).',
+      step2: 'Jab koi loan khatam ho jaaye, uski EMI ka paisa kharch mat karo — wahi agle loan me daal do.',
+      step3: 'Loan is order me khatam honge:', step_never: '{name} — is plan me bhi khatam nahi',
+      chart_title: 'Loan ka bojh kaise kam hoga', chart_hint: 'Line jitni jaldi zero par aaye, utna achha.',
+      series_today: 'Abhi jaisa', series_best: 'Best plan', series_custom: 'Aapka plan',
+      more_detail: 'Har loan ki detail dekho', detail_line: '{date} me khatam · byaaj {interest}', no_rate: 'rate nahi dala',
+      other_way: '{name}: saare loan {date} tak, byaaj {interest}',
+      way_avalanche: 'Sabse mehenga loan pehle', way_snowball: 'Sabse chhota loan pehle',
+
+      rf_title: 'Naya loan lekar purana band karein?',
+      rf_intro: 'Jaise: personal loan lekar gold loan band karna. Bank ne jo offer diya hai wahi number daalo — app batayega faayda hai ya nuksaan.',
+      rf_need_rate: 'Iske liye Loans tab me apne loans ka byaaj % daalo.',
+      rf_pick: 'Kaunse loan band karne hain?', rf_pick_item: '{name} — {amount} baki · {rate} byaaj',
+      rf_rate: 'Naye loan ka byaaj (% saal ka)', rf_rate_hint: 'Jaise 14',
+      rf_tenure: 'Kitne mahine me chukana hai?', rf_tenure_hint: '12 = 1 saal, 36 = 3 saal',
+      rf_fee: 'Processing fee (₹)', rf_more: 'Aur charges (agar hain)',
+      rf_foreclosure: 'Purana loan band karne ka charge (₹)', rf_other: 'Baaki charges (₹)', rf_other_hint: 'Insurance, stamp duty…',
+      rf_amount: 'Naya loan kitne ka? (₹)', rf_amount_hint: 'Khali chhodo = jitna band karna hai utna hi',
+      rf_submit: 'Faayda hai ya nuksaan? Check karo',
+      rf_yes: '✅ Haan, naya loan lena faayde ka hai', rf_yes_sub: 'Lagbhag {amount} bachenge.',
+      rf_no: '❌ Nahi, naya loan mehenga padega', rf_no_sub: 'Isme lagbhag {amount} zyada lagega. Wahi paisa purane loan me bharna better hai.',
+      rf_equal: 'Dono barabar hain — koi fark nahi.',
+      opt_new: 'Naya loan lo', opt_new_sub: '{amount} ka loan · {rate} byaaj · {time}',
+      opt_same: 'Naya loan mat lo', opt_same_sub: 'Bas har mahine wahi {emi} purane loan me bharo',
+      lbl_monthly: 'Har mahine', lbl_time: 'Kitne time me khatam', lbl_interest: 'Kul byaaj', lbl_fees: 'Fees / charges', lbl_total: 'Kul kharcha',
+      over_40: '40 saal se zyada',
+      rf_keep: 'Agar kuch bhi nahi badla (sirf byaaj {monthly}/mahina bharte rahe): {time} me {interest} sirf byaaj me jaayega aur {owed} ka loan fir bhi utna hi baki rahega.',
+      rf_now: 'Abhi aap in loans me har mahine {now} dete ho.',
+      rf_monthly_more: 'Naye loan me har mahine {amount} zyada dena padega.', rf_monthly_less: 'Naye loan me har mahine {amount} kam dena padega.',
+      rf_pocket: 'Fees ke liye {amount} apni jeb se dena hoga.', rf_in_hand: '{amount} haath me bachega.',
+      rf_caution: 'Ye sirf aapke daale numbers par hai. Final faisla karne se pehle bank se EMI aur saare charges pakka kar lo.',
+    },
+    hi: {
+      lakh: 'लाख', crore: 'करोड़', per_month: '/महीना', never: 'कभी नहीं',
+      dur_ym: '{y} साल {m} महीने', dur_y: '{y} साल', dur_m: '{m} महीने',
+      plan_notice: 'यहाँ कुछ भी आज़माइए — आपकी असली एंट्री नहीं बदलेगी।',
+      no_loans: 'पहले लोन टैब में अपने लोन डालें, फिर यहाँ प्लान देखें।',
+      ask_title: 'पैसों के बारे में पूछें', ai_off: 'AI अभी बंद है। सर्वर पर finance-config.php में gemini_api_key डालने से चालू होगा।',
+      ai_intro: 'हिसाब ऐप करता है, AI सिर्फ़ समझाता है। AI कुछ बदल नहीं सकता, और नाम/नोट्स भेजे नहीं जाते।',
+      ai_placeholder: 'पूछें — जैसे गोल्ड लोन कब बंद होगा?', ai_ask: 'पूछें', ai_working: 'हिसाब लग रहा है…', ai_need_q: 'पहले सवाल लिखें।',
+      ai_earlier: 'पहले के सवाल', ai_none: 'अभी कोई नहीं।',
+      ai_facts: 'पक्का हिसाब', ai_assumptions: 'मान कर चले', ai_estimates: 'अंदाज़ा', ai_suggestions: 'सुझाव',
+
+      po_title: 'लोन जल्दी कैसे ख़त्म करें?',
+      po_intro: 'सीधा नियम: हर महीने लोन में उतना ही पैसा दें जितना आज देते हैं। जब एक लोन ख़त्म हो, उसकी EMI बंद न करें — वही पैसा अगले लोन में डालें।',
+      po_extra_label: 'हर महीने अलग से कितना दे सकते हैं? (₹)', po_extra_hint: 'नहीं है तो खाली छोड़ें।',
+      po_more: 'और विकल्प (बोनस / पहले कौनसा लोन)',
+      po_lumps_label: 'बीच में अलग से पैसा आएगा? (इंसेंटिव, बोनस)', po_add_lump: '+ पैसा जोड़ें',
+      lump_amount: 'कितना (₹)', lump_month: 'कब से', lump_every: 'हर कितने महीने', lump_every_hint: '0 = सिर्फ़ एक बार', lump_times: 'कितनी बार', lump_remove: 'हटाएँ',
+      po_first_label: 'कोई लोन सबसे पहले बंद करना है?', po_first_none: 'नहीं — ऐप खुद सबसे अच्छा तरीका चुने',
+      po_submit: 'प्लान दिखाओ',
+
+      left_out: 'ये लोन प्लान में नहीं हैं (जानकारी अधूरी): {list}',
+      approx_note: '{names} का ब्याज % नहीं डाला है, इसलिए इनका ब्याज हिसाब में नहीं है। लोन टैब में रेट डालें तो प्लान और सही बनेगा।',
+      res_today: 'अभी जैसा चल रहा है', res_today_sub: 'जो EMI आज देते हैं, वही देते रहें',
+      res_best: 'ऐप का सबसे अच्छा प्लान', res_best_sub: 'ख़त्म हुए लोन की EMI अगले लोन में',
+      res_custom: 'आपका चुना प्लान', res_custom_sub: '{name} सबसे पहले',
+      res_all_done: 'सारे लोन ख़त्म', res_gold_done: 'गोल्ड लोन ख़त्म', res_interest: 'कुल ब्याज देंगे', res_monthly: 'हर महीने लोन में',
+      verdict_never: 'सबसे अच्छे प्लान से सारे लोन {date} तक ख़त्म हो जाएँगे — और लगभग {amount} ब्याज बचेगा।',
+      verdict_early: 'सबसे अच्छे प्लान से लगभग {amount} ब्याज बचेगा और लोन {time} पहले ख़त्म होंगे।',
+      verdict_saved: 'सबसे अच्छे प्लान से लगभग {amount} ब्याज बचेगा।',
+      verdict_stuck: 'आज के पैसों से सारे लोन ख़त्म नहीं हो रहे। हर महीने थोड़ा अलग से डाल कर देखें।',
+      verdict_nochange: 'आपका अभी का तरीका ही ठीक है — कोई बड़ा फ़र्क नहीं।',
+      today_never_note: 'अभी वाले तरीके में गोल्ड लोन कभी ख़त्म नहीं होता (सिर्फ़ ब्याज जाता है), इसलिए उसका ब्याज 40 साल तक जोड़ा गया है।',
+      custom_vs_best: 'ध्यान दें: ऐप का सबसे अच्छा तरीका (सबसे महँगा लोन पहले) {amount} और बचाता।',
+      steps_title: 'क्या करना है — कदम दर कदम',
+      step1: 'हर महीने लोन में कुल {amount} दें।', step1_extra: 'हर महीने लोन में कुल {amount} दें (इसमें {extra} अलग से शामिल है)।',
+      step2: 'जब कोई लोन ख़त्म हो जाए, उसकी EMI का पैसा ख़र्च न करें — वही अगले लोन में डालें।',
+      step3: 'लोन इस क्रम में ख़त्म होंगे:', step_never: '{name} — इस प्लान में भी ख़त्म नहीं',
+      chart_title: 'लोन का बोझ कैसे घटेगा', chart_hint: 'लाइन जितनी जल्दी शून्य पर आए, उतना अच्छा।',
+      series_today: 'अभी जैसा', series_best: 'सबसे अच्छा प्लान', series_custom: 'आपका प्लान',
+      more_detail: 'हर लोन की डिटेल देखें', detail_line: '{date} में ख़त्म · ब्याज {interest}', no_rate: 'रेट नहीं डाला',
+      other_way: '{name}: सारे लोन {date} तक, ब्याज {interest}',
+      way_avalanche: 'सबसे महँगा लोन पहले', way_snowball: 'सबसे छोटा लोन पहले',
+
+      rf_title: 'नया लोन लेकर पुराना बंद करें?',
+      rf_intro: 'जैसे: पर्सनल लोन लेकर गोल्ड लोन बंद करना। बैंक ने जो ऑफ़र दिया है वही नंबर डालें — ऐप बताएगा फ़ायदा है या नुकसान।',
+      rf_need_rate: 'इसके लिए लोन टैब में अपने लोन का ब्याज % डालें।',
+      rf_pick: 'कौनसे लोन बंद करने हैं?', rf_pick_item: '{name} — {amount} बाकी · {rate} ब्याज',
+      rf_rate: 'नए लोन का ब्याज (% सालाना)', rf_rate_hint: 'जैसे 14',
+      rf_tenure: 'कितने महीने में चुकाना है?', rf_tenure_hint: '12 = 1 साल, 36 = 3 साल',
+      rf_fee: 'प्रोसेसिंग फ़ीस (₹)', rf_more: 'और चार्ज (अगर हैं)',
+      rf_foreclosure: 'पुराना लोन बंद करने का चार्ज (₹)', rf_other: 'बाकी चार्ज (₹)', rf_other_hint: 'बीमा, स्टाम्प ड्यूटी…',
+      rf_amount: 'नया लोन कितने का? (₹)', rf_amount_hint: 'खाली छोड़ें = जितना बंद करना है उतना ही',
+      rf_submit: 'फ़ायदा है या नुकसान? देखें',
+      rf_yes: '✅ हाँ, नया लोन लेना फ़ायदे का है', rf_yes_sub: 'लगभग {amount} बचेंगे।',
+      rf_no: '❌ नहीं, नया लोन महँगा पड़ेगा', rf_no_sub: 'इसमें लगभग {amount} ज़्यादा लगेगा। वही पैसा पुराने लोन में भरना बेहतर है।',
+      rf_equal: 'दोनों बराबर हैं — कोई फ़र्क नहीं।',
+      opt_new: 'नया लोन लें', opt_new_sub: '{amount} का लोन · {rate} ब्याज · {time}',
+      opt_same: 'नया लोन न लें', opt_same_sub: 'बस हर महीने वही {emi} पुराने लोन में भरें',
+      lbl_monthly: 'हर महीने', lbl_time: 'कितने समय में ख़त्म', lbl_interest: 'कुल ब्याज', lbl_fees: 'फ़ीस / चार्ज', lbl_total: 'कुल ख़र्च',
+      over_40: '40 साल से ज़्यादा',
+      rf_keep: 'अगर कुछ भी नहीं बदला (सिर्फ़ ब्याज {monthly}/महीना भरते रहे): {time} में {interest} सिर्फ़ ब्याज में जाएगा और {owed} का लोन फिर भी उतना ही बाकी रहेगा।',
+      rf_now: 'अभी आप इन लोन में हर महीने {now} देते हैं।',
+      rf_monthly_more: 'नए लोन में हर महीने {amount} ज़्यादा देना होगा।', rf_monthly_less: 'नए लोन में हर महीने {amount} कम देना होगा।',
+      rf_pocket: 'फ़ीस के लिए {amount} अपनी जेब से देने होंगे।', rf_in_hand: '{amount} हाथ में बचेंगे।',
+      rf_caution: 'यह सिर्फ़ आपके डाले नंबरों पर है। आख़िरी फ़ैसले से पहले बैंक से EMI और सारे चार्ज पक्के कर लें।',
+    },
+    en: {
+      lakh: 'lakh', crore: 'crore', per_month: '/month', never: 'Never',
+      dur_ym: '{y} yr {m} mo', dur_y: '{y} years', dur_m: '{m} months',
+      plan_notice: 'Try anything here — your real entries never change.',
+      no_loans: 'Add your loans in the Loans tab first, then come back to plan.',
+      ask_title: 'Ask about your money', ai_off: 'AI is off. Add gemini_api_key to finance-config.php on the server to switch it on.',
+      ai_intro: 'The app does the maths; the AI explains it. It cannot change anything, and names and notes are not sent.',
+      ai_placeholder: 'Ask — e.g. when will the gold loan close?', ai_ask: 'Ask', ai_working: 'Working it out…', ai_need_q: 'Type a question first.',
+      ai_earlier: 'Earlier questions', ai_none: 'None yet.',
+      ai_facts: 'Calculated facts', ai_assumptions: 'Assumptions', ai_estimates: 'Estimates', ai_suggestions: 'Suggestions',
+
+      po_title: 'How to finish your loans sooner',
+      po_intro: 'One simple rule: keep paying the same total into loans each month. When a loan ends, don’t spend its EMI — put it into the next loan.',
+      po_extra_label: 'Extra you can pay each month (₹)', po_extra_hint: 'Leave empty if none.',
+      po_more: 'More options (bonus / which loan first)',
+      po_lumps_label: 'Extra money coming in? (incentive, bonus)', po_add_lump: '+ Add extra money',
+      lump_amount: 'Amount (₹)', lump_month: 'Starting', lump_every: 'Every … months', lump_every_hint: '0 = only once', lump_times: 'How many times', lump_remove: 'Remove',
+      po_first_label: 'Close one loan first?', po_first_none: 'No — let the app pick the best way',
+      po_submit: 'Show plan',
+
+      left_out: 'Not in the plan (numbers missing): {list}',
+      approx_note: 'No interest rate for {names}, so their interest isn’t counted. Add the rate in Loans for a truer plan.',
+      res_today: 'If you carry on as today', res_today_sub: 'Keep paying today’s EMIs',
+      res_best: 'The app’s best plan', res_best_sub: 'A finished loan’s EMI moves to the next loan',
+      res_custom: 'Your plan', res_custom_sub: '{name} first',
+      res_all_done: 'All loans finished', res_gold_done: 'Gold loans finished', res_interest: 'Total interest', res_monthly: 'Into loans each month',
+      verdict_never: 'With the best plan every loan is finished by {date} — and you save about {amount} in interest.',
+      verdict_early: 'With the best plan you save about {amount} in interest and finish {time} sooner.',
+      verdict_saved: 'With the best plan you save about {amount} in interest.',
+      verdict_stuck: 'Today’s money doesn’t finish every loan. Try adding a little extra each month.',
+      verdict_nochange: 'Your current way is already fine — no big difference.',
+      today_never_note: 'On today’s payments the gold loan never ends (you only pay interest), so its interest is counted for 40 years.',
+      custom_vs_best: 'Note: the app’s best way (costliest loan first) would save {amount} more.',
+      steps_title: 'What to do — step by step',
+      step1: 'Pay {amount} in total into loans every month.', step1_extra: 'Pay {amount} in total into loans every month (includes {extra} extra).',
+      step2: 'When a loan finishes, don’t spend its EMI — put that money into the next loan.',
+      step3: 'Your loans will finish in this order:', step_never: '{name} — not finished even in this plan',
+      chart_title: 'How your loan balance falls', chart_hint: 'The sooner the line reaches zero, the better.',
+      series_today: 'As today', series_best: 'Best plan', series_custom: 'Your plan',
+      more_detail: 'See each loan in detail', detail_line: 'Ends {date} · interest {interest}', no_rate: 'rate not entered',
+      other_way: '{name}: all loans by {date}, interest {interest}',
+      way_avalanche: 'Costliest loan first', way_snowball: 'Smallest loan first',
+
+      rf_title: 'Take a new loan to close old ones?',
+      rf_intro: 'For example, a personal loan to close the gold loan. Enter the bank’s offer exactly — the app tells you if it saves money or not.',
+      rf_need_rate: 'Add interest rates to your loans (Loans tab) to use this.',
+      rf_pick: 'Which loans to close?', rf_pick_item: '{name} — {amount} left · {rate}',
+      rf_rate: 'New loan interest (% a year)', rf_rate_hint: 'e.g. 14',
+      rf_tenure: 'Repay in how many months?', rf_tenure_hint: '12 = 1 year, 36 = 3 years',
+      rf_fee: 'Processing fee (₹)', rf_more: 'Other charges (if any)',
+      rf_foreclosure: 'Charge to close the old loan (₹)', rf_other: 'Other charges (₹)', rf_other_hint: 'Insurance, stamp duty…',
+      rf_amount: 'New loan amount (₹)', rf_amount_hint: 'Empty = exactly what it closes',
+      rf_submit: 'Is it worth it? Check',
+      rf_yes: '✅ Yes, the new loan saves money', rf_yes_sub: 'You save about {amount}.',
+      rf_no: '❌ No, the new loan costs more', rf_no_sub: 'It costs about {amount} more. Paying the same into your old loans is better.',
+      rf_equal: 'Both cost the same — no difference.',
+      opt_new: 'Take the new loan', opt_new_sub: '{amount} loan · {rate} · {time}',
+      opt_same: 'Don’t take a new loan', opt_same_sub: 'Just pay the same {emi} a month into the old loans',
+      lbl_monthly: 'Every month', lbl_time: 'Finished in', lbl_interest: 'Total interest', lbl_fees: 'Fees / charges', lbl_total: 'Total cost',
+      over_40: 'Over 40 years',
+      rf_keep: 'If you change nothing (paying only {monthly}/month interest): in {time} you pay {interest} in interest alone, and still owe the full {owed}.',
+      rf_now: 'Today you pay {now} a month into these loans.',
+      rf_monthly_more: 'The new loan needs {amount} more each month.', rf_monthly_less: 'The new loan needs {amount} less each month.',
+      rf_pocket: 'You’d pay {amount} from your pocket for the fees.', rf_in_hand: '{amount} would be left in hand.',
+      rf_caution: 'This uses only the numbers you entered. Confirm the EMI and every charge with the bank before deciding.',
+    },
   };
+
+  function t(key, vars = {}) {
+    const s = T[state.lang]?.[key] ?? T.en[key] ?? key;
+    return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+  }
+  /** Easy-read money: exact below ₹10 lakh (₹1,03,678), then ₹12.3 lakh · ₹1.25 crore. */
+  function easy(paise) {
+    if (paise === null || paise === undefined) return '—';
+    const r = Math.round(paise / 100);
+    const dp = (n, d) => n.toLocaleString('en-IN', { maximumFractionDigits: d });
+    if (Math.abs(r) >= 1e7) return `₹${dp(r / 1e7, 2)} ${t('crore')}`;
+    if (Math.abs(r) >= 1e6) return `₹${dp(r / 1e5, 1)} ${t('lakh')}`;
+    return `₹${rupee.format(r)}`;
+  }
+  function planMonth(ym) {
+    if (!ym) return t('never');
+    return new Date(ym + '-01T00:00:00').toLocaleDateString(state.lang === 'hi' ? 'hi-IN' : 'en-IN', { month: 'long', year: 'numeric' });
+  }
+  function monthsBetween(a, b) {
+    const [ay, am] = a.split('-').map(Number);
+    const [by, bm] = b.split('-').map(Number);
+    return (by - ay) * 12 + (bm - am);
+  }
+  function duration(n) {
+    const y = Math.floor(n / 12), m = n % 12;
+    if (y && m) return t('dur_ym', { y, m });
+    return y ? t('dur_y', { y }) : t('dur_m', { m });
+  }
+  const kv = (label, value, cls) => h('div', { class: 'kv' }, h('span', { text: label }), h('strong', { class: cls || null, text: value }));
 
   async function viewPlan() {
     const loans = await get('loans');
     const active = loans.filter((l) => l.group !== 'closed');
     const root = h('div', { class: 'stack' });
-    root.append(h('p', { class: 'notice info', text: 'Planning never changes your real entries. Try as many numbers as you like.' }));
-    root.append(aiCard());
+    root.append(h('section', { class: 'card lang-card' },
+      h('p', { class: 'small muted', style: 'margin:0 0 8px', text: 'Bhasha · भाषा · Language' }),
+      segmented(PLAN_LANGS, state.lang, (v) => {
+        state.lang = v;
+        try { localStorage.setItem('ff-lang', v); } catch { /* private mode */ }
+        render();
+      })));
+    root.append(h('p', { class: 'notice info', text: t('plan_notice') }));
     if (!active.length) {
-      root.append(h('div', { class: 'card empty', text: 'Add your loans first (Loans tab), then come back to plan.' }));
+      root.append(h('div', { class: 'card empty', text: t('no_loans') }));
+      root.append(aiCard());
       return root;
     }
-    root.append(payoffCard(active), refinanceCard(active));
+    root.append(payoffCard(active), refinanceCard(active), aiCard());
     return root;
   }
 
@@ -1196,19 +1435,19 @@
 
   function aiCard() {
     const card = h('section', { class: 'card' },
-      h('div', { class: 'card-head' }, h('h2', { text: 'Ask about your money' }), h('span', { class: 'chip info', text: 'AI' })),
+      h('div', { class: 'card-head' }, h('h2', { text: t('ask_title') }), h('span', { class: 'chip info', text: 'AI' })),
     );
     if (!state.meta.ai_enabled) {
-      card.append(h('p', { class: 'muted small', text: 'AI is off. Add gemini_api_key to finance-config.php on the server to switch it on.' }));
+      card.append(h('p', { class: 'muted small', text: t('ai_off') }));
       return card;
     }
-    card.append(h('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'The app does the maths; the AI explains it. It cannot change anything, and names and notes are not sent.' }));
+    card.append(h('p', { class: 'muted small', style: 'margin-bottom:12px', text: t('ai_intro') }));
     const answerBox = h('div', { class: 'stack', style: 'margin-top:14px' });
-    const q = h('textarea', { name: 'question', maxlength: 1000, rows: 2, placeholder: 'Poochho — e.g. gold loan kab band hoga?', 'aria-label': 'Your question' });
+    const q = h('textarea', { name: 'question', maxlength: 1000, rows: 2, placeholder: t('ai_placeholder'), 'aria-label': t('ask_title') });
     const chips = h('div', { class: 'chips', style: 'margin-bottom:12px' }, AI_QUESTIONS.map((text) => h('button', { type: 'button', text, onclick: () => { q.value = text; q.focus(); } })));
     const form = formShell(async () => {
-      if (!q.value.trim()) throw new Error('Type a question first.');
-      answerBox.replaceChildren(h('p', { class: 'loading', text: 'Working it out…' }));
+      if (!q.value.trim()) throw new Error(t('ai_need_q'));
+      answerBox.replaceChildren(h('p', { class: 'loading', text: t('ai_working') }));
       try {
         const r = await post('ai/ask', { question: q.value.trim() });
         answerBox.replaceChildren(aiAnswer(r.question, r.answer));
@@ -1216,55 +1455,63 @@
         answerBox.replaceChildren();
         throw e;
       }
-    }, 'Ask', chips, h('label', { class: 'field' }, q));
+    }, t('ai_ask'), chips, h('label', { class: 'field' }, q));
     card.append(form, answerBox);
-    const past = h('details', { style: 'margin-top:12px' }, h('summary', { class: 'small', text: 'Earlier questions' }));
+    const past = h('details', { style: 'margin-top:12px' }, h('summary', { class: 'small', text: t('ai_earlier') }));
     past.addEventListener('toggle', async () => {
       if (!past.open || past.dataset.loaded) return;
       past.dataset.loaded = '1';
       const rows = await get('ai/history');
-      past.append(rows.length ? h('div', { class: 'stack', style: 'margin-top:10px' }, rows.map((r) => aiAnswer(r.question, r.answer, r.created_at))) : h('p', { class: 'faint', text: 'None yet.' }));
+      past.append(rows.length ? h('div', { class: 'stack', style: 'margin-top:10px' }, rows.map((r) => aiAnswer(r.question, r.answer, r.created_at))) : h('p', { class: 'faint', text: t('ai_none') }));
     });
     card.append(past);
     return card;
   }
 
   function aiAnswer(question, a, when) {
-    const section = (title, items) => (items && items.length ? h('div', {}, h('h3', { style: 'margin:10px 0 4px', text: title }), h('ul', { style: 'margin:0;padding-left:20px' }, items.map((t) => h('li', { text: t })))) : null);
+    const section = (title, items) => (items && items.length ? h('div', {}, h('h3', { style: 'margin:10px 0 4px', text: title }), h('ul', { style: 'margin:0;padding-left:20px' }, items.map((x) => h('li', { text: x })))) : null);
     return h('article', { class: 'card', style: 'background:var(--surface-2);box-shadow:none' },
       h('p', { class: 'faint', text: when ? `${question} · ${new Date(when.replace(' ', 'T')).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : question }),
       h('p', { style: 'font-weight:650;margin-top:6px', text: a.short_answer }),
-      section('Calculated facts', a.facts),
-      section('Assumptions', a.assumptions),
-      section('Estimates', a.estimates),
-      section('Suggestions', a.suggestions),
+      section(t('ai_facts'), a.facts),
+      section(t('ai_assumptions'), a.assumptions),
+      section(t('ai_estimates'), a.estimates),
+      section(t('ai_suggestions'), a.suggestions),
     );
   }
 
+  // ---------- pay off faster ----------
   function payoffCard(active) {
+    const saved = state.planSaved;
     const card = h('section', { class: 'card' },
-      h('div', { class: 'card-head' }, h('h2', { text: 'Pay off loans faster' })),
-      h('p', { class: 'muted small', style: 'margin-bottom:14px', text: 'Keeps your total loan payment each month the same. When a loan ends, its EMI moves to the next loan instead of being spent. Extra money goes on top.' }),
+      h('div', { class: 'card-head' }, h('h2', { text: t('po_title') })),
+      h('p', { class: 'muted', style: 'margin-bottom:14px', text: t('po_intro') }),
     );
     const lumps = h('div', {});
     const addLump = (v = {}) => {
       const row = h('div', { class: 'lump-row' },
-        field('Amount (₹)', moneyInput('lump_amount', v.amount || '')),
-        field('First month', input('lump_month', v.month || addMonthsJs(thisMonth(), 1), { type: 'month' })),
-        field('Every … months', input('lump_every', v.every ?? '3', { inputmode: 'numeric' }), '0 = once'),
-        field('How many times', input('lump_times', v.times ?? '4', { inputmode: 'numeric' })),
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remove', text: '✕', onclick: () => row.remove() }),
+        field(t('lump_amount'), moneyInput('lump_amount', v.amount || '')),
+        field(t('lump_month'), input('lump_month', v.month || addMonthsJs(thisMonth(), 1), { type: 'month' })),
+        field(t('lump_every'), input('lump_every', v.every ?? '0', { inputmode: 'numeric' }), t('lump_every_hint')),
+        field(t('lump_times'), input('lump_times', v.times ?? '1', { inputmode: 'numeric' })),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': t('lump_remove'), text: '✕', onclick: () => row.remove() }),
       );
       lumps.append(row);
     };
-    const firstPick = select('first', [['', 'No — let the method decide'], ...active.map((l) => [String(l.id), l.name])], state.planFirst || '');
+    for (const l of saved?.body.lumps || []) addLump({ amount: l.amount, month: l.month, every: l.every_months, times: l.times });
+    const firstPick = select('first', [['', t('po_first_none')], ...active.map((l) => [String(l.id), l.name])], saved?.body.order[0] ? String(saved.body.order[0]) : '');
+    const more = h('details', { class: 'more' }, h('summary', { text: t('po_more') }),
+      h('div', { class: 'field', style: 'margin-top:12px' }, h('span', { text: t('po_lumps_label') }), lumps,
+        h('button', { class: 'btn small', type: 'button', text: t('po_add_lump'), onclick: () => addLump() })),
+      field(t('po_first_label'), firstPick),
+    );
+    if (saved && (saved.body.lumps.length || saved.body.order.length)) more.open = true;
     const results = h('div', { class: 'stack', style: 'margin-top:16px' });
 
     const form = formShell(async (fd) => {
-      const rows = [...lumps.querySelectorAll('.lump-row')];
       const body = {
         extra_monthly: fd.get('extra_monthly'),
-        lumps: rows.map((r) => ({
+        lumps: [...lumps.querySelectorAll('.lump-row')].map((r) => ({
           amount: r.querySelector('[name=lump_amount]').value,
           month: r.querySelector('[name=lump_month]').value,
           every_months: r.querySelector('[name=lump_every]').value || '0',
@@ -1272,16 +1519,15 @@
         })).filter((l) => l.amount.trim() !== ''),
         order: fd.get('first') ? [Number(fd.get('first'))] : [],
       };
-      state.planFirst = fd.get('first');
       const r = await post('plan/simulate', body);
-      results.replaceChildren(...planResults(r));
-    }, 'Show plan',
-      field('Extra every month (₹)', moneyInput('extra_monthly', ''), 'On top of today’s EMIs. Leave empty for none.'),
-      h('div', { class: 'field' }, h('span', { text: 'Extra income expected (incentive, CRM…)' }), lumps,
-        h('button', { class: 'btn small', type: 'button', text: '+ Add expected income', onclick: () => addLump() })),
-      field('Clear one loan first?', firstPick),
+      state.planSaved = { body, r };
+      results.replaceChildren(...planResults(r, active));
+    }, t('po_submit'),
+      field(t('po_extra_label'), moneyInput('extra_monthly', saved?.body.extra_monthly || ''), t('po_extra_hint')),
+      more,
     );
     card.append(form, results);
+    if (saved) results.replaceChildren(...planResults(saved.r, active));
     return card;
   }
 
@@ -1290,149 +1536,210 @@
     const d = new Date(y, m - 1 + n, 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
-  const when = (ym) => (ym ? monthLabel(ym) : 'Never');
 
-  function planResults(r) {
+  function planResults(r, active) {
     const out = [];
     if (r.left_out.length) {
-      out.push(h('p', { class: 'notice', text: `Left out (missing numbers): ${r.left_out.map((l) => `${l.name} — ${l.reason}`).join(' ')}` }));
+      out.push(h('p', { class: 'notice', text: t('left_out', { list: r.left_out.map((l) => `${l.name} (${l.reason})`).join(', ') }) }));
     }
     const approx = r.loans.filter((l) => l.approx).map((l) => l.name);
-    if (approx.length) {
-      out.push(h('p', { class: 'notice info', text: `No interest rate for ${approx.join(', ')}: EMIs are followed as scheduled, their interest is not counted, and they are ranked last for extra money. Credit cards usually charge far more than 18% — add the card's rate for a truer plan.` }));
+    if (approx.length) out.push(h('p', { class: 'notice info', text: t('approx_note', { names: approx.join(', ') }) }));
+
+    const today = r.plans.none;
+    const smart = ['avalanche', 'snowball'].filter((n) => r.plans[n]).sort((a, b) => r.plans[a].total_interest_paise - r.plans[b].total_interest_paise)[0];
+    const bestKey = r.plans.custom ? 'custom' : smart;
+    const best = r.plans[bestKey];
+    const hasGold = active.some((l) => l.loan_type === 'gold');
+    const firstName = bestKey === 'custom' ? (r.loans.find((l) => l.id === state.planSaved?.body.order[0])?.name || '') : '';
+
+    // 1. The answer in one sentence.
+    const savedPaise = today.total_interest_paise - best.total_interest_paise;
+    let verdict;
+    if (!best.debt_free_month) verdict = t('verdict_stuck');
+    else if (!today.debt_free_month) verdict = t('verdict_never', { date: planMonth(best.debt_free_month), amount: easy(savedPaise) });
+    else if (savedPaise <= 0) verdict = t('verdict_nochange');
+    else {
+      const early = monthsBetween(best.debt_free_month, today.debt_free_month);
+      verdict = early > 0 ? t('verdict_early', { amount: easy(savedPaise), time: duration(early) }) : t('verdict_saved', { amount: easy(savedPaise) });
     }
-    const names = Object.keys(r.plans);
-    const table = h('table', { class: 'compare' },
-      h('thead', {}, h('tr', {}, h('th', { text: 'Method' }), h('th', { class: 'num', text: 'Gold loans closed' }), h('th', { class: 'num', text: 'All loans done' }), h('th', { class: 'num', text: 'Interest paid*' }))),
-      h('tbody', {}, names.map((n) => {
-        const p = r.plans[n];
-        return h('tr', {},
-          h('th', { text: STRATEGY[n] }),
-          h('td', { class: 'num', text: when(p.gold_closed_month) }),
-          h('td', { class: 'num', text: when(p.debt_free_month) }),
-          h('td', { class: 'num', text: fmt0(p.total_interest_paise) }),
-        );
-      })),
+    out.push(h('div', { class: `verdict ${best.debt_free_month && savedPaise > 0 ? 'good' : 'plain'}` }, h('strong', { text: verdict })));
+
+    // 2. Today vs the plan, side by side.
+    const box = (title, sub, p, cls) => h('div', { class: `plan-box ${cls}` },
+      h('h3', { text: title }), h('p', { class: 'sub', text: sub }),
+      kv(t('res_monthly'), `${easy(p.monthly_budget_paise)}${t('per_month')}`),
+      hasGold ? kv(t('res_gold_done'), planMonth(p.gold_closed_month), p.gold_closed_month ? null : 'bad') : null,
+      kv(t('res_all_done'), planMonth(p.debt_free_month), p.debt_free_month ? null : 'bad'),
+      kv(t('res_interest'), easy(p.total_interest_paise)),
     );
-    out.push(h('div', { class: 'table-wrap' }, table));
-    const base = r.plans.none;
-    const best = names.filter((n) => n !== 'none').map((n) => r.plans[n]).sort((a, b) => a.total_interest_paise - b.total_interest_paise)[0];
-    out.push(h('p', { class: 'faint', text: `* Interest on loans whose rate is known, from ${monthLabel(r.start_month)} until each loan ends (or 40 years). Monthly loan budget: ${fmt(best.monthly_budget_paise)}.${base.debt_free_month === null ? " On today's payments alone, interest-only loans never end." : ''}` }));
+    out.push(h('div', { class: 'plan-compare' },
+      box(t('res_today'), t('res_today_sub'), today, ''),
+      bestKey === 'custom'
+        ? box(t('res_custom'), t('res_custom_sub', { name: firstName }), best, 'best')
+        : box(t('res_best'), t('res_best_sub'), best, 'best'),
+    ));
+    if (!today.debt_free_month && hasGold) out.push(h('p', { class: 'faint small', text: t('today_never_note') }));
+    if (bestKey === 'custom' && r.plans[smart].total_interest_paise < best.total_interest_paise) {
+      out.push(h('p', { class: 'notice', text: t('custom_vs_best', { amount: easy(best.total_interest_paise - r.plans[smart].total_interest_paise) }) }));
+    }
 
-    const canvas = h('canvas', { role: 'img', 'aria-label': 'Total loans left over time for each method' });
-    out.push(h('div', { class: 'chart-box tall' }, canvas));
-    requestAnimationFrame(() => drawPlanChart(canvas, r));
+    // 3. What to actually do.
+    const order = best.loans.filter((l) => l.close_month).sort((a, b) => a.close_month.localeCompare(b.close_month));
+    const stuck = best.loans.filter((l) => !l.close_month);
+    out.push(h('div', {},
+      h('h3', { text: t('steps_title') }),
+      h('ol', { class: 'steps' },
+        h('li', { text: r.extra_monthly_paise > 0 ? t('step1_extra', { amount: easy(best.monthly_budget_paise), extra: easy(r.extra_monthly_paise) }) : t('step1', { amount: easy(best.monthly_budget_paise) }) }),
+        h('li', { text: t('step2') }),
+        h('li', {}, t('step3'), h('ol', { class: 'order' },
+          order.map((l, i) => h('li', {}, h('span', {}, h('b', { text: `${i + 1}.` }), l.name), h('span', { class: 'muted', text: planMonth(l.close_month) }))),
+          stuck.map((l) => h('li', {}, h('span', { class: 'bad', text: t('step_never', { name: l.name }) }))),
+        )),
+      ),
+    ));
 
-    const pick = h('div', {});
-    const showLoans = (n) => {
-      const p = r.plans[n];
-      pick.replaceChildren(h('div', { class: 'table-wrap' }, h('table', { class: 'compare' },
-        h('thead', {}, h('tr', {}, h('th', { text: 'Loan' }), h('th', { class: 'num', text: 'Ends' }), h('th', { class: 'num', text: 'Interest' }))),
-        h('tbody', {}, p.loans.slice().sort((a, b) => (a.close_month || '9999').localeCompare(b.close_month || '9999')).map((l) => h('tr', {},
-          h('th', { text: l.name }),
-          h('td', { class: 'num', text: when(l.close_month) }),
-          h('td', { class: 'num', text: l.interest_paise === null ? 'rate not entered' : fmt0(l.interest_paise) }),
-        ))),
-      )));
-    };
-    const initial = names.includes('custom') ? 'custom' : 'avalanche';
-    out.push(h('h3', { text: 'When each loan ends' }), segmented(names.map((n) => [n, STRATEGY[n].replace(' first', '').replace("Today's payments only", 'Today')]), initial, showLoans), pick);
-    showLoans(initial);
+    // 4. The picture.
+    const canvas = h('canvas', { role: 'img', 'aria-label': t('chart_title') });
+    out.push(h('div', {}, h('h3', { text: t('chart_title') }), h('p', { class: 'faint small', style: 'margin:0 0 8px', text: t('chart_hint') }), h('div', { class: 'chart-box tall' }, canvas)));
+    requestAnimationFrame(() => drawPlanChart(canvas, r, bestKey));
+
+    // 5. Detail, for whoever wants it.
+    const other = ['avalanche', 'snowball'].filter((n) => r.plans[n] && n !== bestKey);
+    out.push(h('details', { class: 'more' }, h('summary', { text: t('more_detail') }),
+      h('ul', { class: 'order', style: 'margin-top:10px' }, order.concat(stuck).map((l) => h('li', { class: 'col' },
+        h('strong', { text: l.name }),
+        h('span', { class: 'muted small', text: t('detail_line', { date: planMonth(l.close_month), interest: l.interest_paise === null ? t('no_rate') : easy(l.interest_paise) }) }),
+      ))),
+      other.map((n) => h('p', { class: 'faint small', style: 'margin-top:8px', text: t('other_way', { name: t(`way_${n}`), date: planMonth(r.plans[n].debt_free_month), interest: easy(r.plans[n].total_interest_paise) }) })),
+    ));
     return out;
   }
 
-  function drawPlanChart(canvas, r) {
+  function drawPlanChart(canvas, r, bestKey) {
     if (!window.Chart || !canvas.isConnected) return;
     if (state.planChart) state.planChart.destroy();
-    const names = Object.keys(r.plans);
-    const longest = Math.max(...names.map((n) => r.plans[n].timeline.length));
+    const keys = ['none', bestKey];
+    const longest = Math.max(...keys.map((n) => r.plans[n].timeline.length));
     const months = Math.min(longest, 240);
     const labels = Array.from({ length: months }, (_, i) => addMonthsJs(r.start_month, i));
-    const colors = { none: '#94a3b8', avalanche: '#0e9f8e', snowball: '#3b82f6', custom: '#f59e0b' };
+    const style = {
+      none: { label: t('series_today'), color: '#94a3b8', dash: [5, 4], width: 2 },
+      [bestKey]: { label: bestKey === 'custom' ? t('series_custom') : t('series_best'), color: '#0e9f8e', dash: [], width: 3 },
+    };
+    const short = (v) => (v >= 1e5 ? `₹${(v / 1e5).toFixed(v % 1e5 ? 1 : 0)} ${t('lakh')}` : `₹${rupee.format(v)}`);
     state.planChart = new window.Chart(canvas, {
       type: 'line',
       data: {
-        labels: labels.map((m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })),
-        datasets: names.map((n) => ({
-          label: STRATEGY[n],
-          data: labels.map((_, i) => { const t = r.plans[n].timeline[i]; return t ? t.outstanding_paise / 100 : 0; }),
-          borderColor: colors[n], backgroundColor: colors[n], pointRadius: 0, borderWidth: n === 'none' ? 1.5 : 2.5, borderDash: n === 'none' ? [5, 4] : [],
+        labels: labels.map((m) => new Date(m + '-01T00:00:00').toLocaleDateString(state.lang === 'hi' ? 'hi-IN' : 'en-IN', { month: 'short', year: 'numeric' })),
+        datasets: keys.map((n) => ({
+          label: style[n].label,
+          data: labels.map((_, i) => { const p = r.plans[n].timeline[i]; return p ? p.outstanding_paise / 100 : 0; }),
+          borderColor: style[n].color, backgroundColor: style[n].color, pointRadius: 0, borderWidth: style[n].width, borderDash: style[n].dash,
         })),
       },
       options: {
         maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
-        scales: {
-          y: { ticks: { callback: (v) => (v >= 100000 ? `₹${(v / 100000).toFixed(v % 100000 ? 1 : 0)}L` : `₹${rupee.format(v)}`) } },
-          x: { ticks: { maxTicksLimit: 8 } },
-        },
+        scales: { y: { ticks: { callback: short } }, x: { ticks: { maxTicksLimit: 6 } } },
         plugins: {
           legend: { position: 'bottom', labels: { boxWidth: 12 } },
-          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(Math.round(c.parsed.y * 100))}` } },
+          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${easy(Math.round(c.parsed.y * 100))}` } },
         },
       },
     });
   }
 
+  // ---------- new loan to close old ones ----------
   function refinanceCard(active) {
+    const saved = state.refiSaved;
     const withRate = active.filter((l) => l.interest_rate !== null);
     const card = h('section', { class: 'card' },
-      h('div', { class: 'card-head' }, h('h2', { text: 'Replace a loan with a new one?' })),
-      h('p', { class: 'muted small', style: 'margin-bottom:14px', text: 'For example, a personal loan to close the gold loan. Enter the offer exactly as the bank gives it. The fair comparison pays the same monthly amount into the loans you have now.' }),
+      h('div', { class: 'card-head' }, h('h2', { text: t('rf_title') })),
+      h('p', { class: 'muted', style: 'margin-bottom:14px', text: t('rf_intro') }),
     );
     if (!withRate.length) {
-      card.append(h('p', { class: 'empty', text: 'Add interest rates to your loans to use this.' }));
+      card.append(h('p', { class: 'empty', text: t('rf_need_rate') }));
       return card;
     }
     const picks = h('div', { class: 'loan-picks' }, withRate.map((l) => h('label', { class: 'check' },
-      h('input', { type: 'checkbox', name: 'loan', value: String(l.id), checked: l.loan_type === 'gold' }),
-      h('span', { text: `${l.name} — ${fmt(l.outstanding_paise)} at ${rate(l.interest_rate)}` }),
+      h('input', { type: 'checkbox', name: 'loan', value: String(l.id), checked: saved ? saved.body.loan_ids.includes(l.id) : l.loan_type === 'gold' }),
+      h('span', { text: t('rf_pick_item', { name: l.name, amount: easy(l.outstanding_paise), rate: rate(l.interest_rate) }) }),
     )));
-    const results = h('div', { style: 'margin-top:16px' });
-    const form = formShell(async (fd) => {
-      const r = await post('plan/refinance', {
-        loan_ids: fd.getAll('loan').map(Number), new_rate: fd.get('new_rate'), tenure_months: fd.get('tenure_months'),
-        new_amount: fd.get('new_amount'), processing_fee: fd.get('processing_fee'), foreclosure_charges: fd.get('foreclosure_charges'), other_charges: fd.get('other_charges'),
-      });
-      results.replaceChildren(...refinanceResults(r));
-    }, 'Compare',
-      h('div', { class: 'field' }, h('span', { text: 'Loans to close' }), picks),
-      h('div', { class: 'grid-2' },
-        field('Offered interest % per year', input('new_rate', '', { inputmode: 'decimal', required: true })),
-        field('Tenure (months)', input('tenure_months', '36', { inputmode: 'numeric', required: true })),
-      ),
-      h('div', { class: 'grid-2' },
-        field('Processing fee (₹)', moneyInput('processing_fee', '')),
-        field('Closing / foreclosure charges (₹)', moneyInput('foreclosure_charges', '')),
-      ),
-      h('div', { class: 'grid-2' },
-        field('Other charges (₹)', moneyInput('other_charges', ''), 'Insurance, stamp duty…'),
-        field('New loan amount (₹)', moneyInput('new_amount', ''), 'Empty = exactly what it closes'),
+    const v = (k, d = '') => (saved ? saved.body[k] || d : d);
+    const more = h('details', { class: 'more' }, h('summary', { text: t('rf_more') }),
+      h('div', { style: 'margin-top:12px' },
+        field(t('rf_foreclosure'), moneyInput('foreclosure_charges', v('foreclosure_charges'))),
+        field(t('rf_other'), moneyInput('other_charges', v('other_charges')), t('rf_other_hint')),
+        field(t('rf_amount'), moneyInput('new_amount', v('new_amount')), t('rf_amount_hint')),
       ),
     );
+    if (saved && (saved.body.foreclosure_charges || saved.body.other_charges || saved.body.new_amount)) more.open = true;
+    const results = h('div', { class: 'stack', style: 'margin-top:16px' });
+    const form = formShell(async (fd) => {
+      const body = {
+        loan_ids: fd.getAll('loan').map(Number), new_rate: fd.get('new_rate'), tenure_months: fd.get('tenure_months'),
+        new_amount: fd.get('new_amount'), processing_fee: fd.get('processing_fee'), foreclosure_charges: fd.get('foreclosure_charges'), other_charges: fd.get('other_charges'),
+      };
+      const r = await post('plan/refinance', body);
+      state.refiSaved = { body, r };
+      results.replaceChildren(...refinanceResults(r, withRate.filter((l) => body.loan_ids.includes(l.id))));
+    }, t('rf_submit'),
+      h('div', { class: 'field' }, h('span', { text: t('rf_pick') }), picks),
+      field(t('rf_rate'), input('new_rate', v('new_rate'), { inputmode: 'decimal', required: true, placeholder: '14' }), t('rf_rate_hint')),
+      field(t('rf_tenure'), input('tenure_months', v('tenure_months', '36'), { inputmode: 'numeric', required: true }), t('rf_tenure_hint')),
+      field(t('rf_fee'), moneyInput('processing_fee', v('processing_fee'))),
+      more,
+    );
     card.append(form, results);
+    if (saved) results.replaceChildren(...refinanceResults(saved.r, withRate.filter((l) => saved.body.loan_ids.includes(l.id))));
     return card;
   }
 
-  function refinanceResults(r) {
+  function refinanceResults(r, picked) {
     const same = r.same_payment_on_current;
     const nl = r.new_loan;
-    const rows = [
-      ['Monthly payment', fmt0(r.current.monthly_paise), fmt0(same.monthly_paise), fmt0(nl.emi_paise)],
-      ['Time to clear', 'Never (interest only)', same.months ? `${same.months} months` : 'Over 40 years', `${nl.months} months`],
-      ['Interest', `${fmt0(r.current.interest_only_for_tenure_paise)} in ${nl.months} months`, fmt0(same.interest_paise), fmt0(nl.interest_paise)],
-      ['Charges', '—', '—', fmt0(nl.charges_paise)],
-      ['Total cost', `${fmt0(r.current.interest_only_for_tenure_paise)} + ${fmt0(r.current.still_owed_after_tenure_paise)} still owed`, fmt0(same.total_cost_paise), fmt0(nl.total_cost_paise)],
-    ];
-    const table = h('table', { class: 'compare' },
-      h('thead', {}, h('tr', {}, h('th', {}), h('th', { class: 'num', text: 'Keep as now' }), h('th', { class: 'num', text: 'Same EMI into current loans' }), h('th', { class: 'num', text: 'New loan' }))),
-      h('tbody', {}, rows.map((row) => h('tr', {}, h('th', { text: row[0] }), row.slice(1).map((c) => h('td', { class: 'num', text: c }))))),
-    );
     const diff = r.difference_paise;
-    const out = [h('div', { class: 'table-wrap' }, table)];
-    out.push(h('p', { class: `notice${diff < 0 ? ' info' : ''}`, text: diff < 0
-      ? `On these numbers the new loan costs ${fmt0(-diff)} less than paying the same ${fmt0(nl.emi_paise)} a month into the loans you have now.`
-      : `On these numbers the new loan costs ${fmt0(diff)} more than paying the same ${fmt0(nl.emi_paise)} a month into the loans you have now.` }));
-    out.push(h('p', { class: 'faint', text: `Monthly outgo changes by ${r.monthly_change_paise >= 0 ? '+' : ''}${fmt0(r.monthly_change_paise)} compared with today.${nl.cash_in_hand_paise < 0 ? ` You would need ${fmt0(-nl.cash_in_hand_paise)} from your pocket for the fees.` : nl.cash_in_hand_paise > 0 ? ` ${fmt0(nl.cash_in_hand_paise)} would be left in hand.` : ''} Check the bank's own EMI and charges before deciding; this uses only the numbers you entered.` }));
+    const out = [];
+
+    // 1. The answer.
+    out.push(diff === 0
+      ? h('div', { class: 'verdict plain' }, h('strong', { text: t('rf_equal') }))
+      : h('div', { class: `verdict ${diff < 0 ? 'good' : 'bad'}` },
+        h('strong', { text: diff < 0 ? t('rf_yes') : t('rf_no') }),
+        h('p', { text: diff < 0 ? t('rf_yes_sub', { amount: easy(-diff) }) : t('rf_no_sub', { amount: easy(diff) }) })));
+
+    // 2. The two choices, same monthly payment.
+    const newBox = h('div', { class: `plan-box ${diff < 0 ? 'best' : ''}` },
+      h('h3', { text: t('opt_new') }),
+      h('p', { class: 'sub', text: t('opt_new_sub', { amount: easy(nl.amount_paise), rate: rate(nl.rate), time: duration(nl.months) }) }),
+      kv(t('lbl_monthly'), `${easy(nl.emi_paise)}${t('per_month')}`),
+      kv(t('lbl_time'), duration(nl.months)),
+      kv(t('lbl_interest'), easy(nl.interest_paise)),
+      nl.charges_paise > 0 ? kv(t('lbl_fees'), easy(nl.charges_paise)) : null,
+      kv(t('lbl_total'), easy(nl.total_cost_paise), diff < 0 ? 'good' : null),
+    );
+    const sameBox = h('div', { class: `plan-box ${diff > 0 ? 'best' : ''}` },
+      h('h3', { text: t('opt_same') }),
+      h('p', { class: 'sub', text: t('opt_same_sub', { emi: easy(same.monthly_paise) }) }),
+      kv(t('lbl_monthly'), `${easy(same.monthly_paise)}${t('per_month')}`),
+      kv(t('lbl_time'), same.months ? duration(same.months) : t('over_40')),
+      kv(t('lbl_interest'), easy(same.interest_paise)),
+      kv(t('lbl_total'), easy(same.total_cost_paise), diff > 0 ? 'good' : null),
+    );
+    out.push(h('div', { class: 'plan-compare' }, newBox, sameBox));
+
+    // 3. Plain notes on money in and out.
+    const notes = [];
+    const allInterestOnly = picked.length && picked.every((l) => l.repayment_type === 'interest_only');
+    if (allInterestOnly) {
+      notes.push(t('rf_keep', { monthly: easy(r.current.monthly_paise), time: duration(nl.months), interest: easy(r.current.interest_only_for_tenure_paise), owed: easy(r.current.still_owed_after_tenure_paise) }));
+    }
+    notes.push(t('rf_now', { now: easy(r.current.monthly_paise) }));
+    if (r.monthly_change_paise > 0) notes.push(t('rf_monthly_more', { amount: easy(r.monthly_change_paise) }));
+    else if (r.monthly_change_paise < 0) notes.push(t('rf_monthly_less', { amount: easy(-r.monthly_change_paise) }));
+    if (nl.cash_in_hand_paise < 0) notes.push(t('rf_pocket', { amount: easy(-nl.cash_in_hand_paise) }));
+    else if (nl.cash_in_hand_paise > 0) notes.push(t('rf_in_hand', { amount: easy(nl.cash_in_hand_paise) }));
+    out.push(h('ul', { class: 'plain-notes' }, notes.map((n) => h('li', { text: n }))));
+    out.push(h('p', { class: 'faint small', text: t('rf_caution') }));
     return out;
   }
 

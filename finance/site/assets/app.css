@@ -447,3 +447,34 @@ table.compare tbody th { font-weight: 650; }
 table.compare td.status-under { color: var(--good); }
 table.compare td.status-over { color: var(--bad); }
 table.compare td.status-none { color: var(--faint); }
+
+/* Plan screen — plain-language layout, no wide tables */
+.lang-card { padding: 12px 14px; }
+.lang-card .segmented { margin-bottom: 0; }
+.plan-compare { display: grid; gap: 12px; }
+@media (min-width: 640px) { .plan-compare { grid-template-columns: 1fr 1fr; } }
+.plan-box { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px; background: var(--surface); }
+.plan-box h3 { margin: 0 0 2px; font-size: 16px; }
+.plan-box .sub { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+.plan-box.best { border: 2px solid var(--brand); background: var(--brand-weak); }
+.kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.kv:first-of-type { border-top: 0; }
+.kv span { color: var(--muted); font-size: 14px; }
+.kv strong { font-size: 16px; text-align: right; }
+.kv strong.bad { color: var(--bad); }
+.kv strong.good { color: var(--good); }
+.verdict { border-radius: var(--radius-sm); padding: 14px 16px; }
+.verdict strong { display: block; font-size: 17px; line-height: 1.4; }
+.verdict p { margin: 6px 0 0; font-size: 15px; color: var(--text); }
+.verdict.good { background: var(--good-weak); color: var(--good); }
+.verdict.bad { background: var(--bad-weak); color: var(--bad); }
+.verdict.plain { background: var(--surface-2); }
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 10px; font-size: 15px; }
+.order { list-style: none; padding: 0; margin: 8px 0 0; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.order li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-top: 1px solid var(--line); }
+.order li:first-child { border-top: 0; }
+.order li.col { flex-direction: column; gap: 2px; }
+.order li b { color: var(--brand-strong); margin-right: 6px; }
+.order .bad { color: var(--bad); }
+details.more > summary { cursor: pointer; font-weight: 600; color: var(--brand-strong); padding: 6px 0; }
+.plain-notes { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
