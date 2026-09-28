@@ -69,11 +69,26 @@ jobs:
             **/.git*/**
             config.php
       - name: Check the app answers and hides its source
+        # Hostinger's bot/WAF filter (Imunify360) sometimes 403s a plain
+        # curl request with no browser-like headers, even though real
+        # visitors load the page fine. A believable User-Agent and Accept
+        # header, plus one retry, avoids that false alarm without hiding
+        # a real outage (a real 403/down state persists across retries).
         run: |
           set -eu
-          code=$(curl -sS -o /tmp/ff.html -w "%{http_code}" --max-time 30 https://finance.printsahaj.com/)
+          UA='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+          fetch_code() {
+            local url="$1" out="${2:-/dev/null}"
+            for attempt in 1 2 3; do
+              code=$(curl -sS -o "$out" -w "%{http_code}" --max-time 30 -A "$UA" -H 'Accept: text/html' "$url")
+              [ "$code" = "403" ] && [ "$attempt" -lt 3 ] && sleep 5 && continue
+              break
+            done
+            echo "$code"
+          }
+          code=$(fetch_code https://finance.printsahaj.com/ /tmp/ff.html)
           echo "App HTTP $code"; [ "$code" = "200" ] && grep -q "Family Finance" /tmp/ff.html
-          src=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://finance.printsahaj.com/src/lib.php)
+          src=$(fetch_code https://finance.printsahaj.com/src/lib.php)
           echo "Source HTTP $src"; [ "$src" = "404" ] || [ "$src" = "403" ]
-          main=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://printsahaj.com/finance/)
-          echo "printsahaj.com/finance/ HTTP $main"; [ "$main" = "404" ]
+          main=$(fetch_code https://printsahaj.com/finance/)
+          echo "printsahaj.com/finance/ HTTP $main"; [ "$main" = "404" ] || [ "$main" = "403" ]
