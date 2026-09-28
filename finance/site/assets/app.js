@@ -49,6 +49,8 @@
     const frac = abs % 100;
     return `${neg ? '−' : ''}₹${rupee.format(whole)}${frac ? '.' + String(frac).padStart(2, '0') : ''}`;
   }
+  /** Rounded to the rupee, for projections where paise are noise. */
+  const fmt0 = (paise) => (paise === null || paise === undefined ? '—' : fmt(Math.round(paise / 100) * 100));
   /** paise → "12500.50" for putting back into an input. */
   function toInput(paise) {
     if (paise === null || paise === undefined) return '';
@@ -206,7 +208,7 @@
 
   function route() {
     const view = location.hash.replace('#', '') || 'dashboard';
-    state.view = ['dashboard', 'expenses', 'income', 'loans', 'settings'].includes(view) ? view : 'dashboard';
+    state.view = ['dashboard', 'expenses', 'income', 'loans', 'plan', 'settings'].includes(view) ? view : 'dashboard';
     for (const a of document.querySelectorAll('.nav a')) {
       if (a.dataset.view === state.view) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
@@ -216,13 +218,13 @@
 
   async function render() {
     if (!state.user) return;
-    const titles = { dashboard: 'Home', expenses: 'Spending', income: 'Income', loans: 'Loans', settings: 'Settings' };
+    const titles = { dashboard: 'Home', expenses: 'Spending', income: 'Income', loans: 'Loans', plan: 'Plan', settings: 'Settings' };
     $('#view-title').textContent = titles[state.view];
-    $('#month').hidden = state.view === 'settings' || state.view === 'loans';
+    $('#month').hidden = ['settings', 'loans', 'plan'].includes(state.view);
     const main = $('#main');
     main.replaceChildren(h('div', { class: 'loading', text: 'Loading…' }));
     try {
-      const views = { dashboard: viewDashboard, expenses: viewExpenses, income: viewIncome, loans: viewLoans, settings: viewSettings };
+      const views = { dashboard: viewDashboard, expenses: viewExpenses, income: viewIncome, loans: viewLoans, plan: viewPlan, settings: viewSettings };
       const node = await views[state.view]();
       main.replaceChildren(node);
     } catch (e) {
@@ -799,6 +801,222 @@
     openDialog(`Payments — ${l.name}`, body);
   }
 
+  // ---------- plan ----------
+  const STRATEGY = {
+    none: "Today's payments only",
+    avalanche: 'Costliest loan first',
+    snowball: 'Smallest loan first',
+    custom: 'My choice first',
+  };
+
+  async function viewPlan() {
+    const loans = await get('loans');
+    const active = loans.filter((l) => l.group !== 'closed');
+    const root = h('div', { class: 'stack' });
+    root.append(h('p', { class: 'notice info', text: 'Planning never changes your real entries. Try as many numbers as you like.' }));
+    if (!active.length) {
+      root.append(h('div', { class: 'card empty', text: 'Add your loans first (Loans tab), then come back to plan.' }));
+      return root;
+    }
+    root.append(payoffCard(active), refinanceCard(active));
+    return root;
+  }
+
+  function payoffCard(active) {
+    const card = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'Pay off loans faster' })),
+      h('p', { class: 'muted small', style: 'margin-bottom:14px', text: 'Keeps your total loan payment each month the same. When a loan ends, its EMI moves to the next loan instead of being spent. Extra money goes on top.' }),
+    );
+    const lumps = h('div', {});
+    const addLump = (v = {}) => {
+      const row = h('div', { class: 'lump-row' },
+        field('Amount (₹)', moneyInput('lump_amount', v.amount || '')),
+        field('First month', input('lump_month', v.month || addMonthsJs(thisMonth(), 1), { type: 'month' })),
+        field('Every … months', input('lump_every', v.every ?? '3', { inputmode: 'numeric' }), '0 = once'),
+        field('How many times', input('lump_times', v.times ?? '4', { inputmode: 'numeric' })),
+        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Remove', text: '✕', onclick: () => row.remove() }),
+      );
+      lumps.append(row);
+    };
+    const firstPick = select('first', [['', 'No — let the method decide'], ...active.map((l) => [String(l.id), l.name])], state.planFirst || '');
+    const results = h('div', { class: 'stack', style: 'margin-top:16px' });
+
+    const form = formShell(async (fd) => {
+      const rows = [...lumps.querySelectorAll('.lump-row')];
+      const body = {
+        extra_monthly: fd.get('extra_monthly'),
+        lumps: rows.map((r) => ({
+          amount: r.querySelector('[name=lump_amount]').value,
+          month: r.querySelector('[name=lump_month]').value,
+          every_months: r.querySelector('[name=lump_every]').value || '0',
+          times: r.querySelector('[name=lump_times]').value || '1',
+        })).filter((l) => l.amount.trim() !== ''),
+        order: fd.get('first') ? [Number(fd.get('first'))] : [],
+      };
+      state.planFirst = fd.get('first');
+      const r = await post('plan/simulate', body);
+      results.replaceChildren(...planResults(r));
+    }, 'Show plan',
+      field('Extra every month (₹)', moneyInput('extra_monthly', ''), 'On top of today’s EMIs. Leave empty for none.'),
+      h('div', { class: 'field' }, h('span', { text: 'Extra income expected (incentive, CRM…)' }), lumps,
+        h('button', { class: 'btn small', type: 'button', text: '+ Add expected income', onclick: () => addLump() })),
+      field('Clear one loan first?', firstPick),
+    );
+    card.append(form, results);
+    return card;
+  }
+
+  function addMonthsJs(ym, n) {
+    const [y, m] = ym.split('-').map(Number);
+    const d = new Date(y, m - 1 + n, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  const when = (ym) => (ym ? monthLabel(ym) : 'Never');
+
+  function planResults(r) {
+    const out = [];
+    if (r.left_out.length) {
+      out.push(h('p', { class: 'notice', text: `Left out (missing numbers): ${r.left_out.map((l) => `${l.name} — ${l.reason}`).join(' ')}` }));
+    }
+    const approx = r.loans.filter((l) => l.approx).map((l) => l.name);
+    if (approx.length) {
+      out.push(h('p', { class: 'notice info', text: `No interest rate for ${approx.join(', ')}: EMIs are followed as scheduled, their interest is not counted, and they are ranked last for extra money. Credit cards usually charge far more than 18% — add the card's rate for a truer plan.` }));
+    }
+    const names = Object.keys(r.plans);
+    const table = h('table', { class: 'compare' },
+      h('thead', {}, h('tr', {}, h('th', { text: 'Method' }), h('th', { class: 'num', text: 'Gold loans closed' }), h('th', { class: 'num', text: 'All loans done' }), h('th', { class: 'num', text: 'Interest paid*' }))),
+      h('tbody', {}, names.map((n) => {
+        const p = r.plans[n];
+        return h('tr', {},
+          h('th', { text: STRATEGY[n] }),
+          h('td', { class: 'num', text: when(p.gold_closed_month) }),
+          h('td', { class: 'num', text: when(p.debt_free_month) }),
+          h('td', { class: 'num', text: fmt0(p.total_interest_paise) }),
+        );
+      })),
+    );
+    out.push(h('div', { class: 'table-wrap' }, table));
+    const base = r.plans.none;
+    const best = names.filter((n) => n !== 'none').map((n) => r.plans[n]).sort((a, b) => a.total_interest_paise - b.total_interest_paise)[0];
+    out.push(h('p', { class: 'faint', text: `* Interest on loans whose rate is known, from ${monthLabel(r.start_month)} until each loan ends (or 40 years). Monthly loan budget: ${fmt(best.monthly_budget_paise)}.${base.debt_free_month === null ? " On today's payments alone, interest-only loans never end." : ''}` }));
+
+    const canvas = h('canvas', { role: 'img', 'aria-label': 'Total loans left over time for each method' });
+    out.push(h('div', { class: 'chart-box tall' }, canvas));
+    requestAnimationFrame(() => drawPlanChart(canvas, r));
+
+    const pick = h('div', {});
+    const showLoans = (n) => {
+      const p = r.plans[n];
+      pick.replaceChildren(h('div', { class: 'table-wrap' }, h('table', { class: 'compare' },
+        h('thead', {}, h('tr', {}, h('th', { text: 'Loan' }), h('th', { class: 'num', text: 'Ends' }), h('th', { class: 'num', text: 'Interest' }))),
+        h('tbody', {}, p.loans.slice().sort((a, b) => (a.close_month || '9999').localeCompare(b.close_month || '9999')).map((l) => h('tr', {},
+          h('th', { text: l.name }),
+          h('td', { class: 'num', text: when(l.close_month) }),
+          h('td', { class: 'num', text: l.interest_paise === null ? 'rate not entered' : fmt0(l.interest_paise) }),
+        ))),
+      )));
+    };
+    const initial = names.includes('custom') ? 'custom' : 'avalanche';
+    out.push(h('h3', { text: 'When each loan ends' }), segmented(names.map((n) => [n, STRATEGY[n].replace(' first', '').replace("Today's payments only", 'Today')]), initial, showLoans), pick);
+    showLoans(initial);
+    return out;
+  }
+
+  function drawPlanChart(canvas, r) {
+    if (!window.Chart || !canvas.isConnected) return;
+    if (state.planChart) state.planChart.destroy();
+    const names = Object.keys(r.plans);
+    const longest = Math.max(...names.map((n) => r.plans[n].timeline.length));
+    const months = Math.min(longest, 240);
+    const labels = Array.from({ length: months }, (_, i) => addMonthsJs(r.start_month, i));
+    const colors = { none: '#94a3b8', avalanche: '#0e9f8e', snowball: '#3b82f6', custom: '#f59e0b' };
+    state.planChart = new window.Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels.map((m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })),
+        datasets: names.map((n) => ({
+          label: STRATEGY[n],
+          data: labels.map((_, i) => { const t = r.plans[n].timeline[i]; return t ? t.outstanding_paise / 100 : 0; }),
+          borderColor: colors[n], backgroundColor: colors[n], pointRadius: 0, borderWidth: n === 'none' ? 1.5 : 2.5, borderDash: n === 'none' ? [5, 4] : [],
+        })),
+      },
+      options: {
+        maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+        scales: {
+          y: { ticks: { callback: (v) => (v >= 100000 ? `₹${(v / 100000).toFixed(v % 100000 ? 1 : 0)}L` : `₹${rupee.format(v)}`) } },
+          x: { ticks: { maxTicksLimit: 8 } },
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12 } },
+          tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(Math.round(c.parsed.y * 100))}` } },
+        },
+      },
+    });
+  }
+
+  function refinanceCard(active) {
+    const withRate = active.filter((l) => l.interest_rate !== null);
+    const card = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'Replace a loan with a new one?' })),
+      h('p', { class: 'muted small', style: 'margin-bottom:14px', text: 'For example, a personal loan to close the gold loan. Enter the offer exactly as the bank gives it. The fair comparison pays the same monthly amount into the loans you have now.' }),
+    );
+    if (!withRate.length) {
+      card.append(h('p', { class: 'empty', text: 'Add interest rates to your loans to use this.' }));
+      return card;
+    }
+    const picks = h('div', { class: 'loan-picks' }, withRate.map((l) => h('label', { class: 'check' },
+      h('input', { type: 'checkbox', name: 'loan', value: String(l.id), checked: l.loan_type === 'gold' }),
+      h('span', { text: `${l.name} — ${fmt(l.outstanding_paise)} at ${rate(l.interest_rate)}` }),
+    )));
+    const results = h('div', { style: 'margin-top:16px' });
+    const form = formShell(async (fd) => {
+      const r = await post('plan/refinance', {
+        loan_ids: fd.getAll('loan').map(Number), new_rate: fd.get('new_rate'), tenure_months: fd.get('tenure_months'),
+        new_amount: fd.get('new_amount'), processing_fee: fd.get('processing_fee'), foreclosure_charges: fd.get('foreclosure_charges'), other_charges: fd.get('other_charges'),
+      });
+      results.replaceChildren(...refinanceResults(r));
+    }, 'Compare',
+      h('div', { class: 'field' }, h('span', { text: 'Loans to close' }), picks),
+      h('div', { class: 'grid-2' },
+        field('Offered interest % per year', input('new_rate', '', { inputmode: 'decimal', required: true })),
+        field('Tenure (months)', input('tenure_months', '36', { inputmode: 'numeric', required: true })),
+      ),
+      h('div', { class: 'grid-2' },
+        field('Processing fee (₹)', moneyInput('processing_fee', '')),
+        field('Closing / foreclosure charges (₹)', moneyInput('foreclosure_charges', '')),
+      ),
+      h('div', { class: 'grid-2' },
+        field('Other charges (₹)', moneyInput('other_charges', ''), 'Insurance, stamp duty…'),
+        field('New loan amount (₹)', moneyInput('new_amount', ''), 'Empty = exactly what it closes'),
+      ),
+    );
+    card.append(form, results);
+    return card;
+  }
+
+  function refinanceResults(r) {
+    const same = r.same_payment_on_current;
+    const nl = r.new_loan;
+    const rows = [
+      ['Monthly payment', fmt0(r.current.monthly_paise), fmt0(same.monthly_paise), fmt0(nl.emi_paise)],
+      ['Time to clear', 'Never (interest only)', same.months ? `${same.months} months` : 'Over 40 years', `${nl.months} months`],
+      ['Interest', `${fmt0(r.current.interest_only_for_tenure_paise)} in ${nl.months} months`, fmt0(same.interest_paise), fmt0(nl.interest_paise)],
+      ['Charges', '—', '—', fmt0(nl.charges_paise)],
+      ['Total cost', `${fmt0(r.current.interest_only_for_tenure_paise)} + ${fmt0(r.current.still_owed_after_tenure_paise)} still owed`, fmt0(same.total_cost_paise), fmt0(nl.total_cost_paise)],
+    ];
+    const table = h('table', { class: 'compare' },
+      h('thead', {}, h('tr', {}, h('th', {}), h('th', { class: 'num', text: 'Keep as now' }), h('th', { class: 'num', text: 'Same EMI into current loans' }), h('th', { class: 'num', text: 'New loan' }))),
+      h('tbody', {}, rows.map((row) => h('tr', {}, h('th', { text: row[0] }), row.slice(1).map((c) => h('td', { class: 'num', text: c }))))),
+    );
+    const diff = r.difference_paise;
+    const out = [h('div', { class: 'table-wrap' }, table)];
+    out.push(h('p', { class: `notice${diff < 0 ? ' info' : ''}`, text: diff < 0
+      ? `On these numbers the new loan costs ${fmt0(-diff)} less than paying the same ${fmt0(nl.emi_paise)} a month into the loans you have now.`
+      : `On these numbers the new loan costs ${fmt0(diff)} more than paying the same ${fmt0(nl.emi_paise)} a month into the loans you have now.` }));
+    out.push(h('p', { class: 'faint', text: `Monthly outgo changes by ${r.monthly_change_paise >= 0 ? '+' : ''}${fmt0(r.monthly_change_paise)} compared with today.${nl.cash_in_hand_paise < 0 ? ` You would need ${fmt0(-nl.cash_in_hand_paise)} from your pocket for the fees.` : nl.cash_in_hand_paise > 0 ? ` ${fmt0(nl.cash_in_hand_paise)} would be left in hand.` : ''} Check the bank's own EMI and charges before deciding; this uses only the numbers you entered.` }));
+    return out;
+  }
+
   // ---------- settings ----------
   async function viewSettings() {
     const c = await get('contributions');
@@ -859,7 +1077,7 @@
         },
       }),
     ));
-    root.append(h('p', { class: 'faint', text: 'Coming next: loan payoff plan (which loan to clear first), “what if” planner for incentives and refinancing, emergency fund and goals, then AI suggestions.' }));
+    root.append(h('p', { class: 'faint', text: 'Coming next: emergency fund and goals, then AI suggestions.' }));
     return root;
   }
 

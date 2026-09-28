@@ -240,6 +240,40 @@ check('upcoming lists due loans', count($d['upcoming'] ?? []) === 2, $d['upcomin
 $db2 = $b->get("dashboard&month=$month")[1];
 check('Ravi sees the same family totals', ($db2['available_paise'] ?? null) === 2549950, $db2['available_paise'] ?? null);
 
+echo "Plan (never changes data)\n";
+$before = $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn();
+$plan = expectStatus('simulate with no extra', $a->post('plan/simulate', []), 200);
+$none = $plan['plans']['none'] ?? [];
+check('today\'s payments never clear an interest-only loan', array_key_exists('gold_closed_month', $none) && $none['gold_closed_month'] === null && $none['debt_free_month'] === null, $none['warnings'] ?? null);
+check('bike (no rate, 3 months left) still projected on schedule', in_array('Bike', array_column(array_filter($none['loans'] ?? [], fn ($l) => $l['close_month'] !== null), 'name'), true), $none['loans'] ?? null);
+$plan = expectStatus('simulate with extra 20,000/month', $a->post('plan/simulate', ['extra_monthly' => '20000']), 200);
+$av = $plan['plans']['avalanche'];
+$sb = $plan['plans']['snowball'];
+check('avalanche clears the gold loan', $av['gold_closed_month'] !== null, $av);
+check('avalanche pays no more interest than snowball', $av['total_interest_paise'] <= $sb['total_interest_paise'], [$av['total_interest_paise'], $sb['total_interest_paise']]);
+check('budget = month-one payments + extra', $av['monthly_budget_paise'] > 2000000, $av['monthly_budget_paise']);
+$lump = expectStatus('simulate with a lump every 3 months', $a->post('plan/simulate', ['extra_monthly' => '20000', 'lumps' => [['amount' => '30000', 'month' => date('Y-m', strtotime('first day of +1 month')), 'every_months' => 3, 'times' => 4]]]), 200);
+check('lumps bring gold closure earlier or equal', $lump['plans']['avalanche']['gold_closed_month'] <= $av['gold_closed_month'], [$lump['plans']['avalanche']['gold_closed_month'], $av['gold_closed_month']]);
+check('lumps recorded 4 times', count($lump['lumps']) === 4, $lump['lumps']);
+$custom = expectStatus('custom order', $a->post('plan/simulate', ['extra_monthly' => '5000', 'order' => [$card['id']]]), 200);
+check('custom plan present', isset($custom['plans']['custom']), array_keys($custom['plans']));
+$cardClose = array_column($custom['plans']['custom']['loans'], 'close_month', 'name')['Card'] ?? null;
+$cardAval = array_column($custom['plans']['avalanche']['loans'], 'close_month', 'name')['Card'] ?? null;
+check('putting the card first clears it no later', $cardClose !== null && ($cardAval === null || $cardClose <= $cardAval), [$cardClose, $cardAval]);
+check('simulation changed nothing', $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn() === $before);
+expectStatus('bad lump month refused', $a->post('plan/simulate', ['lumps' => [['amount' => '1', 'month' => '2026-13']]]), 422);
+
+$rf = expectStatus('refinance check', $a->post('plan/refinance', ['loan_ids' => [$gold['id']], 'new_rate' => '12', 'tenure_months' => 12, 'processing_fee' => '2000']), 200);
+// 2,00,000 at 12% over 12 months: EMI ≈ ₹17,769.76.
+check('EMI for 2,00,000 @ 12% / 12 months ≈ 17,769.76', abs(($rf['new_loan']['emi_paise'] ?? 0) - 1776976) <= 3, $rf['new_loan'] ?? $rf);
+check('current monthly = interest only (3,000)', ($rf['current']['monthly_paise'] ?? null) === 300000, $rf['current'] ?? null);
+check('same payment on the gold loan clears it', ($rf['same_payment_on_current']['months'] ?? null) !== null, $rf['same_payment_on_current'] ?? null);
+check('charges included in new-loan cost', ($rf['new_loan']['total_cost_paise'] ?? 0) === ($rf['new_loan']['interest_paise'] ?? 0) + 200000, $rf['new_loan'] ?? null);
+check('difference = new cost − keeping cost', ($rf['difference_paise'] ?? null) === $rf['new_loan']['total_cost_paise'] - $rf['same_payment_on_current']['total_cost_paise'], $rf);
+expectStatus('refinance refuses a loan without rate', $a->post('plan/refinance', ['loan_ids' => [$bike['id']], 'new_rate' => '12', 'tenure_months' => 12]), 422);
+expectStatus('refinance needs the offered rate', $a->post('plan/refinance', ['loan_ids' => [$gold['id']], 'tenure_months' => 12]), 422);
+check('refinance changed nothing', $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn() === $before);
+
 echo "Guards\n";
 $other = new Client($base, 'printsahaj.com');
 expectStatus('wrong host answers 404', $other->get('session'), 404);

@@ -19,7 +19,7 @@ stays in the Hostinger database.
 | `site/` | Everything uploaded to `public_html/finance/` |
 | `site/index.html`, `site/assets/` | The app (one page, hash routes) |
 | `site/api/index.php` | The only PHP entry point (`?r=/route`) |
-| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php` |
+| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php`, `planner.php` |
 | `site/src/migrations/` | SQL, applied automatically in order |
 | `site/config.example.php` | Template for the private config |
 | `tests/api_test.php` | End-to-end API test against a throwaway MySQL DB |
@@ -64,9 +64,11 @@ FF_DB_HOST=127.0.0.1 FF_DB_NAME=fftest FF_DB_USER=ff FF_DB_PASS=ffpass php finan
 
 ## Roadmap
 
-- **V1 (this):** sign-in, income, family pool, spending, loans, loan payments, dashboard.
-- **V2:** loan payoff projections, emergency fund, goals.
-- **V3:** avalanche / snowball / custom payoff plans, "what if" scenarios (incentive, CRM income,
-  gold-loan refinance) that never change real data.
+- **V1 (done):** sign-in, income, family pool, spending, loans, loan payments, dashboard.
+- **Plan (done):** month-by-month payoff projection (`src/planner.php`) comparing today's payments,
+  costliest-first (avalanche), smallest-first (snowball) and a chosen loan first, with extra monthly
+  money and expected lump sums (incentive, CRM). Freed EMIs roll into the next loan. Refinance check:
+  new loan vs paying the same EMI into the current loans. Neither changes saved data.
+- **Next:** emergency fund, goals.
 - **V4:** AI explanations on top of the calculated numbers (server-side key; AI never writes data).
 - **V5:** backups, monitoring, security review.

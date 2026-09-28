@@ -9,6 +9,7 @@ declare(strict_types=1);
 require __DIR__ . '/../src/lib.php';
 require __DIR__ . '/../src/auth.php';
 require __DIR__ . '/../src/records.php';
+require __DIR__ . '/../src/planner.php';
 
 date_default_timezone_set('Asia/Kolkata');
 ini_set('display_errors', '0');
@@ -62,7 +63,8 @@ try {
     $in = new Input($method === 'POST' ? Http::body() : $_GET);
     $month = static fn () => (string) ($_GET['month'] ?? substr(today(), 0, 7));
     $id = isset($parts[1]) && ctype_digit($parts[1]) ? (int) $parts[1] : null;
-    $action = $parts[2] ?? '';
+    // Either resource/:id/action or resource/action.
+    $action = $id !== null ? ($parts[2] ?? '') : ($parts[1] ?? '');
     $key = $method . ' ' . ($parts[0] ?? '') . ($id !== null ? '/:id' : '') . ($action !== '' ? "/$action" : '');
 
     $result = match ($key) {
@@ -112,6 +114,10 @@ try {
         'GET loans/:id/payments' => Payments::list($user, $id),
         'POST loans/:id/payments' => Payments::create($user, $id, $in),
         'POST payments/:id/delete' => Payments::delete($user, $id),
+
+        // Planning only reads; nothing here changes saved data.
+        'POST plan/simulate' => Planner::run($user, $in),
+        'POST plan/refinance' => Planner::refinance($user, $in),
 
         default => throw new HttpError(404, 'Not found.'),
     };
