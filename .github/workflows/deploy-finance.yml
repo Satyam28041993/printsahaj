@@ -50,6 +50,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # A device's browser can hold on to an old cached app.css/app.js long
+      # after a deploy (mobile Chrome in particular doesn't offer a hard
+      # refresh). Stamp every deploy's commit SHA onto their URLs so a new
+      # deploy is always a new URL — no cache, on any device, can ever
+      # serve a stale one by mistake.
+      - name: Stamp asset URLs with this commit's SHA
+        run: |
+          set -eu
+          SHA="${GITHUB_SHA::7}"
+          sed -i "s/assets\/app\.css/assets\/app.css?v=${SHA}/" finance/site/index.html
+          sed -i "s/assets\/app\.js/assets\/app.js?v=${SHA}/" finance/site/index.html
+          sed -i "s/^const CACHE = '.*';/const CACHE = 'ff-shell-${SHA}';/" finance/site/sw.js
+          sed -i "s/assets\/app\.css'/assets\/app.css?v=${SHA}'/" finance/site/sw.js
+          sed -i "s/assets\/app\.js'/assets\/app.js?v=${SHA}'/" finance/site/sw.js
       # Same Hostinger FTP account as the website; that user is jailed to
       # public_html, so "finance/" is public_html/finance. The real config
       # (with the database password) sits above public_html and is never
