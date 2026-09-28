@@ -57,6 +57,10 @@ final class Auth
     private const MAX_SECONDS = 30 * 24 * 3600;
     private const MAX_FAILURES = 5;
     private const FAILURE_WINDOW_MINUTES = 15;
+    /** With an MPIN set, a session locks after this long unused. */
+    private const PIN_IDLE_SECONDS = 5 * 60;
+    /** Wrong MPINs allowed before the session is signed out (password needed). */
+    private const PIN_MAX_FAILURES = 5;
 
     private static ?array $user = null;
 
@@ -88,15 +92,20 @@ final class Auth
             return null;
         }
         $t = time();
-        if ($t - (int) ($_SESSION['seen'] ?? 0) > self::IDLE_SECONDS || $t - (int) ($_SESSION['since'] ?? 0) > self::MAX_SECONDS) {
+        $idle = $t - (int) ($_SESSION['seen'] ?? 0);
+        if ($idle > self::IDLE_SECONDS || $t - (int) ($_SESSION['since'] ?? 0) > self::MAX_SECONDS) {
             self::logout();
             return null;
         }
         $_SESSION['seen'] = $t;
-        $user = Db::one('SELECT id, family_id, name, username, role FROM users WHERE id = ?', [$uid]);
+        $user = Db::one('SELECT id, family_id, name, username, role, pin_hash IS NOT NULL AS has_pin FROM users WHERE id = ?', [$uid]);
         if ($user === null) {
             self::logout();
             return null;
+        }
+        $user['has_pin'] = (bool) $user['has_pin'];
+        if ($user['has_pin'] && $idle > self::PIN_IDLE_SECONDS) {
+            $_SESSION['locked'] = true;
         }
         return self::$user = $user;
     }
@@ -108,6 +117,82 @@ final class Auth
             throw new HttpError(401, 'Please sign in.');
         }
         return $user;
+    }
+
+    public static function isLocked(): bool
+    {
+        $user = self::user();
+        return $user !== null && $user['has_pin'] && !empty($_SESSION['locked']);
+    }
+
+    /** Everything except unlock and sign-out waits behind the MPIN. */
+    public static function requireUnlocked(): void
+    {
+        if (self::isLocked()) {
+            throw new HttpError(423, 'Locked. Enter your MPIN.');
+        }
+    }
+
+    public static function lock(array $user): bool
+    {
+        if ($user['has_pin']) {
+            $_SESSION['locked'] = true;
+        }
+        return self::isLocked();
+    }
+
+    public static function unlock(array $user, string $pin): void
+    {
+        if (!$user['has_pin']) {
+            unset($_SESSION['locked']);
+            return;
+        }
+        $row = Db::one('SELECT pin_hash FROM users WHERE id = ?', [$user['id']]);
+        if (password_verify($pin, (string) $row['pin_hash'])) {
+            unset($_SESSION['locked'], $_SESSION['pin_fail']);
+            return;
+        }
+        $_SESSION['pin_fail'] = (int) ($_SESSION['pin_fail'] ?? 0) + 1;
+        $left = self::PIN_MAX_FAILURES - $_SESSION['pin_fail'];
+        if ($left <= 0) {
+            Audit::log($user, 'reset', 'pin_lockout', (int) $user['id']);
+            self::logout();
+            throw new HttpError(401, 'Too many wrong MPINs. Sign in with your password.');
+        }
+        throw new HttpError(422, $left === 1 ? 'Wrong MPIN. 1 try left.' : "Wrong MPIN. {$left} tries left.");
+    }
+
+    /** Set or change the MPIN. The account password is required, so a borrowed unlocked phone cannot change it. */
+    public static function setPin(array $user, string $password, string $pin): void
+    {
+        self::verifyPassword($user, $password);
+        if (!preg_match('/^\d{4,6}$/', $pin)) {
+            throw new HttpError(422, 'MPIN must be 4 to 6 digits.');
+        }
+        if (count(array_unique(str_split($pin))) === 1 || str_contains('0123456789', $pin) || str_contains('9876543210', $pin)) {
+            throw new HttpError(422, 'Choose an MPIN that is harder to guess (not 1111 or 1234).');
+        }
+        Db::run('UPDATE users SET pin_hash = ?, updated_at = NOW() WHERE id = ?', [password_hash($pin, PASSWORD_DEFAULT), $user['id']]);
+        unset($_SESSION['locked'], $_SESSION['pin_fail']);
+        self::$user = null;
+        Audit::log($user, 'update', 'pin', (int) $user['id']);
+    }
+
+    public static function removePin(array $user, string $password): void
+    {
+        self::verifyPassword($user, $password);
+        Db::run('UPDATE users SET pin_hash = NULL, updated_at = NOW() WHERE id = ?', [$user['id']]);
+        unset($_SESSION['locked'], $_SESSION['pin_fail']);
+        self::$user = null;
+        Audit::log($user, 'delete', 'pin', (int) $user['id']);
+    }
+
+    private static function verifyPassword(array $user, string $password): void
+    {
+        $row = Db::one('SELECT password_hash FROM users WHERE id = ?', [$user['id']]);
+        if (!password_verify($password, $row['password_hash'])) {
+            throw new HttpError(422, 'Password is wrong.');
+        }
     }
 
     public static function csrfToken(): string

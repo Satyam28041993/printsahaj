@@ -128,6 +128,7 @@
         state.user = null;
         showLogin('You were signed out. Please sign in again.');
       }
+      if (res.status === 423 && state.user) showLock();
       throw new ApiError(res.status, (data && data.error) || 'Something went wrong.');
     }
     return data;
@@ -137,7 +138,7 @@
 
   // ---------- boot, sign-in, setup ----------
   function showOnly(id) {
-    for (const s of ['#boot', '#view-login', '#view-setup', '#app']) $(s).hidden = s !== id;
+    for (const s of ['#boot', '#view-login', '#view-setup', '#view-lock', '#app']) $(s).hidden = s !== id;
   }
 
   async function boot() {
@@ -146,6 +147,10 @@
       if (s.needsSetup) return showOnly('#view-setup');
       if (s.user) {
         state.user = s.user;
+        if (s.user.has_pin) {
+          if (!s.locked) await post('pin/lock');
+          return showLock();
+        }
         return startApp();
       }
       showLogin();
@@ -198,7 +203,101 @@
     $('#who').textContent = `Signed in as ${state.user.name}`;
     $('#month').value = state.month;
     route();
+    maybeQuickAdd();
   }
+
+  // A home-screen shortcut opens ./?quick=spend: go straight to "Add spending".
+  state.pendingQuick = new URLSearchParams(location.search).get('quick') === 'spend';
+  function maybeQuickAdd() {
+    if (!state.pendingQuick) return;
+    state.pendingQuick = false;
+    history.replaceState(null, '', location.pathname + (location.hash || '#dashboard'));
+    openExpenseForm();
+  }
+
+  // ---------- MPIN lock ----------
+  let pinEntry = '';
+  const pinLenKey = () => `ff-pin-len-${state.user ? state.user.id : ''}`;
+  const pinLen = () => { try { return Number(localStorage.getItem(pinLenKey())) || 0; } catch { return 0; } };
+  const rememberPinLen = (n) => { try { localStorage.setItem(pinLenKey(), String(n)); } catch { /* private mode */ } };
+  function showLock(message = '') {
+    state.locked = true;
+    if (dialog.open) dialog.close();
+    showOnly('#view-lock');
+    pinEntry = '';
+    drawPinDots();
+    $('#lock-who').textContent = state.user ? `Hi ${state.user.name} — enter your MPIN` : 'Enter your MPIN';
+    $('#lock-error').textContent = message;
+  }
+  function drawPinDots() {
+    const n = Math.max(pinLen() || 4, pinEntry.length);
+    $('#pin-dots').replaceChildren(...Array.from({ length: n }, (_, i) => h('span', { class: i < pinEntry.length ? 'on' : null })));
+  }
+  let pinBusy = false;
+  async function submitPin() {
+    if (pinBusy || pinEntry.length < 4) return;
+    const pin = pinEntry;
+    pinBusy = true;
+    try {
+      await post('pin/unlock', { pin });
+      rememberPinLen(pin.length);
+      state.locked = false;
+      if (state.meta) {
+        showOnly('#app');
+        render();
+        maybeQuickAdd();
+      } else {
+        await startApp();
+      }
+    } catch (e) {
+      pinEntry = '';
+      drawPinDots();
+      if (e.status === 401) return; // too many tries: api() has shown the sign-in screen
+      $('#lock-error').textContent = e.message;
+      const card = $('#view-lock .auth-card');
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+    } finally {
+      pinBusy = false;
+    }
+  }
+  function pinKey(k) {
+    if (k === 'back') pinEntry = pinEntry.slice(0, -1);
+    else if (k === 'ok') return submitPin();
+    else if (pinEntry.length < 6) pinEntry += k;
+    $('#lock-error').textContent = '';
+    drawPinDots();
+    if (pinLen() && pinEntry.length === pinLen()) submitPin();
+  }
+  $('#pin-pad').append(...['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'ok'].map((k) => h('button', {
+    type: 'button',
+    class: k === 'ok' ? 'pin-key ok' : k === 'back' ? 'pin-key fn' : 'pin-key',
+    'aria-label': k === 'back' ? 'Delete' : k === 'ok' ? 'Unlock' : k,
+    text: k === 'back' ? '⌫' : k === 'ok' ? '✓' : k,
+    onclick: () => pinKey(k),
+  })));
+  document.addEventListener('keydown', (e) => {
+    if ($('#view-lock').hidden) return;
+    if (/^\d$/.test(e.key)) pinKey(e.key);
+    else if (e.key === 'Backspace') pinKey('back');
+    else if (e.key === 'Enter') pinKey('ok');
+  });
+  $('#lock-forgot').addEventListener('click', async () => {
+    try { await post('logout'); } catch { /* signing out anyway */ }
+    state.user = null;
+    state.meta = null;
+    state.locked = false;
+    showLogin('Sign in with your password. You can change the MPIN in Settings.');
+  });
+  // Coming back after more than a minute away locks again.
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (!state.user || !state.user.has_pin || state.locked || !hiddenAt || Date.now() - hiddenAt < 60 * 1000) return;
+    try { await post('pin/lock'); } catch { /* the server locks on idle anyway */ }
+    showLock();
+  });
 
   $('#month').addEventListener('change', (e) => {
     if (/^\d{4}-\d{2}$/.test(e.target.value)) {
@@ -705,14 +804,26 @@
         onclick: (e) => {
           category = c;
           for (const b of chips.children) b.setAttribute('aria-pressed', String(b === e.currentTarget));
+          syncOther(true);
         },
-      }, `${icon} ${label}`));
+      }, c === 'other' ? '✏️ Other (type a name)' : `${icon} ${label}`));
     }
+    const notes = input('notes', item ? item.notes : '', { maxlength: 500, placeholder: 'Optional' });
+    const notesLabel = h('span', { text: 'Note' });
+    const syncOther = (focus) => {
+      const other = category === 'other';
+      notesLabel.textContent = other ? 'What did you spend on?' : 'Note';
+      notes.placeholder = other ? 'e.g. Chai, auto, stationery…' : 'Optional';
+      notes.required = other;
+      if (other && focus) notes.focus();
+    };
+    syncOther(false);
     const form = formShell(async (fd) => {
       const body = {
         amount: fd.get('amount'), category, spent_on: fd.get('spent_on'), member_id: fd.get('member_id'),
         notes: fd.get('notes'), is_recurring: !!fd.get('is_recurring'), visibility: visibilityOf(fd),
       };
+      if (category === 'other' && !String(body.notes || '').trim()) throw new Error('Type what you spent on.');
       if (item) await post(`expenses/${item.id}/update`, body);
       else await post('expenses', body);
       state.lastCategory = category;
@@ -726,7 +837,7 @@
         field('Date', input('spent_on', item ? item.spent_on : todayIso(), { type: 'date', required: true })),
         field('Paid by', memberSelect(item && item.user_id)),
       ),
-      field('Note', input('notes', item ? item.notes : '', { maxlength: 500, placeholder: 'Optional' })),
+      h('label', { class: 'field' }, notesLabel, notes),
       check('is_recurring', 'Happens every month', item && item.is_recurring),
       privateBox(item),
     );
@@ -1773,7 +1884,7 @@
   const ACTION_TEXT = { create: 'added', update: 'changed', delete: 'deleted', reset: 'reset' };
   const ENTITY_TEXT = {
     income: 'income', expense: 'spending', contribution: 'family pool amount', loan: 'loan', loan_payment: 'loan payment',
-    goal: 'goal', goal_entry: 'goal money', password: 'password',
+    goal: 'goal', goal_entry: 'goal money', password: 'password', pin: 'MPIN', pin_lockout: 'MPIN (too many wrong tries)',
   };
 
   function ownerCard() {
@@ -1814,6 +1925,39 @@
       field('New password again', input('confirm', '', { type: 'password', autocomplete: 'new-password', required: true })),
     );
     openDialog(`Password for ${m.name}`, form);
+  }
+
+  function pinCard() {
+    const on = state.user.has_pin;
+    const card = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'App lock (MPIN)' }), h('span', { class: `chip ${on ? 'good' : ''}`, text: on ? 'On' : 'Off' })),
+      h('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'Asks for a 4–6 digit MPIN every time the app opens, when you come back after a minute away, and after 5 minutes unused. 5 wrong MPINs sign you out; then your password is needed.' }),
+    );
+    const pinInput = (name, label) => field(label, input(name, '', { type: 'password', inputmode: 'numeric', pattern: '[0-9]{4,6}', maxlength: 6, autocomplete: 'off', required: true }));
+    card.append(formShell(async (fd) => {
+      const pin = String(fd.get('pin'));
+      if (pin !== fd.get('pin2')) throw new Error('The two MPINs do not match.');
+      await post('pin', { password: fd.get('password'), pin });
+      rememberPinLen(pin.length);
+      state.user.has_pin = true;
+      toast(on ? 'MPIN changed' : 'MPIN is on');
+      render();
+    }, on ? 'Change MPIN' : 'Turn on MPIN',
+      field('Your password', input('password', '', { type: 'password', autocomplete: 'current-password', required: true }), 'Needed so nobody else can change the lock'),
+      h('div', { class: 'grid-2' }, pinInput('pin', on ? 'New MPIN' : 'MPIN (4–6 digits)'), pinInput('pin2', 'MPIN again')),
+    ));
+    if (on) {
+      card.append(h('details', { class: 'more', style: 'margin-top:8px' }, h('summary', { text: 'Turn off MPIN' }),
+        formShell(async (fd) => {
+          await post('pin/remove', { password: fd.get('password') });
+          state.user.has_pin = false;
+          toast('MPIN is off');
+          render();
+        }, 'Turn off MPIN',
+          field('Your password', input('password', '', { type: 'password', autocomplete: 'current-password', required: true })),
+        )));
+    }
+    return card;
   }
 
   async function viewSettings() {
@@ -1887,6 +2031,8 @@
         )))));
     }
     root.append(budgetCard);
+
+    root.append(pinCard());
 
     root.append(h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Change password' })),
       formShell(async (fd) => {

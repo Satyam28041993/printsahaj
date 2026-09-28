@@ -395,6 +395,40 @@ check('unmarked loan is neither missed nor paid', $row3 && $row3['missed'] === f
 $privateLoan = expectStatus('private loan', $a->post('loans', ['name' => 'Private loan', 'loan_type' => 'personal', 'repayment_type' => 'emi', 'outstanding' => '2000', 'monthly_payment' => '200', 'visibility' => 'private']), 200);
 expectStatus('Ravi cannot skip a loan he cannot see', $b->post("loans/{$privateLoan['id']}/skip", ['month' => $month]), 404);
 
+echo "MPIN lock\n";
+expectStatus('MPIN needs the password', $a->post('pin', ['password' => 'wrong-password', 'pin' => '4826']), 422);
+expectStatus('MPIN must be digits', $a->post('pin', ['password' => 'asha-password-1', 'pin' => '12ab']), 422);
+expectStatus('easy MPIN refused', $a->post('pin', ['password' => 'asha-password-1', 'pin' => '1234']), 422);
+expectStatus('same-digit MPIN refused', $a->post('pin', ['password' => 'asha-password-1', 'pin' => '7777']), 422);
+expectStatus('set MPIN', $a->post('pin', ['password' => 'asha-password-1', 'pin' => '4826']), 200);
+$s = expectStatus('session after setting MPIN', $a->get('session'), 200);
+check('has MPIN and is unlocked', ($s['user']['has_pin'] ?? null) === true && ($s['locked'] ?? null) === false, $s);
+$l = expectStatus('lock', $a->post('pin/lock'), 200);
+check('reports locked', ($l['locked'] ?? null) === true, $l);
+expectStatus('data waits behind the MPIN', $a->get('dashboard'), 423);
+expectStatus('changes wait behind the MPIN', $a->post('expenses', ['amount' => '10', 'category' => 'milk', 'spent_on' => date('Y-m-d')]), 423);
+$s = expectStatus('session still answers when locked', $a->get('session'), 200);
+check('session says locked', ($s['locked'] ?? null) === true, $s);
+expectStatus('wrong MPIN', $a->post('pin/unlock', ['pin' => '0000']), 422);
+expectStatus('right MPIN unlocks', $a->post('pin/unlock', ['pin' => '4826']), 200);
+expectStatus('data opens again', $a->get('dashboard'), 200);
+expectStatus('the other member is not affected', $b->get('dashboard'), 200);
+$a->post('pin/lock');
+for ($i = 0; $i < 4; $i++) {
+    $a->post('pin/unlock', ['pin' => '1111']);
+}
+expectStatus('fifth wrong MPIN signs out', $a->post('pin/unlock', ['pin' => '1111']), 401);
+expectStatus('signed out after too many MPINs', $a->get('dashboard'), 401);
+$a->get('session');
+expectStatus('password sign-in after lockout', $a->post('login', ['username' => 'asha', 'password' => 'asha-password-1']), 200);
+$s = $a->get('session')[1];
+check('password sign-in is unlocked, MPIN kept', ($s['locked'] ?? null) === false && ($s['user']['has_pin'] ?? null) === true, $s);
+expectStatus('removing MPIN needs the password', $a->post('pin/remove', ['password' => 'nope-nope-nope']), 422);
+expectStatus('remove MPIN', $a->post('pin/remove', ['password' => 'asha-password-1']), 200);
+$l = $a->post('pin/lock')[1];
+check('without an MPIN, lock does nothing', ($l['locked'] ?? null) === false, $l);
+expectStatus('still open without MPIN', $a->get('dashboard'), 200);
+
 echo "Owner tools\n";
 expectStatus('member cannot reset the owner', $b->post("members/{$ids['asha']}/password", ['new' => 'hacked-password-1']), 403);
 expectStatus('member cannot see activity', $b->get('activity'), 403);

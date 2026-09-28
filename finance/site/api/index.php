@@ -42,6 +42,7 @@ try {
         $user = Auth::user();
         Http::json([
             'user' => $user,
+            'locked' => Auth::isLocked(),
             'csrf' => Auth::csrfToken(),
             'needsSetup' => $user === null && Auth::needsSetup(),
         ]);
@@ -69,11 +70,27 @@ try {
     // Either resource/:id/action or resource/action.
     $action = $id !== null ? ($parts[2] ?? '') : ($parts[1] ?? '');
     $key = $method . ' ' . ($parts[0] ?? '') . ($id !== null ? '/:id' : '') . ($action !== '' ? "/$action" : '');
+    if (!in_array($key, ['POST logout', 'POST pin/unlock', 'POST pin/lock'], true)) {
+        Auth::requireUnlocked();
+    }
 
     $result = match ($key) {
         'POST logout' => (function () {
             Auth::logout();
             return ['ok' => true, 'csrf' => Auth::csrfToken()];
+        })(),
+        'POST pin/lock' => ['locked' => Auth::lock($user)],
+        'POST pin/unlock' => (function () use ($user, $in) {
+            Auth::unlock($user, (string) $in->raw('pin'));
+            return ['ok' => true];
+        })(),
+        'POST pin' => (function () use ($user, $in) {
+            Auth::setPin($user, (string) $in->raw('password'), (string) $in->raw('pin'));
+            return ['ok' => true];
+        })(),
+        'POST pin/remove' => (function () use ($user, $in) {
+            Auth::removePin($user, (string) $in->raw('password'));
+            return ['ok' => true];
         })(),
         'POST password' => (function () use ($user, $in) {
             Auth::changePassword($user, (string) $in->raw('current'), (string) $in->raw('new'));

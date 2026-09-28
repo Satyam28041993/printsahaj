@@ -667,7 +667,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   box-shadow: 0 0 0 4px var(--brand-weak);
 }
 .chips button { background: var(--surface); transition: border-color 0.15s, color 0.15s; }
-.chips button:hover { border-color: var(--brand); color: var(--brand-strong); }
+@media (hover: hover) { .chips button:not([aria-pressed="true"]):hover { border-color: var(--brand); color: var(--brand-strong); } }
 .chips button[aria-pressed="true"] { background: var(--grad-btn); border-color: transparent; }
 .segmented { background: var(--surface-2); border: 1px solid var(--line); }
 .segmented button[aria-pressed="true"] { background: var(--surface); color: var(--brand-strong); box-shadow: var(--shadow), inset 0 0 0 1px color-mix(in srgb, var(--brand) 30%, transparent); }
@@ -716,3 +716,30 @@ dialog::backdrop { background: rgba(5, 7, 10, 0.55); backdrop-filter: blur(4px);
   .topbar .month-input { flex: 1 1 auto; min-width: 0; max-width: 190px; margin-left: auto; padding: 6px 8px; font-size: 14px; }
 }
 .topbar .month-input[hidden] + .theme-btn { margin-left: auto; }
+
+/* MPIN lock screen */
+.lock-card { text-align: center; max-width: 360px; }
+.lock-card .logo { margin: 0 auto; }
+.pin-dots { display: flex; justify-content: center; gap: 14px; margin: 22px 0 6px; min-height: 16px; }
+.pin-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line-hover); transition: background 0.15s, border-color 0.15s, transform 0.15s; }
+.pin-dots span.on { background: var(--brand); border-color: var(--brand); transform: scale(1.1); box-shadow: 0 0 12px color-mix(in srgb, var(--brand) 60%, transparent); }
+.lock-card .error { min-height: 1.4em; margin: 6px 0 10px; }
+.pin-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 4px auto 16px; max-width: 280px; }
+.pin-key {
+  height: 64px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 24px "Space Grotesk", "Inter", system-ui, sans-serif;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pin-key:active { transform: scale(0.94); background: var(--brand-weak); border-color: var(--brand); }
+.pin-key.fn { background: transparent; border-color: transparent; font-size: 22px; color: var(--muted); }
+.pin-key.ok { background: var(--grad-btn); border-color: transparent; color: #fff; }
+.link-btn { border: 0; background: transparent; color: var(--brand-strong); font-weight: 600; }
+.shake { animation: shake 0.35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } }
