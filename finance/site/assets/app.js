@@ -207,7 +207,72 @@
     }
   });
   window.addEventListener('hashchange', route);
-  $('#fab').addEventListener('click', () => openExpenseForm());
+
+  // FAB: only shown on Home and Spending; draggable to a corner on mobile
+  // (desktop keeps the fixed bottom-right spot from the .fab CSS rule).
+  const fab = $('#fab');
+  const FAB_CORNERS = {
+    tl: { top: 'calc(16px + env(safe-area-inset-top))', left: '16px', right: 'auto', bottom: 'auto' },
+    tr: { top: 'calc(16px + env(safe-area-inset-top))', right: '16px', left: 'auto', bottom: 'auto' },
+    bl: { bottom: 'calc(84px + env(safe-area-inset-bottom))', left: '16px', right: 'auto', top: 'auto' },
+    br: { bottom: 'calc(84px + env(safe-area-inset-bottom))', right: '16px', left: 'auto', top: 'auto' },
+  };
+  const fabIsMobile = () => window.matchMedia('(max-width: 899px)').matches;
+  const applyFabCorner = (corner) => Object.assign(fab.style, FAB_CORNERS[corner] || FAB_CORNERS.br);
+  const loadFabCorner = () => { try { return localStorage.getItem('ff-fab-corner') || 'br'; } catch { return 'br'; } };
+  const saveFabCorner = (corner) => { try { localStorage.setItem('ff-fab-corner', corner); } catch { /* private mode etc. */ } };
+  if (fabIsMobile()) applyFabCorner(loadFabCorner());
+  window.addEventListener('resize', () => {
+    if (fabIsMobile()) applyFabCorner(loadFabCorner());
+    else fab.removeAttribute('style');
+  });
+
+  let fabDragging = false, fabMoved = false, fabSuppressClick = false;
+  let fabStartX = 0, fabStartY = 0, fabStartLeft = 0, fabStartTop = 0;
+  fab.addEventListener('pointerdown', (e) => {
+    if (!fabIsMobile()) return;
+    fabDragging = true;
+    fabMoved = false;
+    const r = fab.getBoundingClientRect();
+    fabStartX = e.clientX;
+    fabStartY = e.clientY;
+    fabStartLeft = r.left;
+    fabStartTop = r.top;
+    fab.style.transition = 'none';
+    fab.setPointerCapture(e.pointerId);
+  });
+  fab.addEventListener('pointermove', (e) => {
+    if (!fabDragging) return;
+    const dx = e.clientX - fabStartX;
+    const dy = e.clientY - fabStartY;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) fabMoved = true;
+    if (!fabMoved) return;
+    const w = fab.offsetWidth, hgt = fab.offsetHeight;
+    const left = Math.max(6, Math.min(window.innerWidth - w - 6, fabStartLeft + dx));
+    const top = Math.max(6, Math.min(window.innerHeight - hgt - 6, fabStartTop + dy));
+    Object.assign(fab.style, { left: `${left}px`, top: `${top}px`, right: 'auto', bottom: 'auto' });
+  });
+  fab.addEventListener('pointerup', () => {
+    if (!fabDragging) return;
+    fabDragging = false;
+    fab.style.transition = '';
+    if (!fabMoved) return;
+    fabSuppressClick = true;
+    const r = fab.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const corner = (cy < window.innerHeight / 2 ? 't' : 'b') + (cx < window.innerWidth / 2 ? 'l' : 'r');
+    applyFabCorner(corner);
+    saveFabCorner(corner);
+  });
+  fab.addEventListener('click', (e) => {
+    if (fabSuppressClick) {
+      fabSuppressClick = false;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    openExpenseForm();
+  });
 
   function route() {
     const view = location.hash.replace('#', '') || 'dashboard';
@@ -216,6 +281,7 @@
       if (a.dataset.view === state.view) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');
     }
+    fab.hidden = !['dashboard', 'expenses'].includes(state.view);
     render();
   }
 
