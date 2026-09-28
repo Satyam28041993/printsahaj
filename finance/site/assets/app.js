@@ -1257,6 +1257,52 @@
   }
 
   // ---------- settings ----------
+  const ACTION_TEXT = { create: 'added', update: 'changed', delete: 'deleted', reset: 'reset' };
+  const ENTITY_TEXT = {
+    income: 'income', expense: 'spending', contribution: 'family pool amount', loan: 'loan', loan_payment: 'loan payment',
+    goal: 'goal', goal_entry: 'goal money', password: 'password',
+  };
+
+  function ownerCard() {
+    const others = state.members.filter((m) => m.id !== state.user.id);
+    const card = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'Admin' }), h('span', { class: 'chip info', text: 'Owner' })),
+      h('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'You can enter anything for anyone (choose them in "Earned by", "Paid by", "Borrower"). Entries someone marks Private stay theirs alone.' }),
+    );
+    card.append(h('ul', { class: 'list' }, others.map((m) => h('li', {},
+      h('div', { class: 'main' }, h('div', { class: 't', text: m.name }), h('div', { class: 's', text: `username: ${m.username}` })),
+      h('button', { class: 'btn small', type: 'button', text: 'Set new password', onclick: () => openResetPassword(m) }),
+    ))));
+    const log = h('details', { style: 'margin-top:12px' }, h('summary', { class: 'small', text: 'Activity — who changed what' }));
+    log.addEventListener('toggle', async () => {
+      if (!log.open || log.dataset.loaded) return;
+      log.dataset.loaded = '1';
+      const rows = await get('activity');
+      log.append(rows.length ? h('ul', { class: 'list' }, rows.map((r) => h('li', {},
+        h('div', { class: 'main' },
+          h('div', { class: 't', text: `${r.member_name || 'Someone'} ${ACTION_TEXT[r.action] || r.action} ${ENTITY_TEXT[r.entity] || r.entity}` }),
+          h('div', { class: 's', text: new Date(r.at.replace(' ', 'T')).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) }),
+        ),
+      ))) : h('p', { class: 'faint', text: 'Nothing yet.' }));
+    });
+    card.append(log);
+    return card;
+  }
+
+  function openResetPassword(m) {
+    const form = formShell(async (fd) => {
+      if (fd.get('new') !== fd.get('confirm')) throw new Error('The two passwords do not match.');
+      await post(`members/${m.id}/password`, { new: fd.get('new') });
+      dialog.close();
+      toast(`New password set for ${m.name}. Tell them directly.`);
+    }, 'Set password',
+      h('p', { class: 'muted small', style: 'margin-bottom:12px', text: `${m.name} will be signed out on every device and sign in again with this password.` }),
+      field('New password', input('new', '', { type: 'password', autocomplete: 'new-password', required: true }), 'At least 10 characters'),
+      field('New password again', input('confirm', '', { type: 'password', autocomplete: 'new-password', required: true })),
+    );
+    openDialog(`Password for ${m.name}`, form);
+  }
+
   async function viewSettings() {
     const c = await get('contributions');
     const root = h('div', { class: 'stack' });
@@ -1303,6 +1349,8 @@
         field('New password', input('new', '', { type: 'password', autocomplete: 'new-password', required: true }), 'At least 10 characters'),
         field('New password again', input('confirm', '', { type: 'password', autocomplete: 'new-password', required: true })),
       )));
+
+    if (state.user.role === 'owner') root.append(ownerCard());
 
     root.append(h('section', { class: 'card' },
       h('div', { class: 'card-head' }, h('h2', { text: 'Account' })),

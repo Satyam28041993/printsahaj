@@ -78,6 +78,11 @@ try {
             Auth::changePassword($user, (string) $in->raw('current'), (string) $in->raw('new'));
             return ['ok' => true];
         })(),
+        'POST members/:id/password' => (function () use ($user, $id, $in) {
+            Auth::resetMemberPassword($user, $id, (string) $in->raw('new'));
+            return ['ok' => true];
+        })(),
+        'GET activity' => Auth::activity($user),
         'GET members' => Db::all('SELECT id, name, username, role FROM users WHERE family_id = ? ORDER BY id', [$user['family_id']]),
         'GET meta' => ['income_types' => Income::TYPES, 'expense_categories' => Expenses::CATEGORIES, 'loan_types' => Loans::TYPES, 'goal_kinds' => Goals::KINDS, 'ai_enabled' => Ai::enabled()],
 

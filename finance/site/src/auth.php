@@ -183,6 +183,41 @@ final class Auth
         Audit::log($user, 'update', 'password', (int) $user['id']);
     }
 
+    public static function requireOwner(array $user): void
+    {
+        if ($user['role'] !== 'owner') {
+            throw new HttpError(403, 'Only the account owner can do this.');
+        }
+    }
+
+    /** Owner sets a new password for another member; that member is signed out everywhere. */
+    public static function resetMemberPassword(array $owner, int $memberId, string $new): void
+    {
+        self::requireOwner($owner);
+        $member = Db::one('SELECT id FROM users WHERE id = ? AND family_id = ?', [$memberId, $owner['family_id']]);
+        if ($member === null) {
+            throw new HttpError(404, 'Not found.');
+        }
+        if ($memberId === (int) $owner['id']) {
+            throw new HttpError(422, 'Use "Change password" for your own password.');
+        }
+        self::checkStrength($new);
+        Db::run('UPDATE users SET password_hash = ?, updated_at = NOW() WHERE id = ?', [password_hash($new, PASSWORD_DEFAULT), $memberId]);
+        Db::run('DELETE FROM sessions WHERE user_id = ?', [$memberId]);
+        Audit::log($owner, 'reset', 'password', $memberId);
+    }
+
+    /** Who did what and when, newest first. No amounts or notes. */
+    public static function activity(array $owner): array
+    {
+        self::requireOwner($owner);
+        return Db::all(
+            'SELECT a.id, a.action, a.entity, a.at, u.name AS member_name FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
+             WHERE a.family_id = ? ORDER BY a.id DESC LIMIT 150',
+            [$owner['family_id']]
+        );
+    }
+
     public static function checkStrength(string $password): void
     {
         if (mb_strlen($password) < 10) {

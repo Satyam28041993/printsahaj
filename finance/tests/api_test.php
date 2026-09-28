@@ -352,6 +352,22 @@ check('question saved for the asker', ($hist[0]['question'] ?? '') === 'Agar Rav
 check('history is private to the asker', $b->get('ai/history')[1] === [], $b->get('ai/history')[1]);
 expectStatus('empty question refused', $a->post('ai/ask', ['question' => '  ']), 422);
 
+echo "Owner tools\n";
+expectStatus('member cannot reset the owner', $b->post("members/{$ids['asha']}/password", ['new' => 'hacked-password-1']), 403);
+expectStatus('member cannot see activity', $b->get('activity'), 403);
+$act = expectStatus('owner sees activity', $a->get('activity'), 200);
+check('activity has who and what, no amounts', isset($act[0]['member_name'], $act[0]['action'], $act[0]['entity']) && !array_key_exists('changes', $act[0]), $act[0] ?? null);
+expectStatus('owner cannot reset own password here', $a->post("members/{$ids['asha']}/password", ['new' => 'another-password-9']), 422);
+expectStatus('reset needs a strong password', $a->post("members/{$ids['ravi']}/password", ['new' => 'short']), 422);
+$b2 = new Client($base);
+$b2->get('session');
+expectStatus('Ravi on another device', $b2->post('login', ['username' => 'ravi', 'password' => 'ravi-password-1']), 200);
+expectStatus('owner resets Ravi', $a->post("members/{$ids['ravi']}/password", ['new' => 'ravi-new-password-2']), 200);
+expectStatus('Ravi is signed out everywhere', $b2->get('dashboard'), 401);
+$b = new Client($base);
+$b->get('session');
+expectStatus('Ravi signs in with the new password', $b->post('login', ['username' => 'ravi', 'password' => 'ravi-new-password-2']), 200);
+
 echo "Guards\n";
 $other = new Client($base, 'printsahaj.com');
 expectStatus('wrong host answers 404', $other->get('session'), 404);
@@ -372,7 +388,7 @@ $c->get('session');
 for ($i = 0; $i < 5; $i++) {
     $c->post('login', ['username' => 'ravi', 'password' => 'wrong-password-x']);
 }
-expectStatus('locked after 5 wrong tries', $c->post('login', ['username' => 'ravi', 'password' => 'ravi-password-1']), 429);
+expectStatus('locked after 5 wrong tries', $c->post('login', ['username' => 'ravi', 'password' => 'ravi-new-password-2']), 429);
 
 echo "\n$checks checks, $failures failed\n";
 exit($failures === 0 ? 0 : 1);
