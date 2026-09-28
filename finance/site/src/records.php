@@ -240,6 +240,97 @@ final class Contributions
     }
 }
 
+final class Budgets
+{
+    /** Each category's current target, plus history. Same pattern as Contributions. */
+    public static function list(array $user): array
+    {
+        $history = Db::all(
+            'SELECT b.*, u.name AS member_name FROM category_budgets b JOIN users u ON u.id = b.user_id
+             WHERE b.family_id = ? AND b.deleted_at IS NULL ORDER BY b.effective_from DESC, b.id DESC',
+            [$user['family_id']]
+        );
+        return ['history' => $history, 'current' => self::onDate($user, today())];
+    }
+
+    /** category => paise in effect on a date (latest effective_from <= date). */
+    public static function onDate(array $user, string $date): array
+    {
+        $rows = Db::all(
+            'SELECT b.category, b.amount_paise FROM category_budgets b
+             WHERE b.family_id = ? AND b.deleted_at IS NULL AND b.effective_from <= ?
+             ORDER BY b.effective_from DESC, b.id DESC',
+            [$user['family_id'], $date]
+        );
+        $current = [];
+        foreach ($rows as $r) {
+            $current[$r['category']] ??= (int) $r['amount_paise'];
+        }
+        return $current;
+    }
+
+    public static function create(array $user, Input $in): array
+    {
+        $category = $in->enum('category', Expenses::CATEGORIES);
+        $amount = $in->money('amount');
+        $from = $in->date('effective_from');
+        $id = Db::insert(
+            'INSERT INTO category_budgets (family_id, user_id, category, amount_paise, effective_from, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())',
+            [$user['family_id'], $user['id'], $category, $amount, $from, $in->str('notes', 500, false, 'Notes')]
+        );
+        Audit::log($user, 'create', 'category_budget', $id, ['category' => $category, 'amount_paise' => $amount, 'effective_from' => $from]);
+        return self::list($user);
+    }
+
+    public static function delete(array $user, int $id): void
+    {
+        $row = Db::one('SELECT id FROM category_budgets WHERE id = ? AND family_id = ? AND deleted_at IS NULL', [$id, $user['family_id']]);
+        if ($row === null) {
+            throw new HttpError(404, 'Not found.');
+        }
+        Db::run('UPDATE category_budgets SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?', [$id]);
+        Audit::log($user, 'delete', 'category_budget', $id);
+    }
+}
+
+/** Explicit "this EMI was not paid this month" marks. Recording a real payment clears the mark. */
+final class LoanSkips
+{
+    /** loan_id => true, for months with an explicit "not paid" mark and no payment since. */
+    public static function forMonth(array $user, string $month): array
+    {
+        [$where, $params] = Scope::visible($user, 'l');
+        $rows = Db::all(
+            "SELECT s.loan_id FROM loan_skips s JOIN loans l ON l.id = s.loan_id WHERE $where AND s.month = ?",
+            array_merge($params, [$month])
+        );
+        return array_fill_keys(array_map(fn ($r) => (int) $r['loan_id'], $rows), true);
+    }
+
+    public static function mark(array $user, int $loanId, Input $in): array
+    {
+        Scope::find($user, 'loans', $loanId);
+        $month = (string) $in->raw('month');
+        monthRange($month);
+        Db::run(
+            'INSERT INTO loan_skips (family_id, loan_id, user_id, month, notes, created_at) VALUES (?, ?, ?, ?, ?, NOW())
+             ON DUPLICATE KEY UPDATE notes = VALUES(notes)',
+            [$user['family_id'], $loanId, $user['id'], $month, $in->str('notes', 500, false, 'Notes')]
+        );
+        Audit::log($user, 'create', 'loan_skip', $loanId, ['month' => $month]);
+        return Loans::describe(Scope::find($user, 'loans', $loanId), substr(today(), 0, 7));
+    }
+
+    public static function unmark(array $user, int $loanId, Input $in): array
+    {
+        Scope::find($user, 'loans', $loanId);
+        $month = (string) $in->raw('month');
+        Db::run('DELETE FROM loan_skips WHERE loan_id = ? AND month = ? AND family_id = ?', [$loanId, $month, $user['family_id']]);
+        Audit::log($user, 'delete', 'loan_skip', $loanId, ['month' => $month]);
+        return Loans::describe(Scope::find($user, 'loans', $loanId), substr(today(), 0, 7));
+    }
+}
+
 final class Loans
 {
     public const TYPES = ['gold', 'home', 'personal', 'bike', 'consumer', 'credit_card', 'other'];
@@ -537,22 +628,26 @@ final class Dashboard
             }
         }
 
+        $skips = LoanSkips::forMonth($user, $month);
         $upcoming = [];
         foreach ($loans as $l) {
             if ($l['group'] === 'closed' || $l['due_day'] === null || $l['scheduled_paise'] === 0) {
                 continue;
             }
             $day = min((int) $l['due_day'], (int) (new DateTimeImmutable($from))->format('t'));
+            $paidThis = isset($paidByLoan[(int) $l['id']]);
             $upcoming[] = [
                 'loan_id' => (int) $l['id'],
                 'name' => $l['name'],
                 'due_on' => sprintf('%s-%02d', $month, $day),
                 'amount_paise' => $l['scheduled_paise'],
-                'paid' => isset($paidByLoan[(int) $l['id']]),
+                'paid' => $paidThis,
+                'missed' => !$paidThis && isset($skips[(int) $l['id']]),
             ];
         }
-        usort($upcoming, fn ($a, $b) => [$a['paid'], $a['due_on']] <=> [$b['paid'], $b['due_on']]);
+        usort($upcoming, fn ($a, $b) => [$a['paid'], !$a['missed'], $a['due_on']] <=> [$b['paid'], !$b['missed'], $b['due_on']]);
 
+        $budgets = Budgets::onDate($user, $to);
         $available = $pool + $variable - $expenses - $scheduled;
         $goals = Goals::summary($user, $from, $to);
         return [
@@ -566,7 +661,7 @@ final class Dashboard
             'fixed_income_paise' => $fixed,
             'variable_income_paise' => $variable,
             'expenses_paise' => $expenses,
-            'expenses_by_category' => array_map(fn ($r) => ['category' => $r['category'], 'total_paise' => (int) $r['total'], 'count' => (int) $r['n']], $byCategory),
+            'expenses_by_category' => array_map(fn ($r) => ['category' => $r['category'], 'total_paise' => (int) $r['total'], 'count' => (int) $r['n'], 'budget_paise' => $budgets[$r['category']] ?? null], $byCategory),
             'scheduled_debt_paise' => $scheduled,
             'available_paise' => $available,
             'outstanding_debt_paise' => $outstanding,

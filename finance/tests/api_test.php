@@ -352,6 +352,49 @@ check('question saved for the asker', ($hist[0]['question'] ?? '') === 'Agar Rav
 check('history is private to the asker', $b->get('ai/history')[1] === [], $b->get('ai/history')[1]);
 expectStatus('empty question refused', $a->post('ai/ask', ['question' => '  ']), 422);
 
+echo "Budgets and reports\n";
+$firstOfMonth = date('Y-m-01');
+$b1 = expectStatus('set entertainment budget', $a->post('budgets', ['category' => 'entertainment', 'amount' => '3000', 'effective_from' => $firstOfMonth]), 200);
+check('current shows the budget', ($b1['current']['entertainment'] ?? null) === 300000, $b1['current'] ?? null);
+check('Ravi sees the same family budget', ($b->get('budgets')[1]['current']['entertainment'] ?? null) === 300000, $b->get('budgets')[1] ?? null);
+expectStatus('unknown category refused', $a->post('budgets', ['category' => 'nope', 'amount' => '1', 'effective_from' => $firstOfMonth]), 422);
+
+$a->post('expenses', ['amount' => '1000', 'category' => 'entertainment', 'spent_on' => $today]);
+$a->post('expenses', ['amount' => '2500', 'category' => 'entertainment', 'spent_on' => $today]);
+$rep = expectStatus('monthly report', $a->get("reports&month=$month"), 200);
+$ent = array_values(array_filter($rep['categories'], fn ($c) => $c['category'] === 'entertainment'))[0] ?? null;
+check('entertainment budget vs actual', $ent && $ent['budget_paise'] === 300000 && $ent['actual_paise'] === 350000, $ent);
+check('diff = actual - budget = 500', $ent && $ent['diff_paise'] === 50000, $ent);
+check('over budget flagged', $ent && $ent['status'] === 'over', $ent);
+$noBudgetCat = array_values(array_filter($rep['categories'], fn ($c) => $c['category'] === 'grocery'))[0] ?? null;
+check('category with no budget set is flagged no_budget', $noBudgetCat && $noBudgetCat['status'] === 'no_budget' && $noBudgetCat['budget_paise'] === null, $noBudgetCat);
+$weeklySum = array_sum(array_column($rep['weekly'], 'spent_paise'));
+check('weekly total matches actual total', $weeklySum === $rep['actual_total_paise'], [$weeklySum, $rep['actual_total_paise']]);
+check('trend has 6 months ending on the viewed month', count($rep['trend']) === 6 && end($rep['trend'])['month'] === $month, $rep['trend']);
+check('trend last month matches actual total', end($rep['trend'])['spent_paise'] === $rep['actual_total_paise'], end($rep['trend']));
+expectStatus('delete budget', $a->post("budgets/{$b1['history'][0]['id']}/delete"), 200);
+check('budget removed from current', !array_key_exists('entertainment', $a->get('budgets')[1]['current'] ?? []), $a->get('budgets')[1] ?? null);
+
+echo "EMI paid / not paid marking\n";
+$skipLoan = expectStatus('loan for skip test', $a->post('loans', ['name' => 'SkipTest', 'loan_type' => 'personal', 'repayment_type' => 'emi', 'outstanding' => '5000', 'monthly_payment' => '500', 'due_day' => 20]), 200);
+expectStatus('mark not paid', $a->post("loans/{$skipLoan['id']}/skip", ['month' => $month]), 200);
+expectStatus('marking twice does not error', $a->post("loans/{$skipLoan['id']}/skip", ['month' => $month]), 200);
+$d1 = $a->get("dashboard&month=$month")[1];
+$row1 = array_values(array_filter($d1['upcoming'], fn ($u) => $u['loan_id'] === $skipLoan['id']))[0] ?? null;
+check('shows as missed, not paid', $row1 && $row1['missed'] === true && $row1['paid'] === false, $row1);
+expectStatus('a real payment for this loan', $a->post("loans/{$skipLoan['id']}/payments", ['principal' => '500', 'paid_on' => $today]), 200);
+$d2 = $a->get("dashboard&month=$month")[1];
+$row2 = array_values(array_filter($d2['upcoming'], fn ($u) => $u['loan_id'] === $skipLoan['id']))[0] ?? null;
+check('paying it shows paid, not missed', $row2 && $row2['paid'] === true && $row2['missed'] === false, $row2);
+$skipLoan2 = expectStatus('second loan for skip test', $a->post('loans', ['name' => 'SkipTest2', 'loan_type' => 'personal', 'repayment_type' => 'emi', 'outstanding' => '5000', 'monthly_payment' => '500', 'due_day' => 22]), 200);
+$a->post("loans/{$skipLoan2['id']}/skip", ['month' => $month]);
+expectStatus('unmark not paid', $a->post("loans/{$skipLoan2['id']}/unskip", ['month' => $month]), 200);
+$d3 = $a->get("dashboard&month=$month")[1];
+$row3 = array_values(array_filter($d3['upcoming'], fn ($u) => $u['loan_id'] === $skipLoan2['id']))[0] ?? null;
+check('unmarked loan is neither missed nor paid', $row3 && $row3['missed'] === false && $row3['paid'] === false, $row3);
+$privateLoan = expectStatus('private loan', $a->post('loans', ['name' => 'Private loan', 'loan_type' => 'personal', 'repayment_type' => 'emi', 'outstanding' => '2000', 'monthly_payment' => '200', 'visibility' => 'private']), 200);
+expectStatus('Ravi cannot skip a loan he cannot see', $b->post("loans/{$privateLoan['id']}/skip", ['month' => $month]), 404);
+
 echo "Owner tools\n";
 expectStatus('member cannot reset the owner', $b->post("members/{$ids['asha']}/password", ['new' => 'hacked-password-1']), 403);
 expectStatus('member cannot see activity', $b->get('activity'), 403);

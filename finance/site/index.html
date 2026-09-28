@@ -6,10 +6,23 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#0e9f8e">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Finance">
   <title>Family Finance</title>
   <link rel="stylesheet" href="assets/app.css">
   <script src="assets/vendor/chart.umd.min.js" defer></script>
   <script src="assets/app.js" defer></script>
+  <script>
+    // Installability only; the worker itself never caches API calls.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+    }
+  </script>
 </head>
 <body>
   <div id="boot" class="loading">Loading…</div>

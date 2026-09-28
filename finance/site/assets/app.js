@@ -324,7 +324,8 @@
     ));
 
     const grid = h('div', { class: 'two-col' });
-    grid.append(upcomingCard(d.upcoming), spendingCard(d.expenses_by_category, d.expenses_paise));
+    const loansById = Object.fromEntries(d.loans.map((l) => [l.id, l]));
+    grid.append(upcomingCard(d.upcoming, loansById), spendingCard(d.expenses_by_category, d.expenses_paise));
     root.append(grid);
     root.append(debtCard(d.loans));
     return root;
@@ -345,6 +346,7 @@
 
   function dueChip(u) {
     if (u.paid) return h('span', { class: 'chip good', text: 'Paid' });
+    if (u.missed) return h('span', { class: 'chip bad', text: 'Missed' });
     const today = todayIso();
     // The app only knows what was recorded; the bill may be paid already.
     if (u.due_on < today) return h('span', { class: 'chip warn', text: 'Not recorded' });
@@ -352,16 +354,34 @@
     return h('span', { class: `chip ${days <= 5 ? 'warn' : 'info'}`, text: days === 0 ? 'Due today' : `In ${days} days` });
   }
 
-  function upcomingCard(upcoming) {
+  function upcomingCard(upcoming, loansById) {
     const card = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Payments this month' })));
     if (!upcoming.length) {
       card.append(h('p', { class: 'empty', text: 'No due dates yet. Add a due day to your loans to see them here.' }));
       return card;
     }
-    card.append(h('ul', { class: 'list' }, upcoming.map((u) => h('li', {},
-      h('div', { class: 'main' }, h('div', { class: 't', text: u.name }), h('div', { class: 's', text: dayLabel(u.due_on) })),
-      h('div', { class: 'money', text: fmt(u.amount_paise) }), dueChip(u),
-    ))));
+    const mark = async (loanId, skip) => {
+      await post(`loans/${loanId}/${skip ? 'skip' : 'unskip'}`, { month: state.month });
+      toast(skip ? 'Marked not paid' : 'Undone');
+      render();
+    };
+    card.append(h('ul', { class: 'list' }, upcoming.map((u) => {
+      const actions = [];
+      if (!u.paid && !u.missed) {
+        actions.push(
+          h('button', { class: 'btn small primary', type: 'button', text: 'Paid', onclick: () => { const l = loansById[u.loan_id]; if (l) openPaymentForm(l); } }),
+          h('button', { class: 'btn small', type: 'button', text: 'Not paid', onclick: () => mark(u.loan_id, true) }),
+        );
+      } else if (u.missed) {
+        actions.push(h('button', { class: 'btn small', type: 'button', text: 'Undo', onclick: () => mark(u.loan_id, false) }));
+      }
+      return h('li', { class: 'payment-row' },
+        h('div', { class: 'main' }, h('div', { class: 't', text: u.name }), h('div', { class: 's', text: dayLabel(u.due_on) })),
+        h('div', { class: 'money', text: fmt(u.amount_paise) }),
+        dueChip(u),
+        actions.length ? h('div', { class: 'row', style: 'gap:6px' }, actions) : null,
+      );
+    })));
     return card;
   }
 
@@ -373,13 +393,15 @@
     }
     const canvas = h('canvas', { 'aria-label': 'Spending by category', role: 'img' });
     card.append(h('div', { class: 'chart-box' }, canvas));
-    card.append(h('ul', { class: 'list' }, cats.map((c, i) => {
-      const [label, icon] = CATEGORY[c.category] || [c.category, '•'];
+    // Compact, one line per category: swatch, name, amount, % — legible at a glance.
+    card.append(h('div', { class: 'legend' }, cats.map((c, i) => {
+      const [label] = CATEGORY[c.category] || [c.category];
       const pct = total ? Math.round((c.total_paise / total) * 100) : 0;
-      return h('li', {},
-        h('span', { class: 'icon', text: icon }),
-        h('div', { class: 'main' }, h('div', { class: 't', text: label }), h('div', { class: 'bar' }, h('span', { style: `width:${pct}%;background:${PALETTE[i % PALETTE.length]}` }))),
-        h('div', { class: 'money', text: fmt(c.total_paise) }),
+      return h('div', { class: 'legend-row' },
+        h('span', { class: 'swatch', style: `background:${PALETTE[i % PALETTE.length]}` }),
+        h('span', { class: 'legend-name', text: label }),
+        h('span', { class: 'legend-pct', text: `${pct}%` }),
+        h('span', { class: 'legend-amount', text: fmt(c.total_paise) }),
       );
     })));
     requestAnimationFrame(() => drawDoughnut(canvas, cats));
@@ -437,6 +459,13 @@
   // ---------- spending ----------
   async function viewExpenses() {
     const root = h('div', { class: 'stack' });
+    const mode = state.expenseMode || 'entries';
+    root.append(segmented([['entries', 'Entries'], ['report', 'Report']], mode, (v) => { state.expenseMode = v; render(); }));
+    if (mode === 'report') {
+      root.append(await expenseReport());
+      return root;
+    }
+
     const filters = h('div', { class: 'card' });
     const cat = select('category', [['', 'All categories'], ...state.meta.expense_categories.map((c) => [c, CATEGORY[c][0]])], state.expCategory || '');
     const q = input('q', state.expQuery || '', { type: 'search', placeholder: 'Search notes', 'aria-label': 'Search notes' });
@@ -456,6 +485,91 @@
     q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(load, 300); });
     await load();
     return root;
+  }
+
+  const STATUS_TEXT = { over: 'Over', under: 'Saved', no_budget: 'No budget' };
+
+  async function expenseReport() {
+    const r = await get(`reports&month=${state.month}`);
+    const root = h('div', { class: 'stack' });
+
+    const budgetCard = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'Budget vs actual' }), h('span', { class: 'money', text: `${fmt(r.actual_total_paise)} of ${fmt(r.budget_total_paise)}` })),
+    );
+    if (!r.categories.length) {
+      budgetCard.append(h('p', { class: 'empty' }, 'No spending or budgets for this month yet. ', h('a', { href: '#settings', text: 'Set category budgets' })));
+    } else {
+      const table = h('table', { class: 'compare' },
+        h('thead', {}, h('tr', {}, h('th', { text: 'Category' }), h('th', { class: 'num', text: 'Budget' }), h('th', { class: 'num', text: 'Actual' }), h('th', { class: 'num', text: 'Difference' }))),
+        h('tbody', {}, r.categories.map((c) => {
+          const [label] = CATEGORY[c.category] || [c.category];
+          const diffText = c.diff_paise === null ? '—' : `${c.diff_paise > 0 ? '+' : ''}${fmt(c.diff_paise)}${c.diff_pct !== null ? ` (${c.diff_pct > 0 ? '+' : ''}${c.diff_pct}%)` : ''}`;
+          return h('tr', {},
+            h('th', { text: label }),
+            h('td', { class: 'num', text: c.budget_paise === null ? '—' : fmt(c.budget_paise) }),
+            h('td', { class: 'num', text: fmt(c.actual_paise) }),
+            h('td', { class: `num status-${c.status}`, text: c.status === 'no_budget' ? 'No budget' : diffText }),
+          );
+        })),
+      );
+      budgetCard.append(h('div', { class: 'table-wrap' }, table));
+      budgetCard.append(h('p', { class: 'faint', style: 'margin-top:10px', text: 'Difference = actual − budget. Red means spent more than planned; green means saved.' }));
+    }
+    budgetCard.append(h('a', { class: 'btn small', href: '#settings', style: 'margin-top:10px', text: 'Set / change budgets' }));
+    root.append(budgetCard);
+
+    const weekCard = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Week by week' })));
+    if (!r.weekly.length) {
+      weekCard.append(h('p', { class: 'empty', text: 'No spending recorded yet this month.' }));
+    } else {
+      const canvas = h('canvas', { role: 'img', 'aria-label': 'Spending by week' });
+      weekCard.append(h('div', { class: 'chart-box' }, canvas));
+      requestAnimationFrame(() => drawWeeklyChart(canvas, r.weekly));
+    }
+    root.append(weekCard);
+
+    const trendCard = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Last 6 months' })));
+    const trendCanvas = h('canvas', { role: 'img', 'aria-label': 'Income, spending and loan payments over the last 6 months' });
+    trendCard.append(h('div', { class: 'chart-box' }, trendCanvas));
+    requestAnimationFrame(() => drawTrendChart(trendCanvas, r.trend));
+    root.append(trendCard);
+    return root;
+  }
+
+  function drawWeeklyChart(canvas, weekly) {
+    if (!window.Chart || !canvas.isConnected) return;
+    if (state.weekChart) state.weekChart.destroy();
+    const byWeek = Object.fromEntries(weekly.map((w) => [w.week, w.spent_paise]));
+    const labels = [1, 2, 3, 4, 5].map((w) => `Week ${w}`);
+    state.weekChart = new window.Chart(canvas, {
+      type: 'bar',
+      data: { labels, datasets: [{ data: [1, 2, 3, 4, 5].map((w) => (byWeek[w] || 0) / 100), backgroundColor: PALETTE[0], borderRadius: 6, maxBarThickness: 44 }] },
+      options: {
+        maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => fmt(Math.round(c.parsed.y * 100)) } } },
+        scales: { y: { ticks: { callback: (v) => `₹${rupee.format(v)}` } } },
+      },
+    });
+  }
+
+  function drawTrendChart(canvas, trend) {
+    if (!window.Chart || !canvas.isConnected) return;
+    if (state.trendChart) state.trendChart.destroy();
+    const labels = trend.map((t) => monthLabel(t.month).split(' ')[0]);
+    const series = [
+      ['Income', trend.map((t) => t.income_paise / 100), '#0e9f8e'],
+      ['Spent', trend.map((t) => t.spent_paise / 100), '#ef4444'],
+      ['Loan payments', trend.map((t) => t.loan_paid_paise / 100), '#3b82f6'],
+    ];
+    state.trendChart = new window.Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets: series.map(([label, data, c]) => ({ label, data, borderColor: c, backgroundColor: c, pointRadius: 3, borderWidth: 2.5, tension: 0.25 })) },
+      options: {
+        maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(Math.round(c.parsed.y * 100))}` } } },
+        scales: { y: { ticks: { callback: (v) => `₹${rupee.format(v)}` } } },
+      },
+    });
   }
 
   function expenseList(rows) {
@@ -1337,6 +1451,43 @@
         )))));
     }
     root.append(pool);
+
+    const bd = await get('budgets');
+    const budgetCard = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Category budgets' })),
+      h('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'A monthly target per category. Spending tab → Report shows actual against it.' }));
+    const set = state.meta.expense_categories.filter((c) => bd.current[c] !== undefined);
+    if (set.length) {
+      budgetCard.append(h('div', {}, set.map((c) => h('div', { class: 'budget-row' },
+        h('span', { class: 'name', text: (CATEGORY[c] || [c])[0] }),
+        h('span', { class: 'money', text: `${fmt(bd.current[c])}/mo` }),
+      ))));
+    }
+    budgetCard.append(formShell(async (fd) => {
+      await post('budgets', { category: fd.get('category'), amount: fd.get('amount'), effective_from: fd.get('effective_from') });
+      toast('Saved');
+      render();
+    }, 'Set budget',
+      h('div', { class: 'grid-2', style: 'margin-top:14px' },
+        field('Category', select('category', state.meta.expense_categories.map((c) => [c, (CATEGORY[c] || [c])[0]]), 'grocery')),
+        field('Budget per month (₹)', moneyInput('amount', '', { required: true })),
+      ),
+      field('From', input('effective_from', first, { type: 'date', required: true }), 'Change it any time; old months keep the old budget.'),
+    ));
+    if (bd.history.length) {
+      budgetCard.append(h('details', { style: 'margin-top:12px' }, h('summary', { class: 'small', text: 'History' }),
+        h('ul', { class: 'list' }, bd.history.map((r) => h('li', {},
+          h('div', { class: 'main' }, h('div', { class: 't', text: `${(CATEGORY[r.category] || [r.category])[0]} — ${fmt(r.amount_paise)}` }), h('div', { class: 's', text: `from ${dayLabel(r.effective_from)}` })),
+          h('button', {
+            class: 'btn small danger', type: 'button', text: 'Remove',
+            onclick: async () => {
+              if (!confirm('Remove this budget entry?')) return;
+              await post(`budgets/${r.id}/delete`);
+              render();
+            },
+          }),
+        )))));
+    }
+    root.append(budgetCard);
 
     root.append(h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: 'Change password' })),
       formShell(async (fd) => {

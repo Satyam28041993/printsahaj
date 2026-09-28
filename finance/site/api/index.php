@@ -12,6 +12,7 @@ require __DIR__ . '/../src/records.php';
 require __DIR__ . '/../src/planner.php';
 require __DIR__ . '/../src/goals.php';
 require __DIR__ . '/../src/ai.php';
+require __DIR__ . '/../src/reports.php';
 
 date_default_timezone_set('Asia/Kolkata');
 ini_set('display_errors', '0');
@@ -121,6 +122,16 @@ try {
         'GET loans/:id/payments' => Payments::list($user, $id),
         'POST loans/:id/payments' => Payments::create($user, $id, $in),
         'POST payments/:id/delete' => Payments::delete($user, $id),
+        'POST loans/:id/skip' => LoanSkips::mark($user, $id, $in),
+        'POST loans/:id/unskip' => LoanSkips::unmark($user, $id, $in),
+
+        'GET budgets' => Budgets::list($user),
+        'POST budgets' => Budgets::create($user, $in),
+        'POST budgets/:id/delete' => (function () use ($user, $id) {
+            Budgets::delete($user, $id);
+            return ['ok' => true];
+        })(),
+        'GET reports' => Reports::monthly($user, $month()),
 
         'GET goals' => Goals::list($user),
         'POST goals' => Goals::create($user, $in),
