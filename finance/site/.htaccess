@@ -42,4 +42,9 @@ ErrorDocument 404 "Not found"
   <FilesMatch "^manifest\.json$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
+  # This app changes often — always revalidate app.css/app.js so a deploy
+  # is never hidden behind a stale browser cache.
+  <FilesMatch "^app\.(css|js)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
 </IfModule>
