@@ -193,7 +193,9 @@ main {
     font-size: 14px;
   }
   .topbar { grid-column: 2; }
-  main { grid-column: 2; padding-bottom: 40px; width: 100%; }
+  /* Bottom padding clears the floating "+ Spending" button (fixed at
+     bottom:28px, ~48px tall) so it never sits over the page's last card. */
+  main { grid-column: 2; padding-bottom: 110px; width: 100%; }
 }
 
 /* Building blocks */
