@@ -8,7 +8,7 @@
 // Bump CACHE when the shell files below change materially, so old
 // clients pick up the new version instead of serving a stale copy.
 const CACHE = 'ff-shell-v1';
-const SHELL = ['./', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/vendor/chart.umd.min.js'];
+const SHELL = ['./', 'index.html', 'assets/app.css', 'assets/app.js', 'assets/boot.js', 'assets/vendor/chart.umd.min.js'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

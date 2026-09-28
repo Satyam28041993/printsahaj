@@ -101,7 +101,7 @@
     ['other', 'Other loans'],
     ['closed', 'Paid off'],
   ];
-  const PALETTE = ['#0e9f8e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981', '#ec4899', '#64748b', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#06b6d4', '#a855f7', '#94a3b8'];
+  const PALETTE = ['#14b8a6', '#6d7cff', '#f59e0b', '#ec4899', '#0ea5e9', '#22c55e', '#f97316', '#a855f7', '#ef4444', '#06b6d4', '#84cc16', '#eab308', '#8b5cf6', '#64748b', '#94a3b8'];
 
   // ---------- API ----------
   class ApiError extends Error {
@@ -207,6 +207,32 @@
     }
   });
   window.addEventListener('hashchange', route);
+
+  // ---------- theme ----------
+  const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => (document.documentElement.dataset.theme || (darkQuery.matches ? 'dark' : 'light')) === 'dark';
+  function applyTheme() {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = isDark() ? '#0a0b0d' : '#f4f6fb';
+    if (!window.Chart) return;
+    window.Chart.defaults.color = cssVar('--muted');
+    window.Chart.defaults.borderColor = cssVar('--line');
+    window.Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  }
+  applyTheme();
+  $('#theme-btn').addEventListener('click', () => {
+    const next = isDark() ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('ff-theme', next); } catch { /* private mode */ }
+    applyTheme();
+    if (state.user) render();
+  });
+  darkQuery.addEventListener('change', () => {
+    if (document.documentElement.dataset.theme) return;
+    applyTheme();
+    if (state.user) render();
+  });
 
   // FAB: only shown on Home and Spending; draggable to a corner on mobile
   // (desktop keeps the fixed bottom-right spot from the .fab CSS rule).
@@ -482,7 +508,7 @@
       type: 'doughnut',
       data: {
         labels: cats.map((c) => (CATEGORY[c.category] || [c.category])[0]),
-        datasets: [{ data: cats.map((c) => c.total_paise / 100), backgroundColor: cats.map((_, i) => PALETTE[i % PALETTE.length]), borderWidth: 0 }],
+        datasets: [{ data: cats.map((c) => c.total_paise / 100), backgroundColor: cats.map((_, i) => PALETTE[i % PALETTE.length]), borderWidth: 3, borderColor: cssVar('--surface'), borderRadius: 6, hoverOffset: 6 }],
       },
       options: {
         maintainAspectRatio: false,
@@ -623,9 +649,9 @@
     if (state.trendChart) state.trendChart.destroy();
     const labels = trend.map((t) => monthLabel(t.month).split(' ')[0]);
     const series = [
-      ['Income', trend.map((t) => t.income_paise / 100), '#0e9f8e'],
-      ['Spent', trend.map((t) => t.spent_paise / 100), '#ef4444'],
-      ['Loan payments', trend.map((t) => t.loan_paid_paise / 100), '#3b82f6'],
+      ['Income', trend.map((t) => t.income_paise / 100), '#14b8a6'],
+      ['Spent', trend.map((t) => t.spent_paise / 100), '#ec4899'],
+      ['Loan payments', trend.map((t) => t.loan_paid_paise / 100), '#6d7cff'],
     ];
     state.trendChart = new window.Chart(canvas, {
       type: 'line',
@@ -1623,7 +1649,7 @@
     const months = Math.min(longest, 240);
     const labels = Array.from({ length: months }, (_, i) => addMonthsJs(r.start_month, i));
     const style = {
-      none: { label: t('series_today'), color: '#94a3b8', dash: [5, 4], width: 2 },
+      none: { label: t('series_today'), color: cssVar('--faint'), dash: [5, 4], width: 2 },
       [bestKey]: { label: bestKey === 'custom' ? t('series_custom') : t('series_best'), color: '#0e9f8e', dash: [], width: 3 },
     };
     const short = (v) => (v >= 1e5 ? `₹${(v / 1e5).toFixed(v % 1e5 ? 1 : 0)} ${t('lakh')}` : `₹${rupee.format(v)}`);

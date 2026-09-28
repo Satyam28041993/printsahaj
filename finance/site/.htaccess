@@ -44,7 +44,7 @@ ErrorDocument 404 "Not found"
   </FilesMatch>
   # This app changes often — always revalidate app.css/app.js so a deploy
   # is never hidden behind a stale browser cache.
-  <FilesMatch "^app\.(css|js)$">
+  <FilesMatch "^(app\.(css|js)|boot\.js)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>
