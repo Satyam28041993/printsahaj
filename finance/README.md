@@ -19,11 +19,12 @@ stays in the Hostinger database.
 | `site/` | Everything uploaded to `public_html/finance/` |
 | `site/index.html`, `site/assets/` | The app (one page, hash routes) |
 | `site/api/index.php` | The only PHP entry point (`?r=/route`) |
-| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php`, `planner.php`, `goals.php` |
+| `site/src/` | PHP: `lib.php` (config, DB, money, input), `auth.php`, `records.php`, `planner.php`, `goals.php`, `ai.php` |
 | `site/src/migrations/` | SQL, applied automatically in order |
 | `site/config.example.php` | Template for the private config |
 | `tests/api_test.php` | End-to-end API test against a throwaway MySQL DB |
 | `tests/dev-router.php` | Local `php -S` router with the production CSP |
+| `tests/fake-gemini.php` | Stand-in Gemini server used by the tests (logs what would be sent) |
 
 ## Rules the code keeps
 
@@ -74,5 +75,10 @@ FF_DB_HOST=127.0.0.1 FF_DB_NAME=fftest FF_DB_USER=ff FF_DB_PASS=ffpass php finan
   goals with money in/out entries, monthly amount, target date, "needs ₹X/month" and expected month.
   Loan-closure goals follow a loan's balance and use the planner for the expected end. Loan planning
   never reads or spends goal money. The dashboard shows money put into goals and what is still free.
-- **V4:** AI explanations on top of the calculated numbers (server-side key; AI never writes data).
+- **AI (done, `src/ai.php`):** Google Gemini, same API, models and fallback order as PrintVerify.
+  The engine calculates, the AI explains: it gets the app's computed numbers, and for a new
+  "what if" it can only call read-only engine tools (payoff plan, refinance check, month-by-month
+  outlook). Names travel as "Person 1/2" and are put back afterwards; notes and usernames are never
+  sent; the key goes in a header from the server only. Answers come back as short answer + facts,
+  assumptions, estimates, suggestions, saved privately per person (40 questions a day).
 - **V5:** backups, monitoring, security review.

@@ -11,6 +11,7 @@ require __DIR__ . '/../src/auth.php';
 require __DIR__ . '/../src/records.php';
 require __DIR__ . '/../src/planner.php';
 require __DIR__ . '/../src/goals.php';
+require __DIR__ . '/../src/ai.php';
 
 date_default_timezone_set('Asia/Kolkata');
 ini_set('display_errors', '0');
@@ -78,7 +79,7 @@ try {
             return ['ok' => true];
         })(),
         'GET members' => Db::all('SELECT id, name, username, role FROM users WHERE family_id = ? ORDER BY id', [$user['family_id']]),
-        'GET meta' => ['income_types' => Income::TYPES, 'expense_categories' => Expenses::CATEGORIES, 'loan_types' => Loans::TYPES, 'goal_kinds' => Goals::KINDS],
+        'GET meta' => ['income_types' => Income::TYPES, 'expense_categories' => Expenses::CATEGORIES, 'loan_types' => Loans::TYPES, 'goal_kinds' => Goals::KINDS, 'ai_enabled' => Ai::enabled()],
 
         'GET dashboard' => Dashboard::get($user, $month()),
 
@@ -126,6 +127,10 @@ try {
         'GET goals/:id/entries' => Goals::entries($user, $id),
         'POST goals/:id/entries' => Goals::addEntry($user, $id, $in),
         'POST goal-entries/:id/delete' => Goals::deleteEntry($user, $id),
+
+        // The AI reads engine results and read-only tools; it cannot write data.
+        'GET ai/history' => Ai::history($user),
+        'POST ai/ask' => Ai::ask($user, $in),
 
         // Planning only reads; nothing here changes saved data.
         'POST plan/simulate' => Planner::run($user, $in),

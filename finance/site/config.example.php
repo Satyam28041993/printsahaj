@@ -15,6 +15,11 @@ return [
     // Needed once, on the first-time setup page. Any long random text.
     // After both accounts exist you can blank it.
     'setup_token' => 'PUT-A-LONG-RANDOM-SETUP-CODE-HERE',
+    // Google Gemini key for the AI tab — the same kind of key PrintVerify uses
+    // (aistudio.google.com → Get API key). Leave empty to keep AI off.
+    'gemini_api_key' => '',
+    // Optional: pin a model. By default it tries gemini-2.5-flash, then the fallbacks.
+    // 'gemini_model' => 'gemini-2.5-flash',
     'allowed_hosts' => ['finance.printsahaj.com'],
     'secure_cookies' => true,
 ];

@@ -995,12 +995,70 @@
     const active = loans.filter((l) => l.group !== 'closed');
     const root = h('div', { class: 'stack' });
     root.append(h('p', { class: 'notice info', text: 'Planning never changes your real entries. Try as many numbers as you like.' }));
+    root.append(aiCard());
     if (!active.length) {
       root.append(h('div', { class: 'card empty', text: 'Add your loans first (Loans tab), then come back to plan.' }));
       return root;
     }
     root.append(payoffCard(active), refinanceCard(active));
     return root;
+  }
+
+  // ---------- AI ----------
+  const AI_QUESTIONS = [
+    'Is mahine hum safely kitna bacha sakte hain?',
+    'Gold loan kab tak band ho sakta hai?',
+    'Agar ₹30,000 incentive aaye to kahan lagayein?',
+    'Hamara cash flow tight kyun hai?',
+    'Agle 6 mahine kaise dikhte hain?',
+    'Debt-free hone ka plan banao.',
+  ];
+
+  function aiCard() {
+    const card = h('section', { class: 'card' },
+      h('div', { class: 'card-head' }, h('h2', { text: 'Ask about your money' }), h('span', { class: 'chip info', text: 'AI' })),
+    );
+    if (!state.meta.ai_enabled) {
+      card.append(h('p', { class: 'muted small', text: 'AI is off. Add gemini_api_key to finance-config.php on the server to switch it on.' }));
+      return card;
+    }
+    card.append(h('p', { class: 'muted small', style: 'margin-bottom:12px', text: 'The app does the maths; the AI explains it. It cannot change anything, and names and notes are not sent.' }));
+    const answerBox = h('div', { class: 'stack', style: 'margin-top:14px' });
+    const q = h('textarea', { name: 'question', maxlength: 1000, rows: 2, placeholder: 'Poochho — e.g. gold loan kab band hoga?', 'aria-label': 'Your question' });
+    const chips = h('div', { class: 'chips', style: 'margin-bottom:12px' }, AI_QUESTIONS.map((text) => h('button', { type: 'button', text, onclick: () => { q.value = text; q.focus(); } })));
+    const form = formShell(async () => {
+      if (!q.value.trim()) throw new Error('Type a question first.');
+      answerBox.replaceChildren(h('p', { class: 'loading', text: 'Working it out…' }));
+      try {
+        const r = await post('ai/ask', { question: q.value.trim() });
+        answerBox.replaceChildren(aiAnswer(r.question, r.answer));
+      } catch (e) {
+        answerBox.replaceChildren();
+        throw e;
+      }
+    }, 'Ask', chips, h('label', { class: 'field' }, q));
+    card.append(form, answerBox);
+    const past = h('details', { style: 'margin-top:12px' }, h('summary', { class: 'small', text: 'Earlier questions' }));
+    past.addEventListener('toggle', async () => {
+      if (!past.open || past.dataset.loaded) return;
+      past.dataset.loaded = '1';
+      const rows = await get('ai/history');
+      past.append(rows.length ? h('div', { class: 'stack', style: 'margin-top:10px' }, rows.map((r) => aiAnswer(r.question, r.answer, r.created_at))) : h('p', { class: 'faint', text: 'None yet.' }));
+    });
+    card.append(past);
+    return card;
+  }
+
+  function aiAnswer(question, a, when) {
+    const section = (title, items) => (items && items.length ? h('div', {}, h('h3', { style: 'margin:10px 0 4px', text: title }), h('ul', { style: 'margin:0;padding-left:20px' }, items.map((t) => h('li', { text: t })))) : null);
+    return h('article', { class: 'card', style: 'background:var(--surface-2);box-shadow:none' },
+      h('p', { class: 'faint', text: when ? `${question} · ${new Date(when.replace(' ', 'T')).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}` : question }),
+      h('p', { style: 'font-weight:650;margin-top:6px', text: a.short_answer }),
+      section('Calculated facts', a.facts),
+      section('Assumptions', a.assumptions),
+      section('Estimates', a.estimates),
+      section('Suggestions', a.suggestions),
+    );
   }
 
   function payoffCard(active) {

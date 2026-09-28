@@ -95,6 +95,7 @@ final class Planner
 
             $budget ??= $required + $extra;
             $pool = $strategy === 'none' ? 0 : max(0, $budget + ($lumps[$month] ?? 0) - $required);
+            $poolStart = $pool;
             if ($pool > 0) {
                 foreach (self::targets($open, $strategy, $order) as $id) {
                     $amount = min($pool, $open[$id]['balance']);
@@ -106,18 +107,21 @@ final class Planner
                 }
             }
             $leftover += $pool;
+            $paidThisMonth = $required + $poolStart - $pool;
 
             $outstanding = 0;
+            $ended = [];
             foreach ($open as $id => $l) {
                 if ($l['balance'] <= 0 || ($l['type'] === 'emi' && $l['units'] === null && $l['remaining'] !== null && $l['remaining'] <= 0)) {
                     $l['closed'] = $month;
                     $done[$id] = $l;
+                    $ended[] = $l['name'];
                     unset($open[$id]);
                     continue;
                 }
                 $outstanding += $l['balance'];
             }
-            $timeline[] = ['month' => $month, 'outstanding_paise' => $outstanding];
+            $timeline[] = ['month' => $month, 'outstanding_paise' => $outstanding, 'payments_paise' => $paidThisMonth, 'ended' => $ended];
             if (!$open) {
                 $debtFree = $month;
             }

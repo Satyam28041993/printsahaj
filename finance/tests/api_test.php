@@ -35,7 +35,21 @@ file_put_contents($configFile, '<?php return ' . var_export([
     'setup_token' => $token,
     'allowed_hosts' => ["127.0.0.1:$port"],
     'secure_cookies' => false,
+    'gemini_api_key' => 'test-key',
+    'gemini_base' => 'http://127.0.0.1:8766/v1beta',
 ], true) . ';');
+
+// Fake Gemini for the AI tests; every request it gets is logged here.
+$geminiLog = sys_get_temp_dir() . '/ff-fake-gemini.log';
+@unlink($geminiLog);
+$fake = proc_open(
+    ['php', '-S', '127.0.0.1:8766', __DIR__ . '/fake-gemini.php'],
+    [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']],
+    $fakePipes,
+    null,
+    ['FAKE_GEMINI_LOG' => $geminiLog] + getenv()
+);
+register_shutdown_function(fn () => proc_terminate($fake));
 
 $site = dirname(__DIR__) . '/site';
 $server = proc_open(
@@ -316,6 +330,27 @@ expectStatus('no money entries on a loan goal', $a->post("goals/{$lg['id']}/entr
 $a->post("loans/{$gold['id']}/payments", ['principal' => '10000', 'paid_on' => $today]);
 $lg2 = array_values(array_filter($a->get('goals')[1], fn ($g) => $g['id'] === $lg['id']))[0];
 check('principal payment moves the goal (10,000 = 5%)', $lg2['current_paise'] === 1000000 && $lg2['progress_pct'] === 5, $lg2);
+
+echo "AI assistant\n";
+$m = $a->get('meta')[1];
+check('AI switched on when a key is set', ($m['ai_enabled'] ?? null) === true, $m);
+$before = $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn();
+$ans = expectStatus('ask a what-if', $a->post('ai/ask', ['question' => 'Agar Ravi ka ₹30,000 incentive aaye to gold loan kab band hoga?']), 200);
+check('engine tool was used', in_array('run_payoff_plan', $ans['tools_used'] ?? [], true), $ans);
+check('answer has the four parts', isset($ans['answer']['facts'], $ans['answer']['assumptions'], $ans['answer']['estimates'], $ans['answer']['suggestions']), $ans['answer'] ?? null);
+check('names are put back in the answer', str_contains($ans['answer']['short_answer'] ?? '', 'Ravi') && !str_contains(json_encode($ans['answer']), 'Person 2'), $ans['answer'] ?? null);
+check('final answer saw the tool result', in_array('tool result seen', $ans['answer']['facts'] ?? [], true), $ans['answer']['facts'] ?? null);
+$log = (string) @file_get_contents($geminiLog);
+check('model fallback on 404', str_contains($log, 'gemini-2.5-flash-lite:generateContent'), substr($log, 0, 200));
+check('no real names sent', !preg_match('/\b(Asha|Ravi)\b/', $log), 'names found in AI request');
+check('no usernames or notes sent', !str_contains($log, 'asha') && !str_contains($log, 'doctor') && !str_contains($log, 'gift'), 'private text found in AI request');
+check('question was masked', str_contains($log, 'Agar Person 2 ka'), 'question not masked');
+check('key sent as a header, not in the URL', !str_contains($log, 'key=test-key'), 'key in URL');
+check('AI changed no data', $pdo->query('SELECT SUM(outstanding_paise) FROM loans WHERE deleted_at IS NULL')->fetchColumn() === $before);
+$hist = expectStatus('history', $a->get('ai/history'), 200);
+check('question saved for the asker', ($hist[0]['question'] ?? '') === 'Agar Ravi ka ₹30,000 incentive aaye to gold loan kab band hoga?', $hist[0] ?? null);
+check('history is private to the asker', $b->get('ai/history')[1] === [], $b->get('ai/history')[1]);
+expectStatus('empty question refused', $a->post('ai/ask', ['question' => '  ']), 422);
 
 echo "Guards\n";
 $other = new Client($base, 'printsahaj.com');
