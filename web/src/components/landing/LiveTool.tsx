@@ -7,7 +7,7 @@ import { home } from "@content/home";
 import { LABEL_RATE_DEFAULTS as DEFAULTS, labelRatePerThousand } from "@/lib/labelRate";
 
 export default function LiveTool() {
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const [labelW, setLabelW] = useState(DEFAULTS.labelW);
   const [labelH, setLabelH] = useState(DEFAULTS.labelH);
   const [gapAround, setGapAround] = useState(DEFAULTS.gapAround);

@@ -33,7 +33,7 @@ function ProofVisual({ visual }: { visual: (typeof home.proof.items)[number]["vi
 
 export default function ProductProof() {
   const copy = home.proof;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="proof-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">

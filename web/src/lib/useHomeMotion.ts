@@ -1,5 +1,6 @@
 "use client";
 
+import { markMotionReady, observeReveals } from "./reveal";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
@@ -42,8 +43,8 @@ export function useInViewState<T extends HTMLElement>(rootMargin = "80px") {
 }
 
 /**
- * Fade-up on first sight. Children marked `.h-reveal` are hidden by CSS only
- * once the `js` class is on <html>, so a page without JS is fully visible.
+ * Fade-up on first sight. Thin wrapper over the shared observer in ./reveal;
+ * children marked `.h-reveal` are hidden by CSS only while `html.js-motion` is set.
  */
 export function useRevealOnView<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -51,20 +52,8 @@ export function useRevealOnView<T extends HTMLElement>() {
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const targets = Array.from(root.querySelectorAll<HTMLElement>(".h-reveal"));
-    if (targets.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          entry.target.classList.add("is-in");
-          observer.unobserve(entry.target);
-        }
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
-    );
-    targets.forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
+    markMotionReady();
+    return observeReveals(root);
   }, []);
 
   return ref;

@@ -28,7 +28,7 @@ function QrMark() {
 
 export default function TraceIdentity() {
   const copy = home.identity;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const [active, setActive] = useState(0);
   const timerRef = useRef<number | null>(null);
 

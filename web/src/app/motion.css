@@ -1,0 +1,504 @@
+/* ---------------------------------------------------------------------------
+   Motion system. CSS + one shared IntersectionObserver (src/lib/reveal.ts);
+   no animation library. Everything animates transform / opacity only.
+
+   1. Scroll reveal        4. Cards & images: lift + gradient glow
+   2. Buttons & CTAs       5. Tabs: sliding indicator + panel swap
+   3. Touch press states   6. Founder portrait glow
+   Reduced motion: one kill-switch at the bottom (and the hide-before-reveal
+   class is never set for those visitors, see the inline script in layout.tsx).
+   --------------------------------------------------------------------------- */
+
+:root {
+  --m-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --m-rise: 14px;
+}
+
+/* ---- 1. Scroll reveal --------------------------------------------------- */
+
+/* Hidden only while html.js-motion is set (JS present, motion allowed). With
+   JS off, or reduced motion, none of this applies and the page is complete. */
+html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
+  opacity: 0;
+}
+
+/* The reveal is an animation, not a transition: `backwards` fill means the
+   element returns to its natural style afterwards, so hover transforms and
+   transitions on the same element keep working. --i is the stagger index. */
+:is([data-reveal], .h-reveal).is-in {
+  animation: m-rise 0.7s var(--m-ease) backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@keyframes m-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--m-rise));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- 2. Buttons & CTAs -------------------------------------------------- */
+
+.pill {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Shine: a soft diagonal band that sweeps across on hover / keyboard focus. */
+.pill::before {
+  content: "";
+  position: absolute;
+  inset: -1px auto -1px 0;
+  width: 55%;
+  z-index: -1;
+  background: linear-gradient(
+    105deg,
+    transparent 15%,
+    color-mix(in srgb, #fff 34%, transparent) 50%,
+    transparent 85%
+  );
+  transform: translateX(-130%) skewX(-12deg);
+  pointer-events: none;
+}
+
+.pill--ghost::before {
+  background: linear-gradient(
+    105deg,
+    transparent 15%,
+    color-mix(in srgb, var(--brand-b) 22%, transparent) 50%,
+    transparent 85%
+  );
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pill:hover::before {
+    transform: translateX(300%) skewX(-12deg);
+    transition: transform 0.7s var(--m-ease);
+  }
+
+  .pill--dark:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 12px 26px -12px color-mix(in srgb, var(--pill-bg) 70%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--brand-b) 16%, transparent);
+  }
+
+  .pill--ghost:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -14px color-mix(in srgb, var(--brand-b) 60%, transparent);
+  }
+}
+
+.pill:focus-visible::before {
+  transform: translateX(300%) skewX(-12deg);
+  transition: transform 0.7s var(--m-ease);
+}
+
+.pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---- 3. Touch / press states ------------------------------------------- */
+
+/* Touch has no :hover, so the press itself is the feedback. */
+.pill:active,
+.founder-linkedin:active,
+.sc-tab:active,
+.hp-pill:active,
+.sc-toggle:active,
+.m-press:active {
+  transform: scale(0.98);
+  transition-duration: 0.08s;
+}
+
+.pill--dark:active {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-b) 20%, transparent);
+}
+
+/* ---- 4. Cards & images: hover lift + gradient glow ---------------------- */
+
+.m-lift,
+.feature-card,
+.tool-window,
+.timeline-item__card,
+.hp-consult {
+  transition:
+    transform 0.25s var(--m-ease),
+    box-shadow 0.25s var(--m-ease),
+    border-color 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .m-lift:hover,
+  .feature-card:hover,
+  .tool-window:hover,
+  .timeline-item__card:hover,
+  .hp-consult:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+.m-lift:active {
+  transform: scale(0.99);
+}
+
+/* Featured cards / images: the existing conic ring (h-ring in home.css) is
+   registered with @property, so it spins where supported and is a static
+   brand-gradient border where it isn't. Off-screen it is paused by the
+   data-inview attribute set through useInViewState. */
+.m-glow {
+  position: relative;
+  isolation: isolate;
+}
+
+.m-glow::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--brand-gradient);
+  opacity: 0;
+  filter: blur(18px);
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .m-glow:hover::after {
+    opacity: 0.28;
+  }
+}
+
+/* ---- 5. Tabs ------------------------------------------------------------ */
+
+/* Sliding active indicator. Position is written to --ix/--iy/--iw/--ih by
+   useSlidingIndicator; until it has measured, the selected tab paints its own
+   background, so nothing is missing without JS. */
+.m-tabs {
+  position: relative;
+}
+
+.m-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: var(--iw, 0);
+  height: var(--ih, 0);
+  border-radius: 999px;
+  transform: translate(var(--ix, 0), var(--iy, 0));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.m-tabs[data-ind="ready"] .m-indicator {
+  opacity: 1;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  border: 1px solid color-mix(in srgb, var(--text-primary) 9%, transparent);
+}
+
+.m-tabs[data-ind="ready"][data-anim="on"] .m-indicator {
+  transition:
+    transform 0.38s var(--m-ease),
+    width 0.38s var(--m-ease);
+}
+
+.m-tabs[data-ind="ready"] .sc-tab,
+.m-tabs[data-ind="ready"] .hp-pill {
+  position: relative;
+  z-index: 1;
+}
+
+.m-tabs[data-ind="ready"] .sc-tab[aria-selected="true"] {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.m-tabs[data-ind="ready"] .hp-pill[aria-selected="true"] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--pill-fg);
+}
+
+/* hp pills use a dark indicator. */
+.m-tabs--dark[data-ind="ready"] .m-indicator {
+  background: var(--pill-bg);
+  border-color: var(--pill-bg);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--pill-bg) 70%, transparent);
+}
+
+/* Panel content swap: enters with a crossfade + short rise on every change. */
+.m-swap {
+  animation: m-swap-in 0.42s var(--m-ease) both;
+}
+
+@keyframes m-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- 6. Founder --------------------------------------------------------- */
+
+.fd {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--h-radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  padding: clamp(22px, 4.5vw, 64px);
+}
+
+.fd::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: min(70%, 520px);
+  z-index: -1;
+  background: var(--panel-wash);
+  pointer-events: none;
+}
+
+.fd__grid {
+  display: grid;
+  gap: clamp(28px, 4vw, 64px);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .fd__grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+}
+
+/* Light wash behind the portrait: a blurred brand blob + radial gradient. */
+.fd__stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2vw, 24px);
+}
+
+.fd__stage::before {
+  content: "";
+  position: absolute;
+  inset: 4% 2%;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    radial-gradient(60% 60% at 30% 25%, color-mix(in srgb, var(--brand-a) 34%, transparent), transparent 70%),
+    radial-gradient(60% 60% at 75% 70%, color-mix(in srgb, var(--brand-c) 30%, transparent), transparent 70%);
+  filter: blur(34px);
+}
+
+/* Frame: 26px radius, slow conic border glow, layered shadow. */
+.fd__frame {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 4 / 5;
+  margin: 0;
+  padding: 3px;
+  border-radius: 28px;
+  background: conic-gradient(
+    from var(--ring-angle, 0deg),
+    var(--brand-a),
+    var(--brand-b),
+    var(--brand-c),
+    var(--brand-a)
+  );
+  box-shadow:
+    0 2px 4px rgba(10, 11, 13, 0.06),
+    0 18px 36px -14px rgba(10, 11, 13, 0.24),
+    0 48px 80px -36px color-mix(in srgb, var(--brand-c) 45%, transparent);
+  animation: h-ring-spin 9s linear infinite;
+}
+
+.fd__frame[data-inview="false"] {
+  animation-play-state: paused;
+}
+
+.fd__photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 25px;
+  background: var(--bg-sunken);
+}
+
+.fd__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 14%;
+}
+
+.fd__badge {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-card);
+}
+
+.fd__badge i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-a);
+}
+
+.fd__name {
+  margin-top: 1.75rem;
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.fd__role {
+  margin-top: 0.3rem;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+}
+
+.fd__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.fd__chip {
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition:
+    transform 0.2s var(--m-ease),
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fd__chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-line);
+    color: var(--text-primary);
+  }
+}
+
+.fd__facts {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+.fd__fact {
+  padding: 0.9rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+}
+
+.fd__fact b {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fd__fact span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.fd__fact--past {
+  border-style: dashed;
+}
+
+.fd__quote {
+  margin-top: 1.75rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--brand-b);
+  font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+/* Past roles on the timeline: visibly not "current". */
+.timeline-item__past {
+  margin-left: 0.6rem;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  vertical-align: middle;
+}
+
+/* ---- Reduced motion: kill-switch ---------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pill::before {
+    display: none;
+  }
+
+  .fd__frame,
+  .m-swap,
+  :is([data-reveal], .h-reveal).is-in {
+    animation: none !important;
+  }
+
+  .m-lift:hover,
+  .feature-card:hover,
+  .tool-window:hover,
+  .timeline-item__card:hover,
+  .hp-consult:hover,
+  .pill:hover,
+  .fd__chip:hover {
+    transform: none !important;
+  }
+}

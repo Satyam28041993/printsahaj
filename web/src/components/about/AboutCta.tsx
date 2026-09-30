@@ -8,7 +8,7 @@ import AboutSection from "./AboutSection";
 
 export default function AboutCta() {
   const copy = about.cta;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <AboutSection labelledBy="about-cta-heading" className="about-section--cta">

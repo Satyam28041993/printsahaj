@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { Bot, Calculator, Factory, Globe, Pause, Play, ShieldCheck, Users } from "lucide-react";
 import Pill from "../Pill";
 import MiniUi, { CALC_INITIAL, type CalcState } from "./MiniUis";
+import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import { useInViewState, usePrefersReducedMotion, useRevealOnView, useSpotlight } from "@/lib/useHomeMotion";
 import { homeShowcase, type ShowcaseVisualId } from "@content/homeShowcase";
 
@@ -50,6 +51,8 @@ export default function HomeShowcase() {
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabsRowRef = useRef<HTMLDivElement>(null);
   const touchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useSlidingIndicator(tabsRowRef, tabRefs, active);
 
   const auto = !reduced;
   const running = auto && inView && !userPaused && !hover && !focused && !touchHold;
@@ -142,11 +145,12 @@ export default function HomeShowcase() {
           <div className="sc__bar h-reveal" style={{ "--i": 1 } as React.CSSProperties}>
             <div
               ref={tabsRowRef}
-              className="sc-tabs"
+              className="sc-tabs m-tabs"
               role="tablist"
               aria-label={homeShowcase.tablistLabel}
               onKeyDown={onKeyDown}
             >
+              <span className="m-indicator" aria-hidden="true" />
               {tabs.map((item, i) => {
                 const Icon = ICONS[item.id];
                 const selected = i === active;

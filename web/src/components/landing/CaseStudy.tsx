@@ -11,7 +11,7 @@ import { caseStudies, caseStudiesIntro } from "@content/caseStudies";
  * The varnish job is the only case with a captured engine output — it leads.
  */
 export default function CaseStudy() {
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const lead = caseStudies[0];
   const rest = caseStudies.slice(1);
   if (!lead) return null;

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import FounderPhoto from "./FounderPhoto";
+import { useInViewState } from "@/lib/useHomeMotion";
 import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
 
@@ -14,39 +14,101 @@ function LinkedInIcon() {
   );
 }
 
+const idx = (i: number) => ({ "--i": i }) as React.CSSProperties;
+
+/** Homepage founder panel: framed portrait with a slow gradient border, credentials, quote. */
 export default function Founder() {
   const copy = home.founder;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 85%" });
+  const revealRef = useReveal<HTMLDivElement>();
+  const { ref: frameRef, inView } = useInViewState<HTMLElement>();
 
   return (
-    <section aria-labelledby="founder-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
-      <div ref={revealRef} className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)]">
-        <div data-reveal>
-          <FounderPhoto photo={copy.photo} name={copy.name} />
-        </div>
-        <div data-reveal>
-          <p className="story-kicker">Founder</p>
-          <h2 id="founder-heading" className="mt-5 max-w-[16ch] font-display text-display-lg font-bold text-primary text-balance">
-            {copy.heading}
-          </h2>
-          <p className="mt-8 font-display text-display-md font-semibold text-primary">{copy.name}</p>
-          <p className="mt-2 text-sm text-muted">{copy.role}</p>
-          <p className="mt-6 max-w-xl text-body-lg text-muted">
-            Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a
-              href={copy.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="founder-linkedin"
+    <section aria-labelledby="founder-heading" className="h-wrap py-[clamp(24px,4vw,56px)]">
+      <div ref={revealRef} className="fd">
+        <div className="fd__grid">
+          <div className="fd__stage" data-reveal style={idx(0)}>
+            <figure ref={frameRef} className="fd__frame" data-inview={inView}>
+              <div className="fd__photo">
+                {copy.photo ? (
+                  // Static export ships images unoptimized; next/image is not used elsewhere on this site.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={copy.photo}
+                    alt={copy.photoAlt}
+                    width={copy.photoWidth}
+                    height={copy.photoHeight}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : null}
+              </div>
+              <figcaption className="fd__badge">
+                <i aria-hidden="true" />
+                {copy.badge}
+              </figcaption>
+            </figure>
+          </div>
+
+          <div>
+            <p className="h-kicker" data-reveal style={idx(0)}>
+              {copy.eyebrow}
+            </p>
+            <h2
+              id="founder-heading"
+              className="h-title h-title--lg mt-4 max-w-[20ch]"
+              data-reveal
+              style={idx(1)}
             >
-              <LinkedInIcon />
-              Connect on LinkedIn
-            </a>
-            <Link href="/about" className="founder-linkedin">
-              Full profile & resume →
-            </Link>
+              {copy.heading}
+            </h2>
+            <p className="fd__name" data-reveal style={idx(2)}>
+              {copy.name}
+            </p>
+            <p className="fd__role" data-reveal style={idx(2)}>
+              {copy.role}
+            </p>
+            <p className="h-lead mt-5 max-w-[62ch]" data-reveal style={idx(3)}>
+              {copy.description}
+            </p>
+
+            <ul className="fd__chips" aria-label="Focus areas">
+              {copy.focus.map((item, i) => (
+                <li key={item} className="fd__chip" data-reveal style={idx(4 + i)}>
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <dl className="fd__facts">
+              {copy.facts.map((fact, i) => (
+                <div
+                  key={fact.label}
+                  className={`fd__fact m-lift${fact.past ? " fd__fact--past" : ""}`}
+                  data-reveal
+                  style={idx(i)}
+                >
+                  <dt className="h-kicker !text-[10px]">{fact.label}</dt>
+                  <dd className="mt-1.5">
+                    <b>{fact.value}</b>
+                    <span>{fact.detail}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <blockquote className="fd__quote" data-reveal style={idx(1)}>
+              {copy.throughline}
+            </blockquote>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3" data-reveal style={idx(2)}>
+              <a href={copy.linkedin} target="_blank" rel="noopener noreferrer" className="founder-linkedin">
+                <LinkedInIcon />
+                {copy.linkedinLabel}
+              </a>
+              <Link href={copy.profileCta.href} className="founder-linkedin">
+                {copy.profileCta.label}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

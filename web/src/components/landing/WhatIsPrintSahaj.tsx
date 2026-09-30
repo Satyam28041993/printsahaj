@@ -19,7 +19,7 @@ const FRAGMENT_STYLE = [
  */
 export default function WhatIsPrintSahaj() {
   const copy = home.problem;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="problem-heading" className="band-sunken relative scroll-mt-28 px-5 py-[clamp(72px,9vw,140px)] sm:px-8">

@@ -8,7 +8,7 @@ import DownloadPdfButton from "./DownloadPdfButton";
 
 export default function AboutPdfSection() {
   const copy = about.pdf;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <AboutSection labelledBy="about-pdf-heading">

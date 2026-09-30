@@ -7,7 +7,7 @@ import AboutSection from "./AboutSection";
 
 export default function AboutTimeline() {
   const copy = about.founder;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%", stagger: 0.08 });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <AboutSection labelledBy="about-career-heading">
@@ -22,6 +22,7 @@ export default function AboutTimeline() {
               <p className="about-timeline__role">
                 {item.role}
                 {item.current ? <span className="about-timeline__now">Now</span> : null}
+                {item.past ? <span className="timeline-item__past">Past</span> : null}
               </p>
               <p className="about-timeline__org">{item.org}</p>
               <p className="about-timeline__desc">{item.description}</p>
