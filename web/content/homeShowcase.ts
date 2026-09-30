@@ -30,9 +30,48 @@ export interface ShowcaseContent {
   playLabel: string;
   statusLabel: string;
   tabs: ShowcaseTab[];
+  /** Every visible string inside the mock-up devices. Sample data only. */
+  miniUi: {
+    flexora: {
+      title: string;
+      badges: [string, string];
+      columns: { name: string; cards: [string, string][] }[];
+      hrmsLabel: string;
+    };
+    crm: {
+      title: string;
+      listLabel: string;
+      rows: [string, string, "info" | "warn" | "ok"][];
+      detailName: string;
+      steps: string[];
+    };
+    websites: {
+      title: string;
+      cta: string;
+      formLabel: string;
+      formCta: string;
+    };
+    printverify: {
+      title: string;
+      files: string[];
+      findingsLabel: string;
+      tones: { ok: string; warn: string; bad: string };
+    };
+    aivy: {
+      label: string;
+      me1: string;
+      bot1: string;
+      me2: string;
+      briefLabel: string;
+      tasks: string;
+      reminder: string;
+    };
+  };
   calculator: {
     title: string;
     resultLabel: string;
+    /** Shown with "—" when width, height or paper rate is empty or not above zero. */
+    invalidHint: string;
     fields: { key: "labelW" | "labelH" | "gapAround" | "gapAcross" | "paperRate"; label: string; unit: string }[];
     note: string;
   };
@@ -51,8 +90,6 @@ export const homeShowcase: ShowcaseContent = {
     {
       id: "flexora",
       label: "Flexora ERP",
-      // CONTENT GAP — NEEDS VERIFICATION: set to "Live" on the owner's instruction for
-      // this task, but content/home.ts and /products/flexora still say "Building".
       status: "Live",
       promise: "ERP + HRMS shaped around how flexographic label printers actually run.",
       chips: ["ERP", "HRMS", "Flexographic workflows"],
@@ -99,8 +136,53 @@ export const homeShowcase: ShowcaseContent = {
       cta: { label: "Open the full calculator", href: "/calculators/?tab=label-rate" },
     },
   ],
+  miniUi: {
+    flexora: {
+      title: "Sample data · ERP",
+      badges: ["ERP", "HRMS"],
+      columns: [
+        { name: "Order", cards: [["Sample order A", "40%"], ["Sample order B", "15%"]] },
+        { name: "Job", cards: [["Sample job A", "70%"], ["Sample job B", "55%"]] },
+        { name: "Dispatch", cards: [["Sample job C", "95%"], ["Sample job D", "100%"]] },
+      ],
+      hrmsLabel: "HRMS · sample",
+    },
+    crm: {
+      title: "Sample data · CRM",
+      listLabel: "Enquiries",
+      rows: [
+        ["Sample customer A", "Enquiry", "info"],
+        ["Sample customer B", "Quote sent", "warn"],
+        ["Sample customer C", "Follow-up", "ok"],
+      ],
+      detailName: "Sample customer B",
+      steps: ["Enquiry received", "Quote prepared", "Follow-up scheduled"],
+    },
+    websites: {
+      title: "Sample website",
+      cta: "Get a quote",
+      formLabel: "Enquiry",
+      formCta: "Send enquiry",
+    },
+    printverify: {
+      title: "Sample check",
+      files: ["Artwork", "Approval sheet", "Plate files"],
+      findingsLabel: "Findings",
+      tones: { ok: "Clear", warn: "Look", bad: "Differs" },
+    },
+    aivy: {
+      label: "Aivy · sample",
+      me1: "Remind me to call the supplier tomorrow at 10.",
+      bot1: "Done. Reminder set for tomorrow, 10:00.",
+      me2: "What's on today?",
+      briefLabel: "Morning brief",
+      tasks: "3 tasks",
+      reminder: "1 reminder",
+    },
+  },
   calculator: {
     title: "Label Rate",
+    invalidHint: "Enter a width, height and paper rate above zero.",
     resultLabel: "Per 1,000 labels",
     fields: [
       { key: "labelW", label: "Width", unit: "mm" },

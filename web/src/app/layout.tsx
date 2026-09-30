@@ -29,8 +29,7 @@ export const metadata: Metadata = {
     template: "%s — PrintSahaj",
   },
   description: printSahajSite.meta.description,
-  // app/icon.svg and app/apple-icon.png are picked up by convention; the 2.7 MB
-  // PNG that used to be the favicon is no longer referenced.
+  // Referenced explicitly: the small SVG and apple-touch PNG live in public/.
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],

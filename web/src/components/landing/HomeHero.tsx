@@ -23,7 +23,7 @@ export default function HomeHero() {
             <span className="h-chip__dot" aria-hidden="true" />
             {hero.eyebrow}
           </p>
-          <h1 id="hero-heading" className="h-title h-title--xl h-rise mt-7 max-w-[19ch] sm:max-w-none" style={rise(1)}>
+          <h1 id="hero-heading" className="h-title h-title--xl h-rise h-rise--move mt-7 max-w-[19ch] sm:max-w-none" style={rise(1)}>
             {hero.headline}
           </h1>
           <p className="h-lead h-rise mt-6 max-w-[52ch]" style={rise(2)}>

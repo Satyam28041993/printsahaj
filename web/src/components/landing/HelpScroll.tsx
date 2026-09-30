@@ -198,7 +198,7 @@ export default function HelpScroll() {
                 {current.points.map((point, i) => {
                   const state = i < step ? "done" : i === step ? "active" : "todo";
                   return (
-                    <li key={point} className="hp-step" data-state={state}>
+                    <li key={point.title} className="hp-step" data-state={state}>
                       <button
                         type="button"
                         className="hp-step__btn"
@@ -206,13 +206,12 @@ export default function HelpScroll() {
                         aria-controls={`help-step-${i}`}
                         onClick={() => setStep(i)}
                       >
-                        {point}
+                        {point.title}
                       </button>
-                      <div id={`help-step-${i}`} className="hp-step__more" role="region" aria-label={point}>
+                      <div id={`help-step-${i}`} className="hp-step__more" role="region" aria-label={point.title}>
                         <div>
-                          <p>
-                            {`Shown in the flow: ${current.flow[i]}`}
-                          </p>
+                          <p>{point.detail}</p>
+                          <p className="hp-step__flow">{`${help.flowLabel} ${current.flow[i]}`}</p>
                         </div>
                       </div>
                       <span className="hp-step__seg" aria-hidden="true">
@@ -247,7 +246,7 @@ export default function HelpScroll() {
             </div>
           </div>
 
-          <div
+          <section
             className="hp-consult h-ring h-reveal"
             style={{ "--i": 3 } as React.CSSProperties}
             data-inview={inView}
@@ -272,7 +271,7 @@ export default function HelpScroll() {
                 {consult.callCta.label}
               </Pill>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </section>

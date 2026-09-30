@@ -47,7 +47,7 @@ web/content/
 
 ## Logo
 
-Assets: `web/public/assets/MainLogo.png` (2816×1536, white canvas), icon-only, vertical lockup, monochrome. The favicon is `web/public/icon.svg` plus `apple-touch-icon.png` (the icon PNG is 2.7 MB — never reference it from a page). For the dark header capsule, enlarge the SVG mark (md/lg) and crop/export a transparent lockup later. Never stretch.
+Assets: `web/public/assets/MainLogo.png` (2816×1536, white canvas), icon-only, vertical lockup, monochrome. The favicon is `web/public/icon.svg` plus `apple-touch-icon.png`. For the dark header capsule, enlarge the SVG mark (md/lg) and crop/export a transparent lockup later. Never stretch.
 
 ## Target routes
 

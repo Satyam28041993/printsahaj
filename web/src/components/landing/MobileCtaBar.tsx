@@ -11,7 +11,9 @@ import { printSahajSite } from "@content/site";
  * `has-mbar` so the footer pads itself and the bar never covers footer text.
  */
 export default function MobileCtaBar() {
-  const [show, setShow] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
+  const [typing, setTyping] = useState(false);
+  const [onShowcase, setOnShowcase] = useState(false);
   const { primary } = printSahajSite.ctas;
   const { callCta } = printSahajSite.nav;
 
@@ -20,11 +22,35 @@ export default function MobileCtaBar() {
     if (!hero) return;
     const observer = new IntersectionObserver(([entry]) => {
       // "After the hero": it has left through the top, not merely not arrived.
-      setShow(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      setPastHero(!entry.isIntersecting && entry.boundingClientRect.top < 0);
     });
     observer.observe(hero);
     return () => observer.disconnect();
   }, []);
+
+  // Out of the way while a field is being filled in, and over the showcase card
+  // (its calculator inputs sit at the bottom of the phone screen).
+  useEffect(() => {
+    const isField = (node: EventTarget | null) =>
+      node instanceof HTMLElement && node.matches("input, select, textarea, [contenteditable='true']");
+    const onIn = (event: FocusEvent) => setTyping(isField(event.target));
+    const onOut = () => setTyping(false);
+    document.addEventListener("focusin", onIn);
+    document.addEventListener("focusout", onOut);
+    const panel = document.getElementById("showcase-panel");
+    let observer: IntersectionObserver | undefined;
+    if (panel) {
+      observer = new IntersectionObserver(([entry]) => setOnShowcase(entry.isIntersecting));
+      observer.observe(panel);
+    }
+    return () => {
+      document.removeEventListener("focusin", onIn);
+      document.removeEventListener("focusout", onOut);
+      observer?.disconnect();
+    };
+  }, []);
+
+  const show = pastHero && !typing && !onShowcase;
 
   useEffect(() => {
     document.documentElement.classList.toggle("has-mbar", show);

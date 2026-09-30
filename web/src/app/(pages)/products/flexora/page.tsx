@@ -19,11 +19,11 @@ export default function FlexoraProductPage() {
       description={product?.positioning ?? ""}
     >
       <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-        {product?.status ?? "Building"}
+        {product?.status ?? "Live"}
       </p>
       <p className="mt-8 text-sm leading-relaxed text-muted">
-        Flexora is a PrintSahaj product still being built. This page does not list unshipped
-        modules as live features.
+        Flexora is a PrintSahaj product: ERP + HRMS shaped around flexographic label printing
+        workflows. Talk to us to see how it fits the way your plant runs.
       </p>
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
         <CtaButton href={printSahajSite.ctas.primary.href}>

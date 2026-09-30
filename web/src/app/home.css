@@ -240,6 +240,20 @@
   transform: none;
 }
 
+/* The H1 is the LCP element: it never starts transparent, it only slides up. */
+.h-rise--move {
+  animation-name: h-rise-move;
+}
+
+@keyframes h-rise-move {
+  from {
+    transform: translateY(18px);
+  }
+  to {
+    transform: none;
+  }
+}
+
 @keyframes h-rise {
   from {
     opacity: 0;
@@ -1437,4 +1451,11 @@
 .home-hero {
   /* The header capsule is fixed: its height comes off the top. */
   padding-top: calc(var(--nav-h, 5.5rem) + 0.5rem);
+}
+
+.hp-step__more p + p {
+  padding-top: 0;
+  margin-top: -0.55rem;
+  font-size: 0.8125rem;
+  color: var(--text-faint);
 }

@@ -30,24 +30,20 @@ function Browser({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FlexoraUi() {
-  const columns = [
-    { name: "Order", cards: [["Sample order A", "40%"], ["Sample order B", "15%"]] },
-    { name: "Job", cards: [["Sample job A", "70%"], ["Sample job B", "55%"]] },
-    { name: "Dispatch", cards: [["Sample job C", "95%"], ["Sample job D", "100%"]] },
-  ];
+  const c = homeShowcase.miniUi.flexora;
   return (
-    <Browser title="Sample data · ERP">
+    <Browser title={c.title}>
       <div className="flex items-center gap-2">
-        <span className="mu-badge">ERP</span>
-        <span className="mu-badge" data-tone="info">HRMS</span>
+        <span className="mu-badge">{c.badges[0]}</span>
+        <span className="mu-badge" data-tone="info">{c.badges[1]}</span>
         <span className="mu-skel ml-auto w-24" />
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2.5">
-        {columns.map((column, c) => (
+        {c.columns.map((column, ci) => (
           <div key={column.name} className="grid content-start gap-2 rounded-xl bg-sunken p-2">
             <p className="mu-label">{column.name}</p>
             {column.cards.map(([name, width], i) => (
-              <div key={name} className="mu-card mu-in grid gap-2" style={idx(c * 2 + i)}>
+              <div key={name} className="mu-card mu-in grid gap-2" style={idx(ci * 2 + i)}>
                 <span className="truncate font-medium">{name}</span>
                 <div className="mu-bar" style={{ "--w": width } as React.CSSProperties}>
                   <i />
@@ -59,7 +55,7 @@ function FlexoraUi() {
         ))}
       </div>
       <div className="mu-card mu-in mt-3 flex items-center gap-3" style={idx(6)}>
-        <span className="mu-label">HRMS · sample</span>
+        <span className="mu-label">{c.hrmsLabel}</span>
         <span className="flex flex-1 items-end gap-1.5" aria-hidden="true">
           {[60, 85, 70, 95, 80, 55, 90].map((height, i) => (
             <i key={i} className="block flex-1 rounded-sm" style={{ height: height * 0.22, background: "var(--brand-gradient)", opacity: 0.85 }} />
@@ -71,17 +67,12 @@ function FlexoraUi() {
 }
 
 function CrmUi() {
-  const rows: [string, string, "info" | "warn" | "ok"][] = [
-    ["Sample customer A", "Enquiry", "info"],
-    ["Sample customer B", "Quote sent", "warn"],
-    ["Sample customer C", "Follow-up", "ok"],
-  ];
-  const steps = ["Enquiry received", "Quote prepared", "Follow-up scheduled"];
+  const { title, listLabel, rows, detailName, steps } = homeShowcase.miniUi.crm;
   return (
-    <Browser title="Sample data · CRM">
+    <Browser title={title}>
       <div className="grid h-full grid-cols-[1fr_1.1fr] gap-3">
         <div className="grid content-start gap-2">
-          <p className="mu-label">Enquiries</p>
+          <p className="mu-label">{listLabel}</p>
           {rows.map(([name, stage, tone], i) => (
             <div key={name} className="mu-card mu-in grid gap-1.5" style={idx(i)}>
               <span className="font-medium">{name}</span>
@@ -93,7 +84,7 @@ function CrmUi() {
           ))}
         </div>
         <div className="grid content-start gap-2 rounded-xl bg-sunken p-3">
-          <p className="mu-label">Sample customer B</p>
+          <p className="mu-label">{detailName}</p>
           {steps.map((step, i) => (
             <div key={step} className="mu-in flex items-center gap-2.5 text-xs" style={idx(i + 2)}>
               <span
@@ -114,8 +105,9 @@ function CrmUi() {
 }
 
 function WebsitesUi() {
+  const c = homeShowcase.miniUi.websites;
   return (
-    <Browser title="Sample website">
+    <Browser title={c.title}>
       <div className="mu-scroll">
         <div className="flex items-center gap-2">
           <span className="mu-skel w-12" />
@@ -128,7 +120,7 @@ function WebsitesUi() {
           <span className="mu-skel w-3/5" style={{ height: 12, background: "var(--text-primary)", opacity: 0.85 }} />
           <span className="mu-skel mt-1 w-2/3" />
           <span className="mt-2 inline-flex w-fit rounded-full bg-[var(--pill-bg)] px-3 py-1.5 text-[11px] font-medium text-[var(--pill-fg)]">
-            Get a quote
+            {c.cta}
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -141,11 +133,11 @@ function WebsitesUi() {
           ))}
         </div>
         <div className="mu-card grid gap-2">
-          <p className="mu-label">Enquiry</p>
+          <p className="mu-label">{c.formLabel}</p>
           <span className="h-7 rounded-lg border border-hairline bg-sunken" />
           <span className="h-7 rounded-lg border border-hairline bg-sunken" />
           <span className="inline-flex w-fit rounded-full bg-[var(--accent)] px-3 py-1.5 text-[11px] font-medium text-[var(--accent-contrast)]">
-            Send enquiry
+            {c.formCta}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -158,11 +150,10 @@ function WebsitesUi() {
 }
 
 function PrintVerifyUi() {
-  const files = ["Artwork", "Approval sheet", "Plate files"];
+  const { title, files, findingsLabel, tones: tone } = homeShowcase.miniUi.printverify;
   const rows = results.rows.slice(0, 3);
-  const tone = { ok: "Clear", warn: "Look", bad: "Differs" } as const;
   return (
-    <Browser title="Sample check">
+    <Browser title={title}>
       <div className="grid grid-cols-3 gap-2">
         {files.map((file, i) => (
           <div key={file} className="mu-card mu-in grid gap-1.5" style={idx(i)}>
@@ -173,7 +164,7 @@ function PrintVerifyUi() {
         ))}
       </div>
       <div className="mt-3 grid gap-2">
-        <p className="mu-label">Findings</p>
+        <p className="mu-label">{findingsLabel}</p>
         {rows.map((row, i) => (
           <div key={row.label} className="mu-card mu-in grid gap-1" style={idx(i + 3)}>
             <span className="flex items-center justify-between gap-2">
@@ -189,27 +180,28 @@ function PrintVerifyUi() {
 }
 
 function AivyUi() {
+  const c = homeShowcase.miniUi.aivy;
   return (
     <div className="phone">
       <div className="phone__notch" aria-hidden="true" />
       <div className="phone__body">
         <p className="mu-label flex items-center gap-1.5">
-          <Sparkles size={11} aria-hidden="true" /> Aivy · sample
+          <Sparkles size={11} aria-hidden="true" /> {c.label}
         </p>
         <p className="mu-bubble mu-in" data-from="me" style={idx(0)}>
-          Remind me to call the supplier tomorrow at 10.
+          {c.me1}
         </p>
         <p className="mu-bubble mu-in" data-from="bot" style={idx(2)}>
-          Done. Reminder set for tomorrow, 10:00.
+          {c.bot1}
         </p>
         <p className="mu-bubble mu-in" data-from="me" style={idx(4)}>
-          What&apos;s on today?
+          {c.me2}
         </p>
         <div className="mu-bubble mu-in grid gap-1.5" data-from="bot" style={idx(6)}>
-          <span className="mu-label">Morning brief</span>
+          <span className="mu-label">{c.briefLabel}</span>
           <span className="flex items-center gap-1.5">
-            <span className="mu-badge">3 tasks</span>
-            <span className="mu-badge" data-tone="info">1 reminder</span>
+            <span className="mu-badge">{c.tasks}</span>
+            <span className="mu-badge" data-tone="info">{c.reminder}</span>
           </span>
           <span className="mu-skel w-full" />
           <span className="mu-skel w-2/3" />
@@ -234,6 +226,9 @@ const num = (value: string) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 };
 
+/** Width, height and paper rate must each be above zero for a rate to mean anything. */
+const isValid = (state: CalcState) => num(state.labelW) > 0 && num(state.labelH) > 0 && num(state.paperRate) > 0;
+
 /** The real calculator: same formula as /calculators and the LiveTool section. */
 function CalculatorUi({ state, onChange }: { state: CalcState; onChange: (next: CalcState) => void }) {
   const { calculator } = homeShowcase;
@@ -245,6 +240,7 @@ function CalculatorUi({ state, onChange }: { state: CalcState; onChange: (next: 
     gapAcross: num(state.gapAcross),
     paperRate: num(state.paperRate),
   });
+  const valid = isValid(state);
   const money = (value: number) =>
     value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -277,8 +273,9 @@ function CalculatorUi({ state, onChange }: { state: CalcState; onChange: (next: 
         </div>
         <p className="calc-result" role="status">
           <span className="mu-label">{calculator.resultLabel}</span>
-          <strong>₹ {money(rate)}</strong>
+          <strong>{valid ? `₹ ${money(rate)}` : "—"}</strong>
         </p>
+        {valid ? null : <p className="mt-2 text-[11px] leading-snug text-muted">{calculator.invalidHint}</p>}
         <p className="mt-2.5 text-[11px] leading-snug text-faint">{calculator.note}</p>
       </form>
     </div>

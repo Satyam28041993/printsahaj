@@ -2041,23 +2041,6 @@ body {
   color: var(--accent);
 }
 
-.hero-split {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--bg-base);
-}
-
-.hero-split::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: min(52%, 720px);
-  height: 480px;
-  background: radial-gradient(closest-side, var(--accent-glow), transparent 74%);
-  pointer-events: none;
-}
-
 .system-board {
   position: relative;
 }
