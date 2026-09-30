@@ -1,7 +1,9 @@
 import SiteNav from "@/components/landing/SiteNav";
 import ScrollProgress from "@/components/landing/ScrollProgress";
 import HomeHero from "@/components/landing/HomeHero";
+import HomeShowcase from "@/components/landing/showcase/HomeShowcase";
 import HelpScroll from "@/components/landing/HelpScroll";
+import MobileCtaBar from "@/components/landing/MobileCtaBar";
 import ProductChapters from "@/components/landing/ProductChapters";
 import LiveTool from "@/components/landing/LiveTool";
 import Pillars from "@/components/landing/Pillars";
@@ -22,6 +24,7 @@ export default function HomePage() {
       <SiteNav variant="overlay" />
       <main id="main">
         <HomeHero />
+        <HomeShowcase />
         <HelpScroll />
         <ProductChapters />
         <LiveTool />
@@ -33,6 +36,7 @@ export default function HomePage() {
         <HomeFinalCta />
       </main>
       <SiteFooter />
+      <MobileCtaBar />
     </>
   );
 }

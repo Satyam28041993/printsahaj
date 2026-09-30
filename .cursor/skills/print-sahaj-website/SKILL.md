@@ -7,7 +7,7 @@ description: PrintSahaj marketing website architecture, reusable components, log
 
 ## Stack
 
-`web/` — Next.js App Router, static export, Tailwind v4 tokens in `src/app/globals.css`, GSAP reveals, Framer Motion only where already used. Copy lives in `web/content/*.ts`.
+`web/` — Next.js App Router, static export, Tailwind v4 tokens in `src/app/globals.css` (light default, `.dark` swap), home panel styles in `src/app/home.css`, GSAP reveals and CSS/IntersectionObserver motion, Framer Motion only where already used (not in new code). Copy lives in `web/content/*.ts`.
 
 Read `node_modules/next/dist/docs/` from `web/` before using Next APIs. Do not add frameworks or animation libraries without asking.
 
@@ -15,7 +15,7 @@ Read `node_modules/next/dist/docs/` from `web/` before using Next APIs. Do not a
 
 **Keep / reuse**
 
-- Token system and dark default in `globals.css`
+- Token system in `globals.css`: light is the default theme, dark is the `html.dark` token swap behind the toggle; font is Google Sans Flex
 - `Logo.tsx` (inline CMYK SVG — do not replace with an uncropped white PNG)
 - `CtaButton`, `Section`, `useReveal`, `SiteNav` structure
 - PrintVerify page + `web/content/tools.ts`
@@ -47,7 +47,7 @@ web/content/
 
 ## Logo
 
-Assets: `web/public/assets/MainLogo.png` (2816×1536, white canvas), icon-only, vertical lockup, monochrome. Favicon already uses the icon PNG. For dark UI, enlarge the SVG mark (md/lg) and crop/export a transparent lockup later. Never stretch.
+Assets: `web/public/assets/MainLogo.png` (2816×1536, white canvas), icon-only, vertical lockup, monochrome. The favicon is `web/public/icon.svg` plus `apple-touch-icon.png` (the icon PNG is 2.7 MB — never reference it from a page). For the dark header capsule, enlarge the SVG mark (md/lg) and crop/export a transparent lockup later. Never stretch.
 
 ## Target routes
 

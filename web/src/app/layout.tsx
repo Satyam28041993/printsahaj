@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Google_Sans_Flex, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import "./home.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { printSahajSite } from "@content/site";
 
-const spaceGrotesk = Space_Grotesk({
+/**
+ * Google Sans Flex, a free (OFL) variable sans: one file serves every weight the
+ * site uses. Display and body share it; the mono is kept for small labels.
+ */
+const sansFlex = Google_Sans_Flex({
   subsets: ["latin"],
-  weight: ["300", "500", "600", "700"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+  weight: "variable",
+  variable: "--font-sans-flex",
   display: "swap",
 });
 
@@ -30,16 +29,20 @@ export const metadata: Metadata = {
     template: "%s — PrintSahaj",
   },
   description: printSahajSite.meta.description,
+  // app/icon.svg and app/apple-icon.png are picked up by convention; the 2.7 MB
+  // PNG that used to be the favicon is no longer referenced.
   icons: {
-    icon: "/assets/Icon only favicon Logo.png",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
 };
 
 /**
  * Applies the stored theme before first paint so the page never flashes the
- * wrong palette. Kept deliberately tiny.
+ * wrong palette. Light is the default; only an explicit "dark" choice made
+ * through the toggle switches it. Kept deliberately tiny.
  */
-const themeScript = `(function(){try{var t=localStorage.getItem("printsahaj_theme");var c=document.documentElement.classList;if(t==="light"){c.remove("dark");c.add("light");}else{c.remove("light");c.add("dark");}}catch(e){}})();`;
+const themeScript = `(function(){try{var t=localStorage.getItem("printsahaj_theme");var c=document.documentElement.classList;c.add("js");if(t==="dark"){c.remove("light");c.add("dark");}else{c.remove("dark");c.add("light");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -49,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark h-full antialiased ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      className={`light h-full antialiased ${sansFlex.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>

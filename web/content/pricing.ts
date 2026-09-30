@@ -13,7 +13,6 @@ export interface PricingContent {
   };
   product: {
     name: string;
-    price: string;
     bullets: string[];
     cta: { label: string; href: string };
   };
@@ -32,7 +31,6 @@ export const pricing: PricingContent = {
   },
   product: {
     name: "PrintSahaj",
-    price: "from ₹2,500 / month",
     bullets: [
       "Unlimited jobs",
       "Full audit trail",

@@ -185,6 +185,8 @@ export interface HomeContent {
     headline: string;
     supporting: string;
     specialization: string;
+    /** One honest line under the buttons. Facts from the founder section only. */
+    trustLine: string;
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
     video: HeroVideo;
@@ -279,6 +281,8 @@ export const home: HomeContent = {
     supporting:
       "Software, AI, automation and digital growth — connected so the work actually moves.",
     specialization: "Deep expertise in printing & packaging.",
+    trustLine:
+      "Founder-led by Satyam Singh · twelve years across sales, operations and marketing · deep expertise in printing & packaging",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
     video: {

@@ -1,33 +1,48 @@
 import React from "react";
-import CtaButton from "./CtaButton";
-import HeroOrb from "./visuals/HeroOrb";
+import Pill from "./Pill";
+import SpotPanel from "./SpotPanel";
+import Marquee from "./Marquee";
 import { home } from "@content/home";
+import { printSahajSite } from "@content/site";
 
+const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
+
+/**
+ * S1 — the hero: one centred statement inside a large rounded panel. Copy is
+ * the existing hero copy; the staggered fade-up is CSS, so it needs no JS.
+ */
 export default function HomeHero() {
-  const { hero } = home;
+  const { hero, pillars } = home;
+  const { callCta } = printSahajSite.nav;
 
   return (
-    <section id="top" aria-labelledby="hero-heading" className="hero-split hero-fit">
-      <div className="hero-fit__inner relative mx-auto grid w-full max-w-[1360px] items-center gap-8 px-5 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12 xl:gap-16">
-        <div className="hero-fit__copy">
-          <p className="story-kicker">{hero.eyebrow}</p>
-          <h1 id="hero-heading" className="hero-fit__title mt-5 text-balance font-display font-bold text-primary">
+    <section id="top" aria-labelledby="hero-heading" className="home-hero h-wrap">
+      <SpotPanel>
+        <div className="mx-auto flex max-w-[1040px] flex-col items-center px-5 pb-8 pt-12 text-center sm:px-8 sm:pt-16 lg:pt-20">
+          <p className="h-chip h-rise" style={rise(0)}>
+            <span className="h-chip__dot" aria-hidden="true" />
+            {hero.eyebrow}
+          </p>
+          <h1 id="hero-heading" className="h-title h-title--xl h-rise mt-7 max-w-[19ch] sm:max-w-none" style={rise(1)}>
             {hero.headline}
           </h1>
-          <p className="mt-5 max-w-[46ch] text-body-lg text-muted">{hero.supporting}</p>
-          <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <CtaButton href={hero.primaryCta.href} size="lg">
-              {hero.primaryCta.label}
-            </CtaButton>
-            <CtaButton href="/crm/" size="lg" variant="ghost">
-              See the CRM
-            </CtaButton>
+          <p className="h-lead h-rise mt-6 max-w-[52ch]" style={rise(2)}>
+            {hero.supporting}
+          </p>
+          <div className="h-rise mt-9 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center" style={rise(3)}>
+            <Pill href={hero.primaryCta.href}>{hero.primaryCta.label}</Pill>
+            <Pill href={callCta.href} variant="ghost" call ariaLabel={`${callCta.label}: ${callCta.number}`}>
+              {callCta.label}
+            </Pill>
           </div>
+          <p className="h-rise mt-7 max-w-[62ch] text-sm text-faint" style={rise(4)}>
+            {hero.trustLine}
+          </p>
         </div>
-        <div className="lg:order-first">
-          <HeroOrb src={hero.visual.src} alt={hero.visual.alt} />
+        <div className="h-rise pb-7 pt-3" style={rise(5)}>
+          <Marquee items={pillars.items.map((item) => item.name)} label={hero.specialization} />
         </div>
-      </div>
+      </SpotPanel>
     </section>
   );
 }

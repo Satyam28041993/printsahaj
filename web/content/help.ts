@@ -7,6 +7,8 @@ export interface HelpService {
   promise: string;
   body: string;
   points: string[];
+  /** Three short labels for the small demo animation: from → through → to. */
+  flow: [string, string, string];
 }
 
 /** The closing card: talk it through first, no obligation to buy. */
@@ -25,6 +27,10 @@ export interface HelpContent {
   eyebrow: string;
   heading: string;
   scrollCue: string;
+  /** Accessible name of the pill row, and the labels of its controls. */
+  tablistLabel: string;
+  pauseLabel: string;
+  playLabel: string;
   services: HelpService[];
   consult: HelpConsult;
 }
@@ -33,36 +39,44 @@ export const help: HelpContent = {
   eyebrow: "What we build",
   heading: "Where we can help you.",
   scrollCue: "Scroll",
+  tablistLabel: "Services",
+  pauseLabel: "Pause auto-advance",
+  playLabel: "Play auto-advance",
   services: [
     {
       title: "Website Building",
       promise: "Not just a website. One that brings you business.",
       body: "SEO and speed are the basics — everyone promises them. We start from what your customers are trying to get done, build the site around that need, and give every visit a clear path to an enquiry.",
       points: ["Built around your customer's need", "Every page leads to an enquiry", "Fast, found and easy to update"],
+      flow: ["Visit", "Enquiry", "Follow-up"],
     },
     {
       title: "Customized CRM",
       promise: "Not one CRM for everyone. One built around your problems.",
       body: "Most CRMs are built once and handed to every business. We first learn how your enquiries, quotes and follow-ups really move, then build the CRM around that — so it takes work away instead of adding it.",
       points: ["Mapped to your real workflow", "Solves your specific bottlenecks", "Your team actually uses it"],
+      flow: ["Enquiry", "CRM", "Follow-up"],
     },
     {
       title: "ERP",
       promise: "Built for how your company works — not just your industry.",
       body: "An industry template still asks you to change how you work. We shape the ERP around your company's own way of doing things, so your people adopt it in days, not months.",
       points: ["Follows your process", "Quick for your team to adopt", "Grows as you grow"],
+      flow: ["Order", "Job", "Dispatch"],
     },
     {
       title: "Automation Tools",
       promise: "The repeated work, done for you.",
       body: "Every business has tasks someone does the same way, every single day. We find them and automate them to your exact requirement — so your people spend their time on work that needs a person.",
       points: ["Built to your requirement", "Repetitive tasks, automated", "Hours back every week"],
+      flow: ["Task", "Rule", "Done"],
     },
     {
       title: "Marketing & Lead Generation",
       promise: "Leads that turn into business.",
       body: "Getting leads is only half the job. We bring together systems, technology, digital marketing and AI to attract the right leads — and put a process behind them so they convert into customers.",
       points: ["The right leads, not just more", "A system that converts them", "Digital marketing, powered by AI"],
+      flow: ["Campaign", "Lead", "Customer"],
     },
   ],
   consult: {

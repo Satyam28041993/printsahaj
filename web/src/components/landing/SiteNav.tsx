@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
-import NavClock from "./NavClock";
 import { printSahajSite } from "@content/site";
 
 function pathMatches(pathname: string, href: string) {
@@ -37,8 +36,8 @@ function ArrowIcon() {
 }
 
 /**
- * The header: a dark capsule with a soft glow in the same inks as the hero
- * orb. It stays dark in both themes, the way a printed badge would.
+ * The header: a dark capsule that stays dark in both themes, the way a printed
+ * badge would. It condenses on scroll — smaller, no glass blur, no live clock.
  */
 export default function SiteNav({
   variant = "overlay",
@@ -54,11 +53,23 @@ export default function SiteNav({
     setMenuOpen(false);
   }
 
+  // Condense once the page has scrolled a little: smaller capsule, same colours.
+  const [condensed, setCondensed] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setCondensed(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const closeMenu = () => setMenuOpen(false);
   const { links, callCta } = printSahajSite.nav;
 
   return (
-    <header className={`ps-header ${variant === "solid" ? "sticky" : "fixed"} inset-x-0 top-0 z-50`}>
+    <header
+      className={`ps-header ${variant === "solid" ? "sticky" : "fixed"} inset-x-0 top-0 z-50`}
+      data-condensed={condensed}
+    >
       <div className="ps-nav-wrap">
         <nav aria-label="Primary" className="ps-nav">
           <Link href="/" className="ps-nav__brand" aria-label="PrintSahaj, home">
@@ -83,12 +94,6 @@ export default function SiteNav({
               );
             })}
           </ul>
-
-          <span className="ps-nav__rule hidden lg:block" aria-hidden="true" />
-
-          <div className="hidden lg:block">
-            <NavClock />
-          </div>
 
           <div className="ps-nav__actions">
             <ThemeToggle />
@@ -124,7 +129,7 @@ export default function SiteNav({
         <button
           type="button"
           aria-label="Close menu overlay"
-          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--bg-base)_72%,transparent)] backdrop-blur-[2px] xl:hidden"
+          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--bg-base)_72%,transparent)] xl:hidden"
           onClick={closeMenu}
         />
       ) : null}
@@ -152,9 +157,6 @@ export default function SiteNav({
                 );
               })}
             </ul>
-            <div className="mt-4 lg:hidden">
-              <NavClock />
-            </div>
             <a href={callCta.href} className="ps-call mt-4 flex w-full justify-center" onClick={closeMenu}>
               <PhoneIcon />
               <span>

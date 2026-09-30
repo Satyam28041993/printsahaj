@@ -39,7 +39,7 @@ export const faq: FaqContent = {
     {
       question: "What does it cost?",
       answer:
-        "Pricing starts from ₹2,500 per month for unlimited jobs. Early access users help shape what gets built first, and the price is held for them.",
+        "We have not published pricing yet. Get in touch with a job that went wrong and one that went fine, and we will tell you where things stand and what early access looks like.",
     },
   ],
 };

@@ -66,9 +66,6 @@ export default function Pricing() {
             <p className="font-display text-title font-semibold text-primary">
               {pricing.product.name}
             </p>
-            <p className="mt-2 font-display text-display-md font-bold text-[var(--accent)]">
-              {pricing.product.price}
-            </p>
 
             <ul className="mt-7 space-y-3.5">
               {pricing.product.bullets.map((bullet) => (
