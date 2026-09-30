@@ -12,7 +12,7 @@ const TINTS = ["violet", "teal"] as const;
 
 export default function SelectedWork() {
   const copy = home.selectedWork;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const items = copy.items.filter((item) => item.public);
   if (items.length === 0) return null;
 

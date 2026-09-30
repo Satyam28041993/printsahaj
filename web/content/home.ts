@@ -29,6 +29,16 @@ export interface FounderTimelineItem {
   description: string;
   /** Marks the row that culminates the timeline, styled as the destination. */
   current?: boolean;
+  /** A finished role: shown with a "Past" tag, never as the current one. */
+  past?: boolean;
+}
+
+export interface FounderFact {
+  label: string;
+  value: string;
+  detail: string;
+  /** Past experience gets a dashed card so it never reads as current. */
+  past?: boolean;
 }
 
 export interface FounderEducation {
@@ -243,6 +253,17 @@ export interface HomeContent {
     description: string;
     /** Path under web/public. Null shows the initials mark instead. */
     photo: string | null;
+    photoAlt: string;
+    photoWidth: number;
+    photoHeight: number;
+    eyebrow: string;
+    badge: string;
+    /** Accessible name for the focus-area chip list. */
+    chipsLabel: string;
+    /** Credential cards. Every entry restates a fact already in this file. */
+    facts: FounderFact[];
+    linkedinLabel: string;
+    profileCta: { label: string; href: string };
     linkedin: string;
     contact: { phone: string; email: string };
     /** Short capability tags, shown as chips under the name. */
@@ -695,10 +716,41 @@ export const home: HomeContent = {
   founder: {
     heading: "Built by someone who has run the work, not just studied it.",
     name: "Satyam Singh",
-    role: "Founder, PrintSahaj · Sales & Marketing Manager, Prakruti Graphic Pvt Ltd",
+    role: "Founder, PrintSahaj",
     description:
-      "Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
+      "Twelve years across sales, last-mile operations and marketing, including label printing and packaging — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
     photo: "/images/satyam-singh.jpg",
+    photoAlt: "Satyam Singh, founder of PrintSahaj",
+    photoWidth: 640,
+    photoHeight: 796,
+    eyebrow: "Who's building it",
+    badge: "Founder",
+    chipsLabel: "Focus areas",
+    facts: [
+      {
+        label: "Experience",
+        value: "Twelve years",
+        detail: "Sales, last-mile operations and marketing",
+      },
+      {
+        label: "Past experience",
+        value: "Sales & Marketing Manager, Prakruti Graphic Pvt Ltd (until 20 Sep 2026)",
+        detail: "Where the printing & packaging experience was gained",
+        past: true,
+      },
+      {
+        label: "Education",
+        value: "MBA, Logistics and Supply Chain Management",
+        detail: "Suresh Gyan Vihar University, Jaipur (ongoing)",
+      },
+      {
+        label: "Languages",
+        value: "Hindi · Marathi · English",
+        detail: "Mother tongue, proficient, independent user",
+      },
+    ],
+    linkedinLabel: "Connect on LinkedIn",
+    profileCta: { label: "Full profile & resume →", href: "/about" },
     linkedin: "https://www.linkedin.com/in/satyam-singh-3b178883/",
     contact: { phone: "+91 9650744197", email: "singhsatyam28@gmail.com" },
     focus: [
@@ -737,11 +789,12 @@ export const home: HomeContent = {
           "P&L owner for a city-wide vehicle-attachment project across Uber, Rapido and Ola — hiring, training and incentives for field executives and drivers.",
       },
       {
-        period: "2023 – Present",
+        period: "2023 – 20 Sep 2026",
         role: "Sales & Marketing Manager",
         org: "Prakruti Graphic Pvt Ltd",
+        past: true,
         description:
-          "Marketing and growth for label printing & packaging and security labels — digital campaigns, and hands-on work on anti-counterfeit R&D (holograms, microtext, tamper-evident design) and QR-based track & trace.",
+          "Where the printing & packaging experience was gained: marketing and growth for label printing & packaging and security labels — digital campaigns, and hands-on work on anti-counterfeit R&D (holograms, microtext, tamper-evident design) and QR-based track & trace.",
       },
       {
         period: "Building now",

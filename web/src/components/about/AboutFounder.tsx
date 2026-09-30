@@ -51,7 +51,7 @@ function LinkedInIcon() {
 
 export default function AboutFounder() {
   const copy = about.founder;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const phoneHref = `tel:${copy.contact.phone.replace(/\s+/g, "")}`;
 
   return (

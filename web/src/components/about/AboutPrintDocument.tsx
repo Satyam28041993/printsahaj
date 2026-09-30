@@ -76,7 +76,7 @@ export default function AboutPrintDocument() {
             <li key={`${item.period}-${item.role}`}>
               <p className="about-print__date">{item.period}</p>
               <p>
-                <strong>{item.role}</strong> · {item.org}
+                <strong>{item.role}</strong>{item.past ? " · Past" : ""} · {item.org}
               </p>
               <p>{item.description}</p>
             </li>

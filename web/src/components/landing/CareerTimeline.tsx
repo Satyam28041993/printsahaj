@@ -20,7 +20,7 @@ export default function CareerTimeline({
   heading?: string;
   className?: string;
 }) {
-  const timelineRef = useReveal<HTMLDivElement>({ start: "top 90%", stagger: 0.1 });
+  const timelineRef = useReveal<HTMLDivElement>();
 
   return (
     <div ref={timelineRef} className={className}>
@@ -48,6 +48,7 @@ export default function CareerTimeline({
               <h4 className="mt-1.5 font-display text-lg font-bold text-primary">
                 {item.role}
                 {item.current && <span className="timeline-item__now">Now</span>}
+                {item.past && <span className="timeline-item__past">Past</span>}
               </h4>
               <p className="text-sm font-medium text-muted">{item.org}</p>
               <p className="mt-3 text-sm leading-relaxed text-muted">{item.description}</p>

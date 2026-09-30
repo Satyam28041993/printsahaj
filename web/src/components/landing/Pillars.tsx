@@ -8,7 +8,7 @@ import { printSahajSite } from "@content/site";
 /** One line per official pillar. The philosophy appears here once. */
 export default function Pillars() {
   const { items } = home.pillars;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 85%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="pillars-heading" className="band-sunken relative px-5 py-[clamp(64px,8vw,104px)] sm:px-8">

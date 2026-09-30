@@ -7,7 +7,7 @@ import AboutSection from "./AboutSection";
 
 export default function AboutHero() {
   const copy = about.company;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <AboutSection labelledBy="about-company-heading">

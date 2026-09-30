@@ -167,7 +167,6 @@ export interface SiteContent {
     whatsappMessage: string;
   };
   footer: {
-    line: string;
     legal: NavLink[];
     copyright: string;
   };
@@ -204,7 +203,6 @@ export const site: SiteContent = {
     whatsappMessage: "Hello — I would like early access to PrintSahaj.",
   },
   footer: {
-    line: "A verification system for India's printing and packaging industry. Built in Vasai, Maharashtra.",
     legal: [
       { label: "Tools", href: "/tools" },
       { label: "Privacy", href: "/privacy" },

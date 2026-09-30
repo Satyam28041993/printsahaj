@@ -10,7 +10,7 @@ import { useReveal } from "@/lib/useReveal";
  * follow-up — not a new module list.
  */
 export default function CrmShowcase() {
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="crm-showcase-heading" className="relative px-5 py-[clamp(72px,9vw,128px)] sm:px-8">

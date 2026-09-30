@@ -8,7 +8,7 @@ import { printSahajSite } from "@content/site";
 
 export default function HomeFinalCta() {
   const copy = home.finalCta;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 85%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section

@@ -11,7 +11,7 @@ import { checks } from "@content/checks";
  * Sticky behaviour is desktop-only; on a phone they simply stack in flow.
  */
 export default function Checks() {
-  const ref = useReveal<HTMLDivElement>({ selector: "[data-reveal]", start: "top 85%" });
+  const ref = useReveal<HTMLDivElement>();
 
   return (
     <Section id="how-it-works" labelledBy="checks-heading" width="wide">

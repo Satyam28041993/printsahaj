@@ -7,7 +7,7 @@ import { home } from "@content/home";
 
 export default function BuildJourney() {
   const copy = home.journey;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="journey-heading" className="relative scroll-mt-28 px-5 py-[clamp(72px,9vw,140px)] sm:px-8">

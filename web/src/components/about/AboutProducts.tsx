@@ -9,7 +9,7 @@ import AboutSection from "./AboutSection";
 
 export default function AboutProducts() {
   const copy = about.products;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <AboutSection labelledBy="about-products-heading" className="about-section--quiet">

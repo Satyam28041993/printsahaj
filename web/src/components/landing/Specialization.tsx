@@ -13,7 +13,7 @@ import { home } from "@content/home";
 
 export default function Specialization() {
   const copy = home.specialization;
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
 
   return (
     <section aria-labelledby="specialization-heading" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">

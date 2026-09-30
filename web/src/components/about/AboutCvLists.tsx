@@ -7,8 +7,8 @@ import AboutSection from "./AboutSection";
 
 export default function AboutCvLists() {
   const copy = about.founder;
-  const expertiseRef = useReveal<HTMLDivElement>({ start: "top 88%" });
-  const eduRef = useReveal<HTMLDivElement>({ start: "top 88%" });
+  const expertiseRef = useReveal<HTMLDivElement>();
+  const eduRef = useReveal<HTMLDivElement>();
 
   return (
     <>

@@ -8,7 +8,7 @@ import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
 
 export default function ProductChapters() {
-  const revealRef = useReveal<HTMLDivElement>({ start: "top 80%" });
+  const revealRef = useReveal<HTMLDivElement>();
   const printVerify = home.selectedProducts.items.find((item) => item.name === "PrintVerify");
   const flexora = home.selectedProducts.items.find((item) => item.name === "Flexora");
 
@@ -50,7 +50,7 @@ export default function ProductChapters() {
                 Flexora page
               </Link>
             </div>
-            <div data-reveal className="min-h-[220px]">
+            <div data-reveal className="m-glow min-h-[220px]">
               <ProductVisual name="Flexora" size="lg" />
             </div>
           </div>

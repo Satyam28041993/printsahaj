@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import Pill from "./Pill";
+import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import { useInViewState, usePrefersReducedMotion, useRevealOnView, useSpotlight } from "@/lib/useHomeMotion";
 import { help } from "@content/help";
 
@@ -62,6 +63,8 @@ export default function HelpScroll() {
   const pillRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const pillsRowRef = useRef<HTMLDivElement>(null);
   const touchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useSlidingIndicator(pillsRowRef, pillRefs, service);
 
   const auto = !reduced;
   const running = auto && inView && !userPaused && !hover && !focused && !touchHold;
@@ -152,12 +155,13 @@ export default function HelpScroll() {
 
           <div
             ref={pillsRowRef}
-            className="hp-pills h-reveal"
+            className="hp-pills m-tabs m-tabs--dark h-reveal"
             style={{ "--i": 1 } as React.CSSProperties}
             role="tablist"
             aria-label={help.tablistLabel}
             onKeyDown={onPillKeyDown}
           >
+            <span className="m-indicator" aria-hidden="true" />
             {services.map((item, i) => (
               <button
                 key={item.title}
@@ -186,7 +190,7 @@ export default function HelpScroll() {
             aria-labelledby={`help-tab-${service}`}
             tabIndex={0}
           >
-            <div className="hp-info">
+            <div className="hp-info m-swap" key={`info-${service}`}>
               <p className="hp-index">
                 {pad(service + 1)} / {pad(services.length)}
               </p>
@@ -226,7 +230,7 @@ export default function HelpScroll() {
               </ol>
             </div>
 
-            <div className="hp-demo" aria-hidden="true">
+            <div className="hp-demo m-swap" key={`demo-${service}`} aria-hidden="true">
               <div className="flow" key={current.title}>
                 {current.flow.map((label, i) => {
                   const Node = Icons[i];

@@ -1,5 +1,6 @@
 import React from "react";
 import { home, type HomeFaqContent } from "@content/home";
+import RevealRoot from "../RevealRoot";
 import { faq as printverifyFaq } from "@content/faq";
 
 function Chevron() {
@@ -39,9 +40,9 @@ export default function FaqSection({
           {copy.heading}
         </h2>
 
-        <div className="mt-10 divide-y divide-hairline border-y border-hairline">
+        <RevealRoot className="mt-10 divide-y divide-hairline border-y border-hairline">
           {copy.items.map((item, i) => (
-            <details key={item.question} className="group py-5" open={i === 0}>
+            <details key={item.question} data-reveal className="group py-5" open={i === 0}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-title font-semibold text-primary">
                 {item.question}
                 <Chevron />
@@ -49,7 +50,7 @@ export default function FaqSection({
               <p className="mt-3 max-w-2xl text-body-lg text-muted">{item.answer}</p>
             </details>
           ))}
-        </div>
+        </RevealRoot>
       </div>
     </section>
   );

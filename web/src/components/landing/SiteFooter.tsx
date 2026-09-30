@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import FooterMotionGate from "./FooterMotionGate";
 import { printSahajSite } from "@content/site";
 import { tools } from "@content/tools";
 
@@ -124,7 +125,8 @@ export default function SiteFooter() {
   const exploreLinks = [...nav.links, ctas.primary];
 
   return (
-    <footer className="site-footer">
+    <footer className="site-footer" data-inview="false">
+      <FooterMotionGate />
       <div className="star-field star-field--far" aria-hidden="true" />
 
       <div className="relative mx-auto max-w-6xl px-5 pt-20 sm:px-8">
