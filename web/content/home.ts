@@ -716,7 +716,7 @@ export const home: HomeContent = {
     name: "Satyam Singh",
     role: "Founder, PrintSahaj",
     description:
-      "Twelve years across sales, last-mile operations and marketing, the last two inside a label printing and packaging company — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
+      "Twelve years across sales, last-mile operations and marketing, including label printing and packaging — running growth for FMCG, pharma and agrochemical clients, and working hands-on on security labels, anti-counterfeit R&D and QR-based track & trace. PrintSahaj is being built from that same vantage point: close enough to the press and the ground team to know where a system actually breaks.",
     photo: "/images/satyam-singh.jpg",
     photoAlt: "Satyam Singh, founder of PrintSahaj",
     photoWidth: 640,

@@ -26,7 +26,7 @@ export interface HeroContent {
 }
 
 export const hero: HeroContent = {
-  eyebrow: "Built inside a working label printing company in Vasai",
+  eyebrow: "CRM · ERP · Automation · AI for every industry",
   headlineLines: [
     "The error your eyes will miss.",
     "Caught before the plate is made.",
