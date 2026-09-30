@@ -12,7 +12,7 @@ interface ThemeContextType {
 const STORAGE_KEY = "printsahaj_theme";
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: "dark",
+  theme: "light",
   toggleTheme: () => {},
 });
 
@@ -24,14 +24,14 @@ function applyTheme(theme: Theme): void {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Dark is the default; the inline script in the root layout has already applied
+  // Light is the default; the inline script in the root layout has already applied
   // the stored preference before paint, so this only needs to catch up in state.
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const initial: Theme = stored === "light" ? "light" : "dark";
-    // Catch up after the pre-paint script. Must run in an effect so SSR stays "dark".
+    const initial: Theme = stored === "dark" ? "dark" : "light";
+    // Catch up after the pre-paint script. Must run in an effect so SSR stays "light".
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe theme restore
     setTheme(initial);
     applyTheme(initial);

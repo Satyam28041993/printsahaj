@@ -2,6 +2,7 @@
 
 import React, { useLayoutEffect, useState } from "react";
 import { Calculator, Layers, FileSpreadsheet, RotateCw, Box, Settings, Sparkles } from "lucide-react";
+import { labelAreaPer1kSqm, labelRatePerThousand } from "@/lib/labelRate";
 import { isCalculatorTab, type CalculatorTab } from "@content/tools";
 
 export default function CalculatorsPage() {
@@ -38,11 +39,12 @@ export default function CalculatorsPage() {
   const [orderQty, setOrderQty] = useState<number>(50000); // Labels
 
   // Math for Label Rate
-  const areaPer1k =
-    ((labelW + gapAcross) * (labelH + gapAround) * 1000) / 1000000;
+  const areaPer1k = labelAreaPer1kSqm({ labelW, labelH, gapAround, gapAcross });
   const rawPaperCost1k = areaPer1k * paperRate;
   const paperCost1k = rawPaperCost1k * (1 + wastagePercent / 100);
-  const totalRatePer1k = paperCost1k + inkCostPer1k + varnishCostPer1k;
+  const totalRatePer1k = labelRatePerThousand({
+    labelW, labelH, gapAround, gapAcross, paperRate, inkCostPer1k, varnishCostPer1k, wastagePercent,
+  });
   const ratePerUnit = totalRatePer1k / 1000;
   const totalJobCost = (totalRatePer1k * orderQty) / 1000;
 

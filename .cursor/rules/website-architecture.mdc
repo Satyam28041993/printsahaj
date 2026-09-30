@@ -14,7 +14,7 @@ Stack: Next.js App Router in `web/` (`output: "export"`), Tailwind v4 tokens in 
 
 Keep two chrome systems until a deliberate unification: `SiteNav` + `SiteFooter` on `/`; `Navbar` + `Footer` on `(pages)`. Prefer the landing visual language (tokens, `CtaButton`, `Logo` SVG) when adding brand pages.
 
-Do not rewrite PrintVerify: `/tools/artwork-verification` and `web/content/tools.ts` (`artworkTool`). `/verification` redirects there. Do not change Hostinger/Firebase deploy config unless asked.
+Do not rewrite PrintVerify: `/tools/artwork-verification` and `web/content/tools.ts` (`artworkTool`). `/verification` redirects there. Do not change Hostinger/Firebase deploy config unless asked. Never publish a PrintVerify price, a client logo, or client customer data (names, phones, emails, rates, PO/job numbers) — sample data only.
 
 Target IA (implement only when a later task asks; each is a real page, not a homepage anchor):
 
@@ -27,6 +27,8 @@ Target IA (implement only when a later task asks; each is a real page, not a hom
 Existing PrintVerify URL `/tools/artwork-verification` stays until a move is approved. `/verification` redirects there.
 
 Primary global CTA: "Start a Project". Do not use Pricing as a primary nav item.
+
+Header (`SiteNav`): a dark capsule that condenses on scroll (no backdrop blur, no live clock). On the home page a mobile-only sticky bottom bar (`MobileCtaBar`: Start a Project + call) slides in after the hero and pads the footer while visible. Home sections S1 hero, S1b showcase (auto-cycling tabs, real calculator via `src/lib/labelRate.ts`), S2 Where we can help (no scroll-lock) are described in `web/content/home.ts`, `homeShowcase.ts`, `help.ts`.
 
 Logo: header uses inline SVG `Logo.tsx` at 30px (`size="sm"`) — too small. PNGs in `web/public/assets/` have large white canvases; do not drop them into a dark header uncropped. Do not distort the mark.
 
@@ -51,4 +53,4 @@ web/content/
 
 `home.ts`: hero, what is PrintSahaj, four pillars, selected products, Digital Growth & Marketing, printing & packaging specialization, selected work references, founder, optional currently-building, final CTA.
 
-Contact: do not expose the placeholder WhatsApp number or an unconfirmed email publicly.
+Contact: the Gmail address and WhatsApp link already in `site.ts` (`contact`) are approved for public display — keep those values, never invent new ones. The old placeholder WhatsApp number `919876543210` and any unconfirmed email stay non-public.

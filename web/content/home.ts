@@ -185,11 +185,11 @@ export interface HomeContent {
     headline: string;
     supporting: string;
     specialization: string;
+    /** One honest line under the buttons. Facts from the founder section only. */
+    trustLine: string;
     primaryCta: CtaLink;
     secondaryCta: CtaLink;
     video: HeroVideo;
-    /** Circular banner artwork on the left of the hero. */
-    visual: { src: string; alt: string };
     system: {
       ariaLabel: string;
       spine: HomeSystemStep[];
@@ -279,6 +279,8 @@ export const home: HomeContent = {
     supporting:
       "Software, AI, automation and digital growth — connected so the work actually moves.",
     specialization: "Deep expertise in printing & packaging.",
+    trustLine:
+      "Founder-led by Satyam Singh · twelve years across sales, operations and marketing · deep expertise in printing & packaging",
     primaryCta: printSahajSite.ctas.primary,
     secondaryCta: printSahajSite.ctas.secondary,
     video: {
@@ -286,10 +288,6 @@ export const home: HomeContent = {
       src: "",
       poster: "",
       label: "PrintSahaj CRM walkthrough",
-    },
-    visual: {
-      src: "/assets/hero-ecosystem.webp",
-      alt: "PrintSahaj at the centre, connected to CRM, ERP, business automation tools, websites and business growth with technology.",
     },
     system: {
       ariaLabel: "How PrintSahaj turns a business problem into a working system",
@@ -437,7 +435,7 @@ export const home: HomeContent = {
       },
       {
         name: "Flexora",
-        status: "Building",
+        status: "Live",
         positioning:
           "ERP + HRMS platform designed for flexographic label printing workflows.",
         href: "/products/flexora",
@@ -539,7 +537,7 @@ export const home: HomeContent = {
       {
         name: "Flexora",
         kind: "product",
-        tag: "Building",
+        tag: "Live",
         description: "ERP + HRMS platform designed for flexographic label printing workflows.",
         href: "/products/flexora",
       },
@@ -604,8 +602,8 @@ export const home: HomeContent = {
       },
       {
         name: "Flexora",
-        status: "Building",
-        caption: "ERP + HRMS shaped around order, job and system — still being built, so this page does not list unshipped modules.",
+        status: "Live",
+        caption: "ERP + HRMS shaped around order, job and system.",
         href: "/products/flexora",
         visual: "flexora",
       },
@@ -677,7 +675,7 @@ export const home: HomeContent = {
       {
         name: "Flexora",
         category: "Product",
-        status: "Building",
+        status: "Live",
         description:
           "ERP + HRMS platform designed for flexographic label printing workflows.",
         url: "/products/flexora",

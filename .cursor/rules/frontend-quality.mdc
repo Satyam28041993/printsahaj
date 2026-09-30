@@ -6,8 +6,9 @@ alwaysApply: false
 
 # Frontend quality
 
-- Keep the dark premium system: `--bg-base`, teal accent, hairline borders, Space Grotesk / Inter / JetBrains Mono. Do not add a new UI framework or extra animation libraries without asking.
-- Motion: GSAP `useReveal` + `prefers-reduced-motion`. Do not ship invisible content if JS fails.
+- Keep the premium token system: **light is the default theme** (warm near-white canvas, white panels), dark is a token swap behind the ThemeToggle (`html.dark`). Teal accent, hairline borders, one brand gradient (teal `#14b8a6` → cyan `#00aeef` → violet `#6d7cff`). Every colour goes through a token in `globals.css`; never hard-code a hex in a component. Font: **Google Sans Flex** (OFL, variable, via `next/font`) for display and body, JetBrains Mono for small labels. Do not add a new UI framework or extra animation libraries without asking.
+- Home panel language: large rounded panels (40px, 28px on mobile) with a soft gradient top-wash, weight-500 tight-tracked headlines (`.h-title`), dark pill CTAs (`Pill`), 150ms eased hovers. Styles live in `src/app/home.css`.
+- Motion: CSS keyframes + IntersectionObserver (`useRevealOnView`, `useInViewState`) or the existing GSAP hooks. No Lottie, Framer Motion (in new code) or Lenis. Global `prefers-reduced-motion` kill-switch lives in `home.css`. Loops must pause off-screen. Auto-playing UI needs a visible pause button and must pause on hover, focus and touch. Never block or hijack page scroll (no non-passive wheel/touch/key listeners). Do not ship invisible content if JS fails: entrance states are hidden only under `.js` (set by the inline theme script).
 - Accessibility: skip link, real headings, buttons/links that are keyboard reachable, `aria` on icon-only controls.
 - Responsive: desktop and mobile headers both get a readable logo and a usable CTA.
 - SEO: `site.meta` must describe the **company**, not only PrintVerify, once the homepage changes.

@@ -44,7 +44,7 @@ export const about = {
     supportingItems: [
       {
         name: "Flexora",
-        status: "Building",
+        status: "Live",
         description: "ERP + HRMS platform designed for flexographic label printing workflows.",
         href: "/products/flexora",
       },

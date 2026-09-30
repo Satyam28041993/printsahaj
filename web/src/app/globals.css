@@ -4,30 +4,103 @@
 
 /* ---------------------------------------------------------------------------
    Design tokens.
-   Dark is the default. The light variant is a pure token swap on <html class="light">
-   — same layout, same motion, same components. No component reads a raw hex.
+   Light is the default (the :root block). Dark is a pure token swap on
+   <html class="dark"> behind the ThemeToggle — same layout, same motion, same
+   components. No component reads a raw hex. Switching the default theme again
+   is a one-line change in the root layout's theme script.
    --------------------------------------------------------------------------- */
 
 :root {
-  /* Surfaces */
+  /* Surfaces: a warm near-white canvas, white panels */
+  --bg-base: #faf9f6;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #f3f2ee;
+  --surface: rgba(10, 11, 13, 0.025);
+  --surface-hover: rgba(10, 11, 13, 0.05);
+
+  /* Lines */
+  --border: #e6e4de;
+  --border-hover: #d2d0c8;
+
+  /* Type */
+  --text-primary: #14161a;
+  --text-muted: #565d67;
+  /* 5.0+ on white and on --bg-base; 4.5+ on --bg-sunken. */
+  --text-faint: #666d76;
+
+  /* Working colour */
+  /* Text-safe teal: 5.4 on white, 4.6 on --bg-sunken. The brand teal #14b8a6
+     lives in --brand-a and the gradient, where it is never body text. */
+  --accent: #097a6f;
+  --accent-hover: #0d9488;
+  --accent-press: #086b62;
+  --accent-weak: rgba(13, 148, 136, 0.08);
+  --accent-line: rgba(13, 148, 136, 0.28);
+  --accent-glow: rgba(13, 148, 136, 0.1);
+  --accent-glow-strong: rgba(13, 148, 136, 0.28);
+  --accent-contrast: #ffffff;
+  --violet: #5b6ae8;
+  --violet-weak: rgba(91, 106, 232, 0.12);
+
+  /* The mark's CMYK trio — used sparingly, as ink, never as decoration */
+  --cyan: #00aeef;
+  --magenta: #ec008c;
+  --yellow: #fff200;
+
+  /* Separation inks for the hero plates */
+  --ink-cyan: #00aeef;
+  --ink-magenta: #ec008c;
+  --ink-yellow: #d6c400;
+  --ink-key: #4a4f57;
+  --ink-spot-a: #7c8b3e;
+  --ink-spot-b: #4a6fa5;
+
+  --key: #1a1d22;
+  --grid-line: rgba(10, 11, 13, 0.045);
+  --focus-ring: #097a6f;
+
+  --shadow-card: 0 1px 2px rgba(10, 11, 13, 0.04), 0 12px 32px -14px rgba(10, 11, 13, 0.14);
+  --shadow-lift: 0 2px 4px rgba(10, 11, 13, 0.05), 0 20px 48px -18px rgba(10, 11, 13, 0.2);
+
+  /* Brand gradient: teal → cyan → violet. The one gradient the new home uses. */
+  --brand-a: #14b8a6;
+  --brand-b: #00aeef;
+  --brand-c: #6d7cff;
+  --brand-gradient: linear-gradient(100deg, var(--brand-a), var(--brand-b) 52%, var(--brand-c));
+  /* The soft wash that sits at the top of a panel, and the mat behind a device. */
+  --panel-wash: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--brand-b) 12%, transparent),
+    color-mix(in srgb, var(--brand-a) 6%, transparent) 38%,
+    transparent 72%
+  );
+  --mat-gradient: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-a) 22%, var(--bg-elevated)),
+    color-mix(in srgb, var(--brand-b) 20%, var(--bg-elevated)) 55%,
+    color-mix(in srgb, var(--brand-c) 22%, var(--bg-elevated))
+  );
+  /* Dark pill CTAs: near-black in light, near-white in dark. */
+  --pill-bg: #14161a;
+  --pill-fg: #ffffff;
+  --pill-bg-hover: #2a2e35;
+}
+
+.dark {
   --bg-base: #0a0b0d;
   --bg-elevated: #14161a;
   --bg-sunken: #070809;
   --surface: rgba(255, 255, 255, 0.035);
   --surface-hover: rgba(255, 255, 255, 0.06);
 
-  /* Lines */
   --border: #24272e;
   --border-hover: #343842;
 
-  /* Type */
   --text-primary: #f5f6f7;
   --text-muted: #9ba1aa;
-  /* 4.93 on --bg-base, 4.53 on --bg-elevated. The previous #6b7178 measured
-     3.99 and 3.67, under the 4.5 needed for normal text. Same hue, lighter. */
+  /* 4.93 on --bg-base, 4.53 on --bg-elevated. */
   --text-faint: #798088;
 
-  /* Working colour */
   --accent: #14b8a6;
   --accent-hover: #2dd4bf;
   --accent-press: #0f9488;
@@ -39,63 +112,18 @@
   --violet: #6d7cff;
   --violet-weak: rgba(109, 124, 255, 0.14);
 
-  /* The mark's CMYK trio — used sparingly, as ink, never as decoration */
-  --cyan: #00aeef;
-  --magenta: #ec008c;
-  --yellow: #fff200;
-
-  /* Separation inks for the hero plates */
-  --ink-cyan: #00aeef;
-  --ink-magenta: #ec008c;
   --ink-yellow: #fff200;
   --ink-key: #8a8f98;
-  --ink-spot-a: #7c8b3e;
-  --ink-spot-b: #4a6fa5;
 
-  --key: #1a1d22;
   --grid-line: rgba(255, 255, 255, 0.028);
   --focus-ring: #2dd4bf;
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.6);
   --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4), 0 20px 48px -16px rgba(0, 0, 0, 0.7);
-}
 
-.light {
-  --bg-base: #fafafa;
-  --bg-elevated: #ffffff;
-  --bg-sunken: #f2f3f5;
-  --surface: rgba(10, 11, 13, 0.025);
-  --surface-hover: rgba(10, 11, 13, 0.05);
-
-  --border: #e3e5e9;
-  --border-hover: #cfd2d8;
-
-  --text-primary: #14161a;
-  --text-muted: #5a616b;
-  /* 5.01 on white, 4.80 on --bg-base, 4.51 on --bg-sunken. The previous
-     #868d96 measured 3.35 / 3.21, well under 4.5. */
-  --text-faint: #697079;
-
-  --accent: #0d9488;
-  --accent-hover: #14b8a6;
-  --accent-press: #0b7b70;
-  --accent-weak: rgba(13, 148, 136, 0.08);
-  --accent-line: rgba(13, 148, 136, 0.28);
-  --accent-glow: rgba(13, 148, 136, 0.1);
-  --accent-glow-strong: rgba(13, 148, 136, 0.28);
-  --accent-contrast: #ffffff;
-  --violet: #5b6ae8;
-  --violet-weak: rgba(91, 106, 232, 0.12);
-
-  --ink-key: #4a4f57;
-  --ink-yellow: #d6c400;
-
-  --key: #1a1d22;
-  --grid-line: rgba(10, 11, 13, 0.045);
-  --focus-ring: #0d9488;
-
-  --shadow-card: 0 1px 2px rgba(10, 11, 13, 0.04), 0 12px 32px -14px rgba(10, 11, 13, 0.14);
-  --shadow-lift: 0 2px 4px rgba(10, 11, 13, 0.05), 0 20px 48px -18px rgba(10, 11, 13, 0.2);
+  --pill-bg: #f5f6f7;
+  --pill-fg: #0a0b0d;
+  --pill-bg-hover: #ffffff;
 }
 
 /* Expose tokens to Tailwind as utilities: bg-base, text-muted, border-hairline, … */
@@ -120,8 +148,8 @@
   --color-ink-magenta: var(--magenta);
   --color-ink-yellow: var(--yellow);
 
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans-flex), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans-flex), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   --text-display-xl: clamp(2.5rem, 1.2rem + 4.2vw, 4.5rem);
@@ -1322,7 +1350,7 @@ body {
 }
 
 .section-title {
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-family: var(--font-sans-flex), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.08;
@@ -1539,7 +1567,7 @@ body {
   padding: 22px 26px;
   cursor: pointer;
   list-style: none;
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-family: var(--font-sans-flex), system-ui, sans-serif;
   font-weight: 600;
   font-size: clamp(16px, 2vw, 20px);
   color: var(--text-primary);
@@ -1673,7 +1701,7 @@ body {
 }
 
 .footer-wordmark text {
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-family: var(--font-sans-flex), system-ui, sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -2013,47 +2041,6 @@ body {
   color: var(--accent);
 }
 
-.hero-split {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: var(--bg-base);
-}
-
-/* The whole hero — orb, headline and buttons — sits inside the first screen.
-   The header is fixed, so its height comes off the top. */
-.hero-fit {
-  /* The capsule header: 8px gap + 6px + 72px pill + 6px. */
-  --hero-header: 5.75rem;
-  display: flex;
-  align-items: center;
-  min-height: 100svh;
-  padding-block: calc(var(--hero-header) + 0.25rem) 0.5rem;
-}
-
-.hero-fit__title {
-  max-width: 17ch;
-  font-size: clamp(2.1rem, 0.9rem + 2.9vw, 3.6rem);
-  line-height: 1.06;
-  letter-spacing: -0.03em;
-}
-
-@media (min-width: 1024px) {
-  .hero-fit__copy {
-    max-width: 560px;
-  }
-}
-
-.hero-split::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: min(52%, 720px);
-  height: 480px;
-  background: radial-gradient(closest-side, var(--accent-glow), transparent 74%);
-  pointer-events: none;
-}
-
 .system-board {
   position: relative;
 }
@@ -2219,7 +2206,7 @@ body {
 }
 
 .evidence-figure {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.92;
@@ -2257,7 +2244,7 @@ body {
 .cta-spine span {
   position: relative;
   padding-left: 1.5rem;
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: clamp(1.5rem, 3vw, 2.25rem);
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -2444,7 +2431,7 @@ details[open] .faq-chevron {
 }
 
 .crm-window__name {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1rem;
   font-weight: 600;
 }
@@ -2468,12 +2455,12 @@ details[open] .faq-chevron {
   border-radius: 10px;
   background: var(--accent-weak);
   color: var(--accent);
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-weight: 700;
 }
 
 .crm-window__record-name {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2615,7 +2602,7 @@ details[open] .faq-chevron {
 }
 
 .tool-window__result-value {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -2809,7 +2796,7 @@ details[open] .faq-chevron {
 }
 
 .about-process__label {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2901,7 +2888,7 @@ details[open] .faq-chevron {
 }
 
 .about-product-ref__name {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2996,7 +2983,7 @@ details[open] .faq-chevron {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -3008,7 +2995,7 @@ details[open] .faq-chevron {
 }
 
 .about-quote p {
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.05rem;
   font-weight: 500;
   line-height: 1.55;
@@ -3093,7 +3080,7 @@ details[open] .faq-chevron {
 
 .about-timeline__role {
   margin-top: 0.55rem;
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -3219,7 +3206,7 @@ details[open] .faq-chevron {
 
 .about-vcard__name {
   margin-top: 1.35rem;
-  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+  font-family: var(--font-sans-flex), ui-sans-serif, sans-serif;
   font-size: 1.35rem;
   font-weight: 700;
 }
@@ -3534,120 +3521,9 @@ details[open] .faq-chevron {
   }
 }
 
-/* Hero orb — ecosystem artwork in a wavy circle, floating slowly. */
-.hero-orb {
-  position: relative;
-  width: 100%;
-  /* Never taller than the screen left under the header, so the orb is never cut. */
-  max-width: min(680px, calc(100svh - 6.5rem));
-  margin-inline: auto;
-  aspect-ratio: 1;
-}
-
-.hero-orb::before {
-  content: "";
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(167, 139, 250, 0.28), rgba(34, 211, 238, 0.12) 60%, transparent);
-  filter: blur(28px);
-  pointer-events: none;
-}
-
-.hero-orb__float {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.hero-orb__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.hero-orb__backdrop {
-  fill: #030c1b;
-}
-
-.hero-orb__rim {
-  fill: none;
-  stroke-width: 0.55;
-  opacity: 0.95;
-}
-
-.hero-orb__halo {
-  fill: none;
-  stroke-width: 0.25;
-  opacity: 0.45;
-}
-
-.hero-orb__lights {
-  transform-origin: 50px 50px;
-}
-
-.hero-orb__lights circle {
-  opacity: 0.85;
-  filter: drop-shadow(0 0 0.8px var(--light-colour));
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-orb__float {
-    animation: hero-orb-float 11s ease-in-out infinite;
-  }
-
-  .hero-orb__lights {
-    animation: hero-orb-drift 140s linear infinite;
-  }
-
-  .hero-orb__lights circle {
-    animation-name: hero-orb-blink;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-  }
-
-  .hero-orb__halo {
-    transform-origin: 50px 50px;
-    animation: hero-orb-drift 200s linear infinite reverse;
-  }
-}
-
-@keyframes hero-orb-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  25% {
-    transform: translate3d(4px, -10px, 0) rotate(0.6deg);
-  }
-  50% {
-    transform: translate3d(0, -16px, 0) rotate(0deg);
-  }
-  75% {
-    transform: translate3d(-4px, -8px, 0) rotate(-0.6deg);
-  }
-}
-
-@keyframes hero-orb-drift {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes hero-orb-blink {
-  0%,
-  100% {
-    opacity: 0.15;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 /* ---------------------------------------------------------------------------
-   Header capsule — dark pill with a soft glow in the hero orb's inks. It
-   stays dark in both themes, so the colours it uses are set locally rather
+   Header capsule — a dark pill (no blur, no glow) that condenses on scroll.
+   It stays dark in both themes, so the colours it uses are set locally rather
    than read from the theme.
    --------------------------------------------------------------------------- */
 :root {
@@ -3728,29 +3604,49 @@ details[open] .faq-chevron {
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 999px;
   background: var(--ps-nav-bg);
-  box-shadow:
-    0 14px 40px -16px rgba(0, 0, 0, 0.85),
-    0 0 26px -8px rgba(34, 211, 238, 0.28),
-    0 0 44px -14px rgba(217, 70, 239, 0.32);
+  box-shadow: 0 10px 28px -14px rgba(10, 11, 13, 0.5);
+  transition:
+    height 0.25s var(--h-ease, ease),
+    box-shadow 0.25s ease;
 }
 
-/* Soft coloured bloom that leaks out past the pill. Deliberately still: a
-   moving gradient under a blur is repainted every frame, which cost frames
-   on every page while scrolling. */
-.ps-nav::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--ps-rainbow);
-  filter: blur(18px);
-  opacity: 0.28;
-  transition: opacity 0.3s ease;
+/* Condensed on scroll: shorter capsule, smaller mark, less padding. Colours and
+   opacity are unchanged, and nothing here uses backdrop-filter. */
+.ps-header {
+  --nav-h: 5.5rem;
+  transition: padding 0.25s var(--h-ease, ease);
 }
 
-.ps-nav-wrap:hover .ps-nav::before {
-  opacity: 0.45;
+.ps-header[data-condensed="true"] {
+  --nav-h: 4.25rem;
+  padding-top: 4px;
+}
+
+.ps-header[data-condensed="true"] .ps-nav-wrap {
+  padding-block: 3px;
+}
+
+.ps-header[data-condensed="true"] .ps-nav {
+  height: 56px;
+  padding: 0 7px 0 12px;
+  box-shadow: 0 6px 18px -12px rgba(10, 11, 13, 0.55);
+}
+
+.ps-header[data-condensed="true"] .ps-nav__brand svg {
+  width: 44px;
+  height: 44px;
+}
+
+.ps-header[data-condensed="true"] .ps-nav__brand svg + span {
+  font-size: 1.35rem;
+}
+
+.ps-nav__brand svg,
+.ps-nav__brand svg + span {
+  transition:
+    width 0.25s var(--h-ease, ease),
+    height 0.25s var(--h-ease, ease),
+    font-size 0.25s var(--h-ease, ease);
 }
 
 .ps-nav__brand {
@@ -3859,47 +3755,6 @@ details[open] .faq-chevron {
   width: 64px;
   bottom: 4px;
   transform-origin: left;
-}
-
-/* ---- clock ---- */
-.ps-nav__clock {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  white-space: nowrap;
-  color: #eef1f6;
-}
-
-.ps-nav__clock-icon {
-  display: grid;
-  place-items: center;
-  color: #d9dde5;
-}
-
-.ps-nav__clock-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.ps-nav__clock-date {
-  min-height: 1.1em;
-  font-size: 12.5px;
-  color: #aab1bd;
-}
-
-.ps-nav__clock-time {
-  font-size: 21px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
-
-.ps-nav__clock-ampm {
-  margin-left: 6px;
-  font-size: 15px;
-  font-weight: 400;
-  color: #aab1bd;
 }
 
 /* ---- actions ---- */
@@ -4064,399 +3919,9 @@ details[open] .faq-chevron {
 
 @media (prefers-reduced-motion: reduce) {
   .ps-nav,
-  .ps-nav::before,
   .ps-nav__link,
   .ps-nav__link::after,
   .ps-call::after {
     animation: none !important;
-  }
-}
-
-/* ---------------------------------------------------------------------------
-   "Where we can help" — black stage, white 3D words.
-   Default styles are the still version: every card stacked and readable.
-   .help-scroll--staged is added by the component when motion is allowed,
-   turning the section into one pinned screen the cards pass through.
-   --------------------------------------------------------------------------- */
-.help-scroll {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background: #000;
-  color: #fff;
-}
-
-/* Melts the hero's background into the black, in either theme. */
-.help-scroll::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 140px;
-  z-index: 0;
-  background: linear-gradient(var(--bg-base), transparent);
-  pointer-events: none;
-}
-
-.help-scroll__glow {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(38% 30% at 50% 100%, rgba(139, 92, 246, 0.16), transparent 70%),
-    radial-gradient(30% 24% at 22% 90%, rgba(34, 211, 238, 0.1), transparent 70%),
-    radial-gradient(30% 24% at 80% 88%, rgba(236, 72, 153, 0.1), transparent 70%);
-}
-
-.help-scroll__stage {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 7rem;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding: 8rem 1.5rem;
-}
-
-.help-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.help-panel--intro .story-kicker {
-  margin-bottom: 1.5rem;
-}
-
-/* The white word with depth: stacked hairline shadows form the extruded side,
-   two soft ones below give it a floor. In em, so the depth scales with it. */
-.help-3d {
-  max-width: 14ch;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(2.6rem, min(8.5vw, 16svh), 9rem);
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.035em;
-  text-wrap: balance;
-  color: #fff;
-  text-shadow:
-    0 0.008em 0 #d9dce2,
-    0 0.016em 0 #c5c9d0,
-    0 0.024em 0 #b1b6be,
-    0 0.032em 0 #9da2ac,
-    0 0.04em 0 #8a909a,
-    0 0.048em 0 #777d88,
-    0 0.056em 0.006em rgba(0, 0, 0, 0.4),
-    0 0 0.05em rgba(255, 255, 255, 0.1),
-    0 0.09em 0.12em rgba(0, 0, 0, 0.55),
-    0 0.2em 0.35em rgba(0, 0, 0, 0.7);
-}
-
-.help-3d--intro {
-  max-width: 13ch;
-  font-size: clamp(2.4rem, min(7vw, 14svh), 7.5rem);
-}
-
-.help-panel__index {
-  margin: 0 0 1.25rem;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: 0.24em;
-  color: transparent;
-  background: var(--ps-rainbow-bright);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-.help-panel__index span {
-  color: #5d6470;
-}
-
-.help-panel__promise {
-  max-width: 34ch;
-  margin: 1.6rem 0 0;
-  font-size: clamp(1.15rem, 0.9rem + 1vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-  color: #fff;
-  text-wrap: balance;
-}
-
-.help-panel__body {
-  max-width: 60ch;
-  margin: 0.9rem 0 0;
-  font-size: clamp(0.95rem, 0.88rem + 0.25vw, 1.08rem);
-  line-height: 1.6;
-  color: #9aa1ad;
-}
-
-.help-panel__points {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin: 1.5rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.help-panel__points li {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-  font-size: 13.5px;
-  color: #d9dde4;
-}
-
-.help-panel__points li::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--ps-rainbow);
-  background-size: 400% 100%;
-}
-
-.help-panel__points li:nth-child(2)::before {
-  background-position: 50% 0;
-}
-
-.help-panel__points li:nth-child(3)::before {
-  background-position: 100% 0;
-}
-
-.help-scroll__cue {
-  display: none;
-}
-
-.help-scroll__rail {
-  display: none;
-}
-
-/* ---- the pinned sequence ---- */
-.help-scroll--staged {
-  height: 100svh;
-}
-
-.help-scroll--staged .help-scroll__stage {
-  position: absolute;
-  inset: 0;
-  display: block;
-  max-width: none;
-  padding: 0;
-  perspective: 1400px;
-}
-
-/* Every card shares the screen below the header; they take turns in it.
-   No will-change: it would freeze each card as a bitmap drawn at its small
-   starting size, and the type would stay blurry once it grew to full size. */
-.help-scroll--staged .help-panel {
-  position: absolute;
-  inset: 6.25rem 1.5rem 4.5rem;
-  justify-content: center;
-}
-
-/* When a card lands, its chips and buttons rise in one after another. */
-.help-scroll--staged .help-panel__points li,
-.help-scroll--staged .help-panel__ctas {
-  opacity: 0;
-  transform: translateY(10px);
-  transition:
-    opacity 0.45s ease,
-    transform 0.45s cubic-bezier(0.22, 0.9, 0.28, 1);
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__points li,
-.help-scroll--staged .help-panel.is-current .help-panel__ctas {
-  opacity: 1;
-  transform: none;
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__points li:nth-child(1) {
-  transition-delay: 0.15s;
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__points li:nth-child(2) {
-  transition-delay: 0.23s;
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__points li:nth-child(3) {
-  transition-delay: 0.31s;
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__points li:nth-child(4) {
-  transition-delay: 0.39s;
-}
-
-.help-scroll--staged .help-panel.is-current .help-panel__ctas {
-  transition-delay: 0.45s;
-}
-
-/* ---- the closing consultation card ---- */
-.help-panel--consult .story-kicker {
-  margin-bottom: 1.1rem;
-}
-
-.help-panel__ctas {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 1.6rem;
-}
-
-.help-panel__ctas .ps-call {
-  height: 52px;
-}
-
-.help-scroll--staged .help-scroll__cue {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-top: 3rem;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.help-scroll__cue i {
-  width: 1px;
-  height: 42px;
-  background: linear-gradient(#fff, transparent);
-  transform-origin: top;
-  animation: help-cue 1.8s ease-in-out infinite;
-}
-
-.help-scroll--staged .help-scroll__rail {
-  position: absolute;
-  left: 50%;
-  bottom: 1.6rem;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transform: translateX(-50%);
-  opacity: 1;
-  transition: opacity 0.35s ease;
-}
-
-.help-scroll__rail[data-active="0"] {
-  opacity: 0;
-}
-
-.help-scroll__count {
-  min-width: 4.5em;
-  white-space: nowrap;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  color: #8b93a1;
-  text-align: right;
-}
-
-.help-scroll__ticks {
-  display: flex;
-  gap: 6px;
-}
-
-.help-scroll__ticks i {
-  width: 28px;
-  height: 3px;
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.14);
-  transition: background 0.35s ease;
-}
-
-.help-scroll__rail[data-active="1"] i:nth-child(-n + 1),
-.help-scroll__rail[data-active="2"] i:nth-child(-n + 2),
-.help-scroll__rail[data-active="3"] i:nth-child(-n + 3),
-.help-scroll__rail[data-active="4"] i:nth-child(-n + 4),
-.help-scroll__rail[data-active="5"] i:nth-child(-n + 5),
-.help-scroll__rail[data-active="6"] i:nth-child(-n + 6) {
-  /* Longhands, not the shorthand: each bar keeps its own position below. */
-  background-image: var(--ps-rainbow);
-  background-size: 500% 100%;
-}
-
-/* Each lit bar shows its own slice of the rainbow, so progress reads as colour. */
-.help-scroll__ticks i:nth-child(2) {
-  background-position: 25% 0;
-}
-
-.help-scroll__ticks i:nth-child(3) {
-  background-position: 50% 0;
-}
-
-.help-scroll__ticks i:nth-child(4) {
-  background-position: 75% 0;
-}
-
-.help-scroll__ticks i:nth-child(5),
-.help-scroll__ticks i:nth-child(6) {
-  background-position: 100% 0;
-}
-
-/* The consultation card is a stop, not a service: a dot, not a bar. */
-.help-scroll__ticks .help-scroll__tick-end {
-  width: 7px;
-  height: 7px;
-  margin-left: 4px;
-  align-self: center;
-  border-radius: 50%;
-}
-
-/* Laptop screens around 600px tall: a little smaller so a whole card fits. */
-@media (max-height: 720px) {
-  .help-3d {
-    font-size: clamp(2.3rem, min(8vw, 13svh), 7rem);
-  }
-
-  .help-panel__index {
-    margin-bottom: 0.9rem;
-  }
-
-  .help-panel__promise {
-    margin-top: 1.1rem;
-  }
-
-  .help-panel__body {
-    font-size: 0.92rem;
-    line-height: 1.5;
-  }
-
-  .help-panel__points {
-    margin-top: 1rem;
-  }
-
-  /* The consultation card also carries buttons. Its chips already say
-     "no obligation" and "your decision", so the paragraph can step aside. */
-  .help-scroll--staged .help-panel--consult .help-panel__body {
-    display: none;
-  }
-}
-
-@keyframes help-cue {
-  0% {
-    transform: scaleY(0);
-    opacity: 1;
-  }
-  60% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 0;
   }
 }

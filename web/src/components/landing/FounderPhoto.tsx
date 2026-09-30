@@ -20,7 +20,7 @@ export default function FounderPhoto({
       {photo ? (
         // Static export ships images unoptimized; next/image is not used elsewhere on this site.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photo} alt={name} width={800} height={1000} />
+        <img src={photo} alt={name} width={800} height={1000} loading="lazy" decoding="async" />
       ) : (
         <div className="flex h-full items-center justify-center">
           <span className="font-display text-5xl font-bold text-primary">{initials}</span>

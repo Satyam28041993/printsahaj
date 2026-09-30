@@ -4,36 +4,7 @@ import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
-
-/**
- * Same defaults and formula as the live Label Rate calculator.
- * Result is computed from the inputs — it is not a sample number.
- */
-function labelRatePerThousand(input: {
-  labelW: number;
-  labelH: number;
-  gapAround: number;
-  gapAcross: number;
-  paperRate: number;
-  inkCostPer1k: number;
-  varnishCostPer1k: number;
-  wastagePercent: number;
-}) {
-  const areaPer1k = ((input.labelW + input.gapAcross) * (input.labelH + input.gapAround) * 1000) / 1_000_000;
-  const paperCost1k = areaPer1k * input.paperRate * (1 + input.wastagePercent / 100);
-  return paperCost1k + input.inkCostPer1k + input.varnishCostPer1k;
-}
-
-const DEFAULTS = {
-  labelW: 114,
-  labelH: 76,
-  gapAround: 3,
-  gapAcross: 3,
-  paperRate: 48,
-  inkCostPer1k: 35,
-  varnishCostPer1k: 15,
-  wastagePercent: 12,
-};
+import { LABEL_RATE_DEFAULTS as DEFAULTS, labelRatePerThousand } from "@/lib/labelRate";
 
 export default function LiveTool() {
   const revealRef = useReveal<HTMLDivElement>({ start: "top 82%" });
