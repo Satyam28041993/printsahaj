@@ -33,9 +33,15 @@ ErrorDocument 404 /404.html
   </FilesMatch>
 </IfModule>
 
-# The deploy state file belongs to the deploy tool, not to visitors.
-<IfModule mod_authz_core.c>
-  <Files ".ftp-deploy-sync-state.json">
+# The deploy state file belongs to the deploy tool, not to visitors: it lists
+# every file on the site. Matches every state-name version (v2, v3, ...).
+# Both syntaxes so it works on Apache 2.4 and on older/LiteSpeed setups.
+<FilesMatch "^\.ftp-deploy-sync-state.*\.json$">
+  <IfModule mod_authz_core.c>
     Require all denied
-  </Files>
-</IfModule>
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
