@@ -258,6 +258,8 @@ export interface HomeContent {
     photoHeight: number;
     eyebrow: string;
     badge: string;
+    /** Accessible name for the focus-area chip list. */
+    chipsLabel: string;
     /** Credential cards. Every entry restates a fact already in this file. */
     facts: FounderFact[];
     linkedinLabel: string;
@@ -721,8 +723,9 @@ export const home: HomeContent = {
     photoAlt: "Satyam Singh, founder of PrintSahaj",
     photoWidth: 640,
     photoHeight: 796,
-    eyebrow: "Founder",
+    eyebrow: "Who's building it",
     badge: "Founder",
+    chipsLabel: "Focus areas",
     facts: [
       {
         label: "Experience",

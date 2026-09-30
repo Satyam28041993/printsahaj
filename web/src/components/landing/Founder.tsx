@@ -71,7 +71,7 @@ export default function Founder() {
               {copy.description}
             </p>
 
-            <ul className="fd__chips" aria-label="Focus areas">
+            <ul className="fd__chips" aria-label={copy.chipsLabel}>
               {copy.focus.map((item, i) => (
                 <li key={item} className="fd__chip" data-reveal style={idx(4 + i)}>
                   {item}

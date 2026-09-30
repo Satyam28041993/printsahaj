@@ -45,9 +45,11 @@ export const metadata: Metadata = {
  * `js` is added before any storage access (blocked storage used to throw first
  * and skip it). `js-motion` gates every hide-before-reveal rule: it is set only
  * when reduced motion is off and IntersectionObserver exists, and is dropped
- * again after 4s if no reveal hook ever ran (failsafe: never leave content hidden).
+ * again if no reveal hook has run 1.5s after window load (or 8s in, whichever comes first).
+ * The failsafe marks every pending target `is-in` under `html.motion-off`, so late
+ * hydration on a slow phone neither leaves content hidden nor replays a fade.
  */
-const themeScript = `(function(){var d=document.documentElement,c=d.classList;c.add("js");try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&"IntersectionObserver"in window){c.add("js-motion");setTimeout(function(){if(!c.contains("motion-ready"))c.remove("js-motion")},4000)}}catch(e){}try{var t=localStorage.getItem("printsahaj_theme");if(t==="dark"){c.remove("light");c.add("dark");}else{c.remove("dark");c.add("light");}}catch(e){}})();`;
+const themeScript = `(function(){var d=document.documentElement,c=d.classList;c.add("js");try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&"IntersectionObserver"in window){c.add("js-motion");var f=function(){if(c.contains("motion-ready")||!c.contains("js-motion"))return;c.add("motion-off");var t=document.querySelectorAll("[data-reveal],.h-reveal");for(var i=0;i<t.length;i++)t[i].classList.add("is-in");c.remove("js-motion")};var arm=function(){setTimeout(f,1500)};document.readyState==="complete"?arm():addEventListener("load",arm);setTimeout(f,8000)}}catch(e){}try{var t=localStorage.getItem("printsahaj_theme");if(t==="dark"){c.remove("light");c.add("dark");}else{c.remove("dark");c.add("light");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,

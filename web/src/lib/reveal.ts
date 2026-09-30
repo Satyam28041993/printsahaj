@@ -36,9 +36,14 @@ function shared(): IntersectionObserver {
 
 /** Watches every reveal target inside `root`. Returns a cleanup function. */
 export function observeReveals(root: HTMLElement): () => void {
-  const io = shared();
   const targets = Array.from(root.querySelectorAll<HTMLElement>(SELECTOR));
   if (root.matches(SELECTOR)) targets.push(root);
+  // The inline failsafe already showed the page: reveal without observing.
+  if (document.documentElement.classList.contains("motion-off")) {
+    targets.forEach((target) => target.classList.add("is-in"));
+    return () => {};
+  }
+  const io = shared();
   targets.forEach((target) => {
     if (!target.classList.contains("is-in")) io.observe(target);
   });
