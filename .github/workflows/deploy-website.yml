@@ -39,11 +39,41 @@ jobs:
           test -f out/.htaccess || { echo "out/.htaccess missing"; exit 1; }
           test -f out/tools/index.html || { echo "route folders have no index.html — is trailingSlash still set?"; exit 1; }
 
+      # Next.js creates an EMPTY out/_next/<buildId>/ folder on every build (the
+      # real per-build files live in out/_next/static/<buildId>/). FTP-Deploy-
+      # Action records that folder in its sync state but never creates it on
+      # the server (git-style tools and FTP skip empty dirs), so the next
+      # deploy, whose buildId differs, tries to delete a folder that does not
+      # exist and dies with "550 No such file or directory" after all files
+      # are uploaded. Removing empty directories here means they are never
+      # tracked, so there is nothing to delete later. This holds for every
+      # deploy, not just the next one.
+      - name: Remove empty directories from the export
+        working-directory: web
+        run: |
+          echo "Empty directories being removed:"
+          find out -mindepth 1 -type d -empty -print
+          find out -mindepth 1 -type d -empty -delete
+          # Deleting can empty a parent; repeat until nothing is left.
+          while [ -n "$(find out -mindepth 1 -type d -empty -print -quit)" ]; do
+            find out -mindepth 1 -type d -empty -delete
+          done
+          test -z "$(find out -type d -empty -print -quit)" || { echo "empty dirs remain"; exit 1; }
+
       # This Hostinger FTP user is already jailed to public_html ("Folder to
       # upload files" in hPanel). Uploading to /public_html/ again nests a
       # second folder and the live site stays empty (403). "./" is the
       # website root. FTP_SERVER_DIR can still override if an account differs.
+      #
+      # state-name v3: the v2 state on the server still lists a stale empty
+      # _next/<buildId> folder. A new name makes the first deploy upload
+      # everything and delete nothing; old orphaned chunks stay behind
+      # harmlessly. Later deploys diff against the v3 file as usual.
+      # continue-on-error only lets the retry step below run; the job still
+      # fails if the retry fails too.
       - name: Deploy to Hostinger via FTP
+        id: ftp
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
@@ -51,12 +81,26 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          # The previous sync-state file listed a /_next build folder that no
-          # longer exists on the server, so every deploy since 25 Sep 2026
-          # died deleting it (FTP 550). A new state name makes the action
-          # upload everything once and delete nothing; old unused chunks stay
-          # behind harmlessly. Later deploys diff against this file as usual.
-          state-name: .ftp-deploy-sync-state-v2.json
+          state-name: .ftp-deploy-sync-state-v3.json
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+
+      # One retry for transient FTP trouble. The sync state is only written
+      # after a full success, so a re-run re-diffs from the last good state.
+      # If this fails too, the step (and the job) is red.
+      - name: Deploy to Hostinger via FTP (retry)
+        if: steps.ftp.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: web/out/
+          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
+          state-name: .ftp-deploy-sync-state-v3.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
@@ -65,7 +109,10 @@ jobs:
 
       # A successful FTP sync can still land in the wrong Hostinger folder.
       # Fail the job if the live homepage is not a real page.
+      # Runs even when FTP failed (to show what is actually live), but not
+      # when the run was cancelled. A failed FTP step still turns the job red.
       - name: Check the live homepage
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 https://printsahaj.com/)
