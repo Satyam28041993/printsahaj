@@ -157,8 +157,13 @@ html[data-hidden] *::after {
   animation-play-state: paused !important;
 }
 
-/* Final CTA: an overlay fades in (opacity only) and text flips at 50%. */
+/* Final CTA: one time-based flip (~350ms, not tied to scroll position), so
+   there is no scroll position where text and background sit half-way. A single
+   number, --flip (0 → 1, driven by the motion layer), drives the dark panel's
+   opacity and both text colours together. At 0 (and with no JS, or reduced
+   motion) it is the normal light section. */
 .cta-flip {
+  --flip: 0;
   isolation: isolate;
 }
 
@@ -167,20 +172,16 @@ html[data-hidden] *::after {
   inset: 0;
   z-index: 0;
   background: var(--cta-flip-bg);
-  opacity: 0;
+  opacity: var(--flip);
   pointer-events: none;
 }
 
-.cta-flip :is(h2, p) {
-  transition: color 0.3s ease;
+.cta-flip h2 {
+  color: color-mix(in srgb, var(--cta-flip-fg) calc(var(--flip) * 100%), var(--text-primary));
 }
 
-.cta-flip[data-flip="true"] h2 {
-  color: var(--cta-flip-fg);
-}
-
-.cta-flip[data-flip="true"] p {
-  color: var(--cta-flip-muted);
+.cta-flip p {
+  color: color-mix(in srgb, var(--cta-flip-muted) calc(var(--flip) * 100%), var(--text-muted));
 }
 
 /* The flagged plate: the missing chip's border goes to the danger token. */

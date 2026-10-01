@@ -451,27 +451,23 @@ function plateChips(c: Ctx, el: HTMLElement) {
 /* ------------------------------------------------------------ final CTA etc */
 
 function flip(c: Ctx, el: HTMLElement) {
-  const { gsap } = c.libs;
-  const bg = el.querySelector<HTMLElement>("[data-m-flip-bg]");
-  if (!bg) return;
-  gsap.fromTo(
-    bg,
-    { opacity: 0 },
-    {
-      opacity: 1,
-      // Front-loaded: the dark panel arrives quickly (about half opaque at 30% of
-      // the range), and the text flips right there, where both colours have the
-      // same contrast. That removes the long grey-on-grey middle.
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: el,
-        start: "top 80%",
-        end: "top 30%",
-        scrub: c.scrub,
-        onUpdate: (self) => el.setAttribute("data-flip", String(self.progress >= 0.3)),
-      },
-    },
-  );
+  const { gsap, ScrollTrigger } = c.libs;
+  // Time-based, not scrubbed: a scrubbed colour flip leaves text and background
+  // half-way (low contrast) for as long as the reader pauses there. Entering
+  // plays one 350ms tween of --flip (background and text colours together);
+  // leaving upward reverses it.
+  const tween = gsap.to(el, { "--flip": 1, duration: 0.35, ease: "power2.inOut", paused: true });
+  ScrollTrigger.create({
+    trigger: el,
+    start: "top 70%",
+    onEnter: () => tween.play(),
+    onEnterBack: () => tween.play(),
+    onLeaveBack: () => tween.reverse(),
+  });
+  c.cleanups.push(() => {
+    tween.kill();
+    el.style.removeProperty("--flip");
+  });
 }
 
 function letters(c: Ctx, el: HTMLElement) {
