@@ -60,6 +60,8 @@ interface Ctx {
   /** One IntersectionObserver per start line, shared by every one-shot entrance. */
   once: Map<number, IntersectionObserver>;
   onceRun: WeakMap<Element, () => void>;
+  /** Entrances not yet run, so a fast fling past them can be caught (see sweepOnce). */
+  pending: Set<HTMLElement>;
   /** Heights read once up front, so entrances never force a layout each. */
   heights: Map<HTMLElement, number>;
   alive: boolean;
@@ -79,18 +81,37 @@ function onceInView(c: Ctx, el: HTMLElement, startPct: number, run: () => void) 
         entries.forEach((entry) => {
           const above = entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0);
           if (!entry.isIntersecting && !above) return;
-          io?.unobserve(entry.target);
-          const fn = c.onceRun.get(entry.target);
-          c.onceRun.delete(entry.target);
-          fn?.();
+          fireOnce(c, entry.target as HTMLElement);
         });
       },
-      { rootMargin: `0px 0px -${100 - startPct}% 0px` },
+      { rootMargin: `0px 0px ${startPct - 100}% 0px` },
     );
     c.once.set(startPct, io);
   }
   c.onceRun.set(el, run);
+  c.pending.add(el);
   io.observe(el);
+}
+
+function fireOnce(c: Ctx, el: HTMLElement) {
+  const fn = c.onceRun.get(el);
+  if (!fn) return;
+  c.onceRun.delete(el);
+  c.pending.delete(el);
+  c.once.forEach((io) => io.unobserve(el));
+  fn();
+}
+
+/**
+ * An IntersectionObserver only reports a change of state. A short element that a
+ * fast fling carries from below the viewport to above it between two frames
+ * never "intersects", so it would stay hidden. After scrolling stops (ScrollTrigger's
+ * scrollEnd) anything pending that is now above the viewport is run.
+ */
+function sweepOnce(c: Ctx) {
+  c.pending.forEach((el) => {
+    if (el.getBoundingClientRect().bottom < 0) fireOnce(c, el);
+  });
 }
 
 /* ---------------------------------------------------------------- reveals */
@@ -153,17 +174,9 @@ function pop(c: Ctx, el: HTMLElement) {
 
 function lines(c: Ctx, el: HTMLElement) {
   // Splitting measures layout, so it waits until the heading is within a screen
-  // of the viewport instead of running for every heading at load.
-  const io = new IntersectionObserver(
-    (entries) => {
-      if (!entries.some((e) => e.isIntersecting || e.boundingClientRect.top < 0)) return;
-      io.disconnect();
-      if (c.alive) splitLines(c, el);
-    },
-    { rootMargin: "0px 0px 100% 0px" },
-  );
-  io.observe(el);
-  c.cleanups.push(() => io.disconnect());
+  // of the viewport (startPct 200 = one viewport below it) instead of running
+  // for every heading at load. Sharing onceInView also gets the fast-fling sweep.
+  onceInView(c, el, 200, () => splitLines(c, el));
 }
 
 function splitLines(c: Ctx, el: HTMLElement) {
@@ -622,7 +635,7 @@ function activeCards(c: Ctx) {
 /* -------------------------------------------------------- idle CTA shine */
 
 function idleShine(c: Ctx) {
-  const buttons = q(".pill--dark, .cta-shine");
+  const buttons = q(".pill--dark, .cta-shine, .h-sweep");
   const io = new IntersectionObserver((entries) =>
     entries.forEach((e) => ((e.target as HTMLElement).dataset.shine = e.isIntersecting ? "on" : "off")),
   );
@@ -775,10 +788,14 @@ export function buildMotion(libs: MotionLibs, opts: { entrances?: boolean } = {}
       cleanups: [],
       once: new Map(),
       onceRun: new WeakMap(),
+      pending: new Set(),
       heights: new Map(),
       alive: true,
     };
     c.cleanups.push(() => c.once.forEach((io) => io.disconnect()));
+    const onScrollEnd = () => sweepOnce(c);
+    ScrollTrigger.addEventListener("scrollEnd", onScrollEnd);
+    c.cleanups.push(() => ScrollTrigger.removeEventListener("scrollEnd", onScrollEnd));
 
     // Every builder is queued as its own small unit and run in time slices
     // (~6ms, then yield to the browser), so no long task ever blocks input.
@@ -828,7 +845,9 @@ export function buildMotion(libs: MotionLibs, opts: { entrances?: boolean } = {}
         await new Promise<void>((resolve) => setTimeout(resolve, 0));
         if (!c.alive) return;
       }
-      ScrollTrigger.refresh();
+      // No explicit ScrollTrigger.refresh(): every trigger above was created after
+      // fonts settled and measures itself on creation, and a full refresh here was
+      // the single longest task (~45ms). Resize and window load still refresh as usual.
       // Read by the proof script (web/scripts/motion-proof.mjs); harmless otherwise.
       document.documentElement.dataset.mTriggers = String(ScrollTrigger.getAll().length);
     })();

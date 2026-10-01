@@ -308,11 +308,37 @@
   color: transparent;
 }
 
-.h-sweep[data-shine="on"] {
+/* Both animations are declared from the start, so switching the sweep on never
+   restarts the word drop-in; it only un-pauses the second one. */
+.h-sweep {
   animation:
     h-word 0.8s var(--h-ease) backwards,
     h-sweep 8s ease-in-out infinite;
   animation-delay: calc(var(--w, 0) * 50ms + 120ms), calc(1s + var(--s, 0) * 0.18s);
+  animation-play-state: running, paused;
+}
+
+.h-sweep[data-shine="on"] {
+  animation-play-state: running, running;
+}
+
+/* Phone: no word drop-in at all. The H1 is the first thing painted (and the
+   page's LCP text), so it is plain inline text there; only the sweep animates. */
+@media (max-width: 767px) {
+  .h-word {
+    display: inline;
+    animation: none;
+  }
+
+  .h-sweep {
+    animation: h-sweep 8s ease-in-out infinite;
+    animation-delay: calc(1s + var(--s, 0) * 0.18s);
+    animation-play-state: paused;
+  }
+
+  .h-sweep[data-shine="on"] {
+    animation-play-state: running;
+  }
 }
 
 @keyframes h-sweep {
@@ -1551,10 +1577,18 @@
     display: none;
   }
 
+  .hp {
+    padding: 14px 12px 14px;
+  }
+
+  .hp__head {
+    margin-bottom: 0;
+  }
+
   .hp-stack {
     display: grid;
-    gap: 10px;
-    margin: 1rem 0 0;
+    gap: 8px;
+    margin: 0.75rem 0 0;
     padding: 0;
     list-style: none;
   }
@@ -1565,7 +1599,7 @@
     position: sticky;
     top: calc(var(--stack-top, 84px) + var(--i, 0) * 14px);
     transition: top 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-    padding: 14px 16px 16px;
+    padding: 12px 14px 12px;
     overflow: hidden;
     border-radius: var(--h-radius-sm);
     border: 1px solid var(--border-hover);
@@ -1574,26 +1608,30 @@
     transform-origin: 50% 0;
   }
 
+  /* The counter sits in the corner instead of taking a line of its own. */
   .hp-scard .hp-index {
+    position: absolute;
+    top: 14px;
+    right: 14px;
     font-size: 0.6875rem;
   }
 
   .hp-scard__title {
-    margin-top: 0.25rem;
-    font-size: 1.3rem;
+    padding-right: 3.25rem;
+    font-size: 1.2rem;
     line-height: 1.12;
   }
 
   .hp-scard__promise {
-    margin-top: 0.4rem;
-    font-size: 0.9375rem;
-    line-height: 1.35;
+    margin-top: 0.3rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
   }
 
   .hp-scard__body {
-    margin-top: 0.4rem;
-    font-size: 0.8125rem;
-    line-height: 1.4;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1.32;
   }
 
   /* Dims the card as the next one covers it (cheaper than a brightness filter). */
@@ -1609,49 +1647,50 @@
 
   .hp-scard__points {
     display: grid;
-    gap: 0.35rem;
-    margin-top: 0.6rem;
-    padding: 0;
-    list-style: none;
+    gap: 0.1rem;
+    margin-top: 0.35rem;
   }
 
-  .hp-scard__points li {
+  .hp-scard__points details {
     padding-left: 0.7rem;
     border-left: 2px solid var(--accent-line);
   }
 
-  .hp-scard__points b {
-    display: block;
+  .hp-scard__points summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 26px;
+    list-style: none;
+    cursor: pointer;
     font-size: 0.8125rem;
     font-weight: 600;
     line-height: 1.3;
     color: var(--text-primary);
   }
 
+  .hp-scard__points summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .hp-scard__points summary::after {
+    content: "+";
+    flex: none;
+    color: var(--text-faint);
+    font-weight: 500;
+  }
+
+  .hp-scard__points details[open] summary::after {
+    content: "–";
+  }
+
   .hp-scard__points span {
     display: block;
+    padding-bottom: 0.25rem;
     font-size: 0.75rem;
     line-height: 1.35;
     color: var(--text-muted);
-  }
-
-  .hp-scard__flow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    margin-top: 0.6rem;
-  }
-
-  .hp-scard__node {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    background: var(--accent-weak);
-    color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 500;
   }
 }
 

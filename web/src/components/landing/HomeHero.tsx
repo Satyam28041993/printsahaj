@@ -56,7 +56,7 @@ export default function HomeHero() {
           <h1 id="hero-heading" className="h-title h-title--xl h-hero-title mt-4 max-w-[19ch] sm:mt-7 sm:max-w-none">
             <HeadlineWords text={hero.headline} sweepWords={hero.sweepWords} />
           </h1>
-          <p className="h-lead h-rise h-rise--solid mt-3 max-w-[52ch] sm:mt-6" style={rise(2)}>
+          <p className="h-lead mt-3 max-w-[52ch] sm:mt-6" style={rise(2)}>
             {hero.supporting}
           </p>
           <div className="h-rise h-rise--solid mt-5 flex w-full flex-col items-stretch gap-2.5 sm:mt-9 sm:w-auto sm:flex-row sm:items-center" style={rise(3)}>
@@ -65,7 +65,7 @@ export default function HomeHero() {
               {callCta.label}
             </Pill>
           </div>
-          <p className="h-rise h-rise--solid mt-3 max-w-[62ch] text-[13px] leading-snug text-faint sm:mt-7 sm:text-sm" style={rise(4)}>
+          <p className="mt-3 max-w-[62ch] text-[13px] leading-snug text-faint sm:mt-7 sm:text-sm" style={rise(4)}>
             {hero.trustLine}
           </p>
         </div>

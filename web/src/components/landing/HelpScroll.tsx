@@ -296,7 +296,6 @@ function HelpStack() {
   return (
     <ol className="hp-stack" data-m="stack">
       {services.map((service, i) => {
-        const Icons = FLOW_ICONS[i];
         return (
           <li
             key={service.title}
@@ -309,26 +308,16 @@ function HelpStack() {
             <h3 className="h-title hp-scard__title">{service.title}</h3>
             <p className="h-lead hp-scard__promise font-medium !text-primary">{service.promise}</p>
             <p className="hp-scard__body text-muted">{service.body}</p>
-            <ul className="hp-scard__points">
-              {service.points.map((point) => (
-                <li key={point.title}>
-                  <b>{point.title}</b>
+            {/* Same accordion idea as the desktop card: the first point is open, the others open on tap. */}
+            <div className="hp-scard__points">
+              {service.points.map((point, j) => (
+                <details key={point.title} open={j === 0}>
+                  <summary>{point.title}</summary>
                   <span>{point.detail}</span>
-                </li>
+                </details>
               ))}
-            </ul>
-            <p className="sr-only">{`${help.flowLabel} ${service.flow.join(", ")}`}</p>
-            <div className="hp-scard__flow" aria-hidden="true">
-              {service.flow.map((label, step) => {
-                const Node = Icons[step];
-                return (
-                  <span key={label} className="hp-scard__node">
-                    <Node size={16} aria-hidden />
-                    {label}
-                  </span>
-                );
-              })}
             </div>
+            <p className="sr-only">{`${help.flowLabel} ${service.flow.join(", ")}`}</p>
           </li>
         );
       })}
