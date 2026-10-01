@@ -41,12 +41,223 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
   }
 }
 
+/* ---- 1b. GSAP hooks: hidden pre-states ----------------------------------- */
+
+/* The motion layer (lib/motion, data-m attributes) hides things only while the
+   page is marked data-motion-page AND html.js-motion is set. Both are absent
+   without JS or with reduced motion, and the inline failsafe drops js-motion if
+   GSAP never arrives, so nothing is ever left invisible. The values match the
+   `from` of each tween (and the tokens in lib/motion/tokens.ts), so the hand-over
+   is seamless. `m-done` marks an element whose entrance has finished. */
+:root {
+  --m-rise-y: 44px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --m-rise-y: 64px;
+  }
+}
+
+html.js-motion [data-motion-page] [data-m="reveal"]:not(.m-done):not(:has([data-m-child])),
+html.js-motion [data-motion-page] [data-m="reveal"] > [data-m-child]:not(.m-done),
+html.js-motion [data-motion-page] [data-m="reveal"] [data-m-child]:not(.m-done) {
+  opacity: 0;
+  transform: translateY(var(--m-rise-y)) scale(0.96);
+}
+
+html.js-motion [data-motion-page] [data-m="pop"]:not(.m-done):not(:has([data-m-child])),
+html.js-motion [data-motion-page] [data-m="pop"] [data-m-child]:not(.m-done) {
+  opacity: 0;
+  transform: scale(0.6);
+}
+
+html.js-motion [data-motion-page] [data-m="lines"]:not(.m-split) {
+  opacity: 0;
+}
+
+html.js-motion [data-motion-page] [data-m="scrub-in"]:not(.m-done) {
+  /* Phone: the state the scrub is in at scroll 0 (see scrubIn in engine.ts). */
+  transform: translateY(57px) scale(0.9);
+  transform-origin: 50% 0;
+  clip-path: inset(0 4% round 60px);
+}
+
+@media (min-width: 768px) {
+  html.js-motion [data-motion-page] [data-m="scrub-in"]:not(.m-done) {
+    transform: translateY(120px) scale(0.86);
+    clip-path: inset(0 6% round 60px);
+  }
+}
+
+html.js-motion [data-motion-page] [data-m="clip"]:not(.m-done) {
+  clip-path: inset(12% 8% round 40px);
+}
+
+/* data-m-only="desktop|mobile": the hook only runs at one breakpoint, so the
+   hidden pre-state must not apply at the other. These selectors are more
+   specific than every pre-state above (and come last), including the
+   :has() / [data-m-child] ones. */
+@media (max-width: 767px) {
+  html.js-motion [data-motion-page] [data-m][data-m-only="desktop"]:not(.m-done):not(.m-never),
+  html.js-motion [data-motion-page] [data-m-only="desktop"] [data-m-child]:not(.m-done):not(.m-never) {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
+
+@media (min-width: 768px) {
+  html.js-motion [data-motion-page] [data-m][data-m-only="mobile"]:not(.m-done):not(.m-never),
+  html.js-motion [data-motion-page] [data-m-only="mobile"] [data-m-child]:not(.m-done):not(.m-never) {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
+
+/* Numbers that count keep their width, so nothing shifts while they run. */
+.m-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scroll progress: 3px brand gradient, scaleX driven by a scrubbed ScrollTrigger. */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: var(--scroll-bar-h);
+  pointer-events: none;
+}
+
+.scroll-progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--brand-gradient);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+}
+
+/* Header: slides away on scroll-down, back on any scroll-up (ScrollTrigger). */
+.ps-header {
+  transition:
+    padding 0.25s var(--h-ease, ease),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ps-header[data-hide="true"] {
+  transform: translateY(-110%);
+}
+
+/* Every loop idles while the tab is hidden. */
+html[data-hidden] *,
+html[data-hidden] *::before,
+html[data-hidden] *::after {
+  animation-play-state: paused !important;
+}
+
+/* Final CTA: one time-based flip (~350ms, not tied to scroll position), so
+   there is no scroll position where text and background sit half-way. A single
+   number, --flip (0 → 1, driven by the motion layer), drives the dark panel's
+   opacity and both text colours together. At 0 (and with no JS, or reduced
+   motion) it is the normal light section. */
+.cta-flip {
+  --flip: 0;
+  isolation: isolate;
+}
+
+.cta-flip__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--cta-flip-bg);
+  opacity: var(--flip);
+  pointer-events: none;
+}
+
+.cta-flip h2 {
+  color: color-mix(in srgb, var(--cta-flip-fg) calc(var(--flip) * 100%), var(--text-primary));
+}
+
+.cta-flip p {
+  color: color-mix(in srgb, var(--cta-flip-muted) calc(var(--flip) * 100%), var(--text-muted));
+}
+
+/* The flagged plate: the missing chip's border goes to the danger token. */
+.plate-chip.is-missing.is-flagged {
+  border-color: var(--danger);
+  color: var(--danger);
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
 /* ---- 2. Buttons & CTAs -------------------------------------------------- */
 
 .pill {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+}
+
+/* Ripple from the touch point (created by the press handler in lib/motion). */
+.m-ripple {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  /* Solid colour: the engine fades the whole circle (opacity .6 → 0), so a
+     translucent fill here would multiply down to nothing. */
+  background: color-mix(in srgb, var(--pill-fg) 80%, transparent);
+}
+
+.m-ripple[data-tone="ghost"] {
+  background: var(--brand-b);
+}
+
+.sc-tab,
+.hp-pill,
+.cta-solid,
+.cta-ghost {
+  position: relative;
+  overflow: hidden;
+}
+
+.sc-tab .m-ripple,
+.hp-pill .m-ripple {
+  background: var(--brand-b);
+}
+
+/* Idle shine: the primary CTAs sweep on their own every 4.5s while in view, on
+   touch and desktop alike (the motion layer sets data-shine through an
+   IntersectionObserver). 900ms sweep, then rest. */
+@keyframes m-shine {
+  0% {
+    transform: translateX(-130%) skewX(-12deg);
+  }
+  20%,
+  100% {
+    transform: translateX(300%) skewX(-12deg);
+  }
+}
+
+.pill--dark[data-shine="on"]::before {
+  animation: m-shine 4.5s ease-in-out 0.8s infinite;
+}
+
+@keyframes m-shine-cta {
+  0% {
+    transform: translateX(-120%);
+  }
+  20%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.cta-shine[data-shine="on"]::after {
+  animation: m-shine-cta 4.5s ease-in-out 0.8s infinite;
 }
 
 /* Shine: a soft diagonal band that sweeps across on hover / keyboard focus. */
@@ -82,14 +293,14 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
   }
 
   .pill--dark:hover {
-    transform: translateY(-2px);
+    translate: 0 -3px;
     box-shadow:
       0 12px 26px -12px color-mix(in srgb, var(--pill-bg) 70%, transparent),
       0 0 0 4px color-mix(in srgb, var(--brand-b) 16%, transparent);
   }
 
   .pill--ghost:hover {
-    transform: translateY(-2px);
+    translate: 0 -3px;
     box-shadow: 0 10px 22px -14px color-mix(in srgb, var(--brand-b) 60%, transparent);
   }
 }
@@ -106,15 +317,16 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
 
 /* ---- 3. Touch / press states ------------------------------------------- */
 
-/* Touch has no :hover, so the press itself is the feedback. */
-.pill:active,
-.founder-linkedin:active,
-.sc-tab:active,
-.hp-pill:active,
-.sc-toggle:active,
-.m-press:active {
-  transform: scale(0.98);
-  transition-duration: 0.08s;
+/* Touch has no :hover, so the press itself is the feedback. This CSS version is
+   the no-GSAP fallback; once the motion layer is up (html.m-press) a delegated
+   pointerdown handler scales to .94 and springs back instead. */
+html:not(.m-press) .pill:active,
+html:not(.m-press) .founder-linkedin:active,
+html:not(.m-press) .sc-tab:active,
+html:not(.m-press) .hp-pill:active,
+html:not(.m-press) .sc-toggle:active,
+html:not(.m-press) .m-press:active {
+  scale: 0.97;
 }
 
 .pill--dark:active {
@@ -123,15 +335,18 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
 
 /* ---- 4. Cards & images: hover lift + gradient glow ---------------------- */
 
+/* Lift uses the independent `translate` property, so GSAP's inline transform
+   (press, tilt, parallax) and this never fight. */
 .m-lift,
 .feature-card,
 .tool-window,
 .timeline-item__card,
-.hp-consult {
+.hp-consult,
+[data-m-card] {
   transition:
-    transform 0.25s var(--m-ease),
-    box-shadow 0.25s var(--m-ease),
-    border-color 0.25s ease;
+    translate 0.3s var(--m-ease),
+    box-shadow 0.3s var(--m-ease),
+    border-color 0.3s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -139,14 +354,25 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
   .feature-card:hover,
   .tool-window:hover,
   .timeline-item__card:hover,
-  .hp-consult:hover {
-    transform: translateY(-3px);
+  .hp-consult:hover,
+  [data-m-card]:hover {
+    translate: 0 -3px;
     box-shadow: var(--shadow-lift);
   }
 }
 
-.m-lift:active {
-  transform: scale(0.99);
+/* Touch "hover": the card crossing the middle of the screen is the active one
+   (one at a time, set by the motion layer). */
+[data-m-card][data-active="true"] {
+  translate: 0 -8px;
+  box-shadow: var(--shadow-lift);
+  border-color: var(--accent-line);
+  transition-duration: 0.3s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.m-glow[data-active="true"]::after {
+  opacity: 0.28;
 }
 
 /* Featured cards / images: the existing conic ring (h-ring in home.css) is
@@ -207,9 +433,10 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
 }
 
 .m-tabs[data-ind="ready"][data-anim="on"] .m-indicator {
+  /* A touch of overshoot: the indicator springs onto the new tab. */
   transition:
-    transform 0.38s var(--m-ease),
-    width 0.38s var(--m-ease);
+    transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .m-tabs[data-ind="ready"] .sc-tab,
@@ -245,7 +472,7 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
 @keyframes m-swap-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateX(32px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -500,8 +727,19 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
 
   .fd__frame,
   .m-swap,
+  .h-sweep,
+  .h-word,
   :is([data-reveal], .h-reveal).is-in {
     animation: none !important;
+  }
+
+  .m-ripple,
+  .cta-flip__bg {
+    display: none;
+  }
+
+  .scroll-progress {
+    display: none;
   }
 
   .m-lift:hover,
@@ -510,8 +748,11 @@ html.js-motion :is([data-reveal], .h-reveal):not(.is-in) {
   .timeline-item__card:hover,
   .hp-consult:hover,
   .pill:hover,
-  .fd__chip:hover {
+  .fd__chip:hover,
+  [data-m-card]:hover,
+  [data-m-card][data-active="true"] {
     transform: none !important;
+    translate: none !important;
   }
 }
 

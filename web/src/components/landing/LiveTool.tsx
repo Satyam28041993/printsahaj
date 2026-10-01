@@ -2,12 +2,10 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
 import { LABEL_RATE_DEFAULTS as DEFAULTS, labelRatePerThousand } from "@/lib/labelRate";
 
 export default function LiveTool() {
-  const revealRef = useReveal<HTMLDivElement>();
   const [labelW, setLabelW] = useState(DEFAULTS.labelW);
   const [labelH, setLabelH] = useState(DEFAULTS.labelH);
   const [gapAround, setGapAround] = useState(DEFAULTS.gapAround);
@@ -33,24 +31,26 @@ export default function LiveTool() {
 
   return (
     <section aria-labelledby="live-tool-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,128px)] sm:px-8">
-      <div ref={revealRef} className="mx-auto grid max-w-7xl items-start gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
-        <div data-reveal>
-          <p className="story-kicker">Live tool</p>
-          <h2 id="live-tool-heading" className="mt-5 font-display text-display-lg font-bold text-primary text-balance">
+      <div className="mx-auto grid max-w-7xl items-start gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+        <div>
+          <p data-m="reveal" className="story-kicker">Live tool</p>
+          <h2 id="live-tool-heading" data-m="lines" className="mt-5 font-display text-display-lg font-bold text-primary text-balance">
             Label Rate & Matrix Costing
           </h2>
-          <p className="mt-5 max-w-md text-body-lg text-muted">
+          <div data-m="reveal">
+          <p data-m-child className="mt-5 max-w-md text-body-lg text-muted">
             Roll-label costing from size, gaps and the ₹/sqm paper rate. The figure updates from the same formula as the calculator.
           </p>
-          <p className="mt-4 font-mono text-[11px] leading-relaxed text-faint">
+          <p data-m-child className="mt-4 font-mono text-[11px] leading-relaxed text-faint">
             Ink ₹35 / 1,000 · varnish ₹15 / 1,000 · wastage 12% — the calculator defaults.
           </p>
-          <Link href="/calculators/?tab=label-rate" className="founder-linkedin mt-8">
+          <Link data-m-child href="/calculators/?tab=label-rate" className="founder-linkedin mt-8">
             Open the full calculator
           </Link>
+          </div>
         </div>
 
-        <form data-reveal className="tool-window" onSubmit={(event) => event.preventDefault()}>
+        <form data-m="reveal" className="tool-window" onSubmit={(event) => event.preventDefault()}>
           <div className="tool-window__chrome">
             <p>Label Rate</p>
             <p className="text-faint">Live</p>
@@ -64,15 +64,17 @@ export default function LiveTool() {
           </div>
           <p className="tool-window__result">
             <span className="tool-window__result-label">Per 1,000 labels</span>
-            <span className="tool-window__result-value">₹ {rate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="tool-window__result-value m-num" data-m="counter">
+              {`₹ ${rate.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+            </span>
           </p>
         </form>
       </div>
 
-      <ul className="mx-auto mt-10 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul data-m="reveal" className="mx-auto mt-10 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {others.map((tool) => (
-          <li key={tool.href}>
-            <Link href={tool.href} className="tool-directory">
+          <li key={tool.href} data-m-child>
+            <Link href={tool.href} data-m-card className="tool-directory">
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{tool.tag}</span>
               <span className="mt-2 block font-display text-base font-semibold text-primary">{tool.name}</span>
             </Link>

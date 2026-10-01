@@ -1,0 +1,65 @@
+{
+  "before_390": {
+    "entrances": 51,
+    "maxTranslateY_px": {
+      "median": 14,
+      "max": 14
+    },
+    "duration_ms": {
+      "median": 483,
+      "max": 1067
+    },
+    "scrollTriggers": 0,
+    "jsErrors": 0,
+    "errors": [],
+    "gifFps": 6
+  },
+  "before_1440": {
+    "entrances": 51,
+    "maxTranslateY_px": {
+      "median": 14,
+      "max": 14
+    },
+    "duration_ms": {
+      "median": 583,
+      "max": 1100
+    },
+    "scrollTriggers": 0,
+    "jsErrors": 0,
+    "errors": [],
+    "gifFps": 12
+  },
+  "after_390": {
+    "entrances": 50,
+    "maxTranslateY_px": {
+      "median": 44,
+      "max": 44
+    },
+    "duration_ms": {
+      "median": 567,
+      "max": 1017
+    },
+    "scrollTriggers": 24,
+    "jsErrors": 0,
+    "errors": [],
+    "gifFps": 5
+  },
+  "after_1440": {
+    "entrances": 49,
+    "maxTranslateY_px": {
+      "median": 64,
+      "max": 64
+    },
+    "duration_ms": {
+      "median": 617,
+      "max": 1033
+    },
+    "scrollTriggers": 17,
+    "jsErrors": 0,
+    "errors": [],
+    "gifFps": 12
+  },
+  "slowNetwork": {
+    "inViewBelowHalfOpacity": 0
+  }
+}

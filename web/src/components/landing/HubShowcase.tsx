@@ -17,15 +17,15 @@ export default function HubShowcase() {
   return (
     <section className="relative px-5 py-[clamp(72px,9vw,128px)] sm:px-8" aria-labelledby="ecosystem-heading">
       <div className="mx-auto max-w-7xl">
-        <h2 id="ecosystem-heading" className="max-w-3xl font-display text-display-lg font-bold text-primary text-balance">
+        <h2 id="ecosystem-heading" data-m="lines" className="max-w-3xl font-display text-display-lg font-bold text-primary text-balance">
           {copy.heading}
         </h2>
-        <p className="mt-5 max-w-xl text-body-lg text-muted">
+        <p data-m="reveal" className="mt-5 max-w-xl text-body-lg text-muted">
           PrintSahaj, then the products and tools that exist on this site.
         </p>
 
-        <div className="eco-tree mt-14">
-          <div className="eco-tree__root">
+        <div className="eco-tree mt-14" data-m="reveal">
+          <div className="eco-tree__root" data-m="parallax" data-m-speed="-6">
             <Logo showWordmark={false} size="lg" instance="eco-mark" />
             <p className="mt-3 font-display text-title font-semibold text-primary">{copy.hub}</p>
           </div>
@@ -35,7 +35,7 @@ export default function HubShowcase() {
               if (node.kind === "tools") {
                 return (
                   <li key={node.key}>
-                    <Link href={toolsHref} className="eco-tree__node">
+                    <Link href={toolsHref} data-m-card className="eco-tree__node">
                       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">Live</span>
                       <span className="mt-2 block font-display text-lg font-semibold text-primary">Live Tools</span>
                     </Link>
@@ -46,7 +46,7 @@ export default function HubShowcase() {
               if (!product) return null;
               return (
                 <li key={node.key}>
-                  <Link href={product.href} className="eco-tree__node">
+                  <Link href={product.href} data-m-card className="eco-tree__node">
                     <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{product.tag}</span>
                     <span className="mt-2 block font-display text-lg font-semibold text-primary">{product.name}</span>
                   </Link>

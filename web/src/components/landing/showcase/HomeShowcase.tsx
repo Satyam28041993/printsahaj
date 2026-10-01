@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Bot, Calculator, Factory, Globe, Pause, Play, ShieldCheck, Users } from "lucide-react";
 import Pill from "../Pill";
 import MiniUi, { CALC_INITIAL, type CalcState } from "./MiniUis";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
-import { useInViewState, usePrefersReducedMotion, useRevealOnView, useSpotlight } from "@/lib/useHomeMotion";
+import { useInViewState, usePrefersReducedMotion, useSpotlight } from "@/lib/useHomeMotion";
+import { getMotion } from "@/lib/motion/loader";
 import { homeShowcase, type ShowcaseVisualId } from "@content/homeShowcase";
 
 const ICONS: Record<ShowcaseVisualId, React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = {
@@ -47,7 +48,6 @@ export default function HomeShowcase() {
   const reduced = usePrefersReducedMotion();
   const { ref: viewRef, inView } = useInViewState<HTMLDivElement>();
   const spotRef = useSpotlight<HTMLDivElement>();
-  const revealRef = useRevealOnView<HTMLElement>();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabsRowRef = useRef<HTMLDivElement>(null);
   const touchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -64,18 +64,76 @@ export default function HomeShowcase() {
     return () => clearTimeout(touchTimer.current);
   }, []);
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  const direction = useRef(1);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const animateIn = useRef(false);
+
   const select = useCallback(
     (index: number) => {
+      if (index === active) return;
+      direction.current = index > active ? 1 : -1;
       const apply = () => setActive(index);
       const doc = document as TransitionDocument;
-      if (!reduced && typeof doc.startViewTransition === "function") {
+      const motion = getMotion();
+      const pane = stageRef.current?.querySelector<HTMLElement>(".sc-pane");
+      if (!reduced && motion && pane) {
+        // Outgoing pane slides away first; the incoming one is animated in the effect below.
+        animateIn.current = true;
+        motion.gsap.to(pane, {
+          x: -40 * direction.current,
+          opacity: 0,
+          duration: 0.22,
+          ease: "power2.in",
+          overwrite: true,
+          onComplete: () => flushSync(apply),
+        });
+      } else if (!reduced && typeof doc.startViewTransition === "function") {
         doc.startViewTransition(() => flushSync(apply));
       } else {
         apply();
       }
     },
-    [reduced],
+    [reduced, active],
   );
+
+  // Incoming pane: slides in from the swipe side, then the mini-UI rows pop up in turn.
+  useLayoutEffect(() => {
+    const motion = getMotion();
+    const pane = stageRef.current?.querySelector<HTMLElement>(".sc-pane");
+    if (!motion || !pane || reduced || !animateIn.current) return;
+    animateIn.current = false;
+    const { gsap } = motion;
+    const rows = Array.from(pane.querySelectorAll<HTMLElement>(".mu-in"));
+    pane.style.animation = "none";
+    rows.forEach((row) => (row.style.animation = "none"));
+    gsap.fromTo(
+      pane,
+      { x: 60 * direction.current, scale: 0.96, opacity: 0 },
+      { x: 0, scale: 1, opacity: 1, duration: 0.48, ease: "expo.out", clearProps: "transform,opacity" },
+    );
+    if (rows.length) {
+      gsap.fromTo(
+        rows,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, stagger: 0.06, delay: 0.15, ease: "back.out(1.6)", clearProps: "transform,opacity,animation" },
+      );
+    }
+  }, [active, reduced]);
+
+  const onStageDown = (event: React.PointerEvent) => {
+    swipe.current = { x: event.clientX, y: event.clientY };
+  };
+  const onStageUp = (event: React.PointerEvent) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const last = tabs.length - 1;
+    select(dx < 0 ? (active === last ? 0 : active + 1) : active === 0 ? last : active - 1);
+  };
 
   // Keep the active tab in view inside the scrolling row, without moving the page.
   useEffect(() => {
@@ -114,7 +172,6 @@ export default function HomeShowcase() {
 
   return (
     <section
-      ref={revealRef}
       id="showcase"
       aria-labelledby="showcase-heading"
       className="h-wrap mt-4 sm:mt-6"
@@ -122,6 +179,7 @@ export default function HomeShowcase() {
       <div
         ref={spotRef}
         className="h-panel sc"
+        data-m="scrub-in"
         style={{ "--cycle": `${CYCLE_SECONDS}s` } as React.CSSProperties}
         data-play={running ? "running" : "paused"}
         data-auto={auto ? "on" : "off"}
@@ -134,7 +192,7 @@ export default function HomeShowcase() {
         onTouchStart={onTouchStart}
       >
         <div ref={viewRef}>
-          <header className="sc__head h-reveal">
+          <header className="sc__head">
             <p className="h-kicker">{homeShowcase.eyebrow}</p>
             <h2 id="showcase-heading" className="h-title h-title--lg max-w-[22ch]">
               {homeShowcase.heading}
@@ -142,7 +200,7 @@ export default function HomeShowcase() {
             <p className="h-lead max-w-[56ch]">{homeShowcase.supporting}</p>
           </header>
 
-          <div className="sc__bar h-reveal" style={{ "--i": 1 } as React.CSSProperties}>
+          <div className="sc__bar">
             <div
               ref={tabsRowRef}
               className="sc-tabs m-tabs"
@@ -193,8 +251,7 @@ export default function HomeShowcase() {
           </div>
 
           <div
-            className="sc-card h-reveal"
-            style={{ "--i": 2 } as React.CSSProperties}
+            className="sc-card"
             role="tabpanel"
             id="showcase-panel"
             aria-labelledby={`showcase-tab-${tab.id}`}
@@ -218,7 +275,13 @@ export default function HomeShowcase() {
                 <Pill href={tab.cta.href}>{tab.cta.label}</Pill>
               </div>
             </div>
-            <div className="sc-stage">
+            <div
+              ref={stageRef}
+              className="sc-stage"
+              onPointerDown={onStageDown}
+              onPointerUp={onStageUp}
+              onPointerCancel={() => (swipe.current = null)}
+            >
               <div className="sc-pane" key={tab.id} data-fallback={!hasTransitions && !reduced}>
                 <MiniUi id={tab.id} calc={calc} onCalcChange={setCalc} />
               </div>

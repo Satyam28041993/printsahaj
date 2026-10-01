@@ -87,6 +87,8 @@ function FooterWordmark({ name }: { name: string }) {
   return (
     <svg
       className="footer-wordmark"
+      data-m="letters"
+      data-m-drop="100"
       viewBox="0 0 1300 215"
       role="img"
       aria-label={name}
@@ -112,7 +114,11 @@ function FooterWordmark({ name }: { name: string }) {
         stroke="var(--accent-line)"
         strokeWidth="1.2"
       >
-        {name}
+        {Array.from(name).map((letter, i) => (
+          <tspan key={`${letter}-${i}`} data-m-letter="">
+            {letter}
+          </tspan>
+        ))}
       </text>
     </svg>
   );

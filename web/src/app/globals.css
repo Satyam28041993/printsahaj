@@ -84,6 +84,14 @@
   --pill-bg: #14161a;
   --pill-fg: #ffffff;
   --pill-bg-hover: #2a2e35;
+
+  /* Motion: "danger" for the flagged plate, and the dark panel the final CTA
+     flips to as it scrolls in (scrub, see motion.css). */
+  --danger: #c2294b;
+  --cta-flip-bg: #14161a;
+  --cta-flip-fg: #f5f6f7;
+  --cta-flip-muted: #b4bac3;
+  --scroll-bar-h: 3px;
 }
 
 .dark {
@@ -124,6 +132,11 @@
   --pill-bg: #f5f6f7;
   --pill-fg: #0a0b0d;
   --pill-bg-hover: #ffffff;
+
+  --danger: #ff6b86;
+  --cta-flip-bg: #0f2a2b;
+  --cta-flip-fg: #f5f6f7;
+  --cta-flip-muted: #a9c4c4;
 }
 
 /* Expose tokens to Tailwind as utilities: bg-base, text-muted, border-hairline, … */

@@ -28,21 +28,33 @@ function Chevron() {
  */
 export default function FaqSection({
   content,
+  gsap = false,
 }: {
   content?: HomeFaqContent;
+  /** Home only: use the GSAP motion hooks (MotionRoot) instead of the CSS reveal. */
+  gsap?: boolean;
 }) {
   const copy = content ?? home.faq;
 
   return (
     <section id="faq" className="relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8" aria-labelledby="faq-heading">
       <div className="mx-auto w-full max-w-4xl">
-        <h2 id="faq-heading" className="font-display text-display-lg font-bold text-primary">
+        <h2
+          id="faq-heading"
+          data-m={gsap ? "lines" : undefined}
+          className="font-display text-display-lg font-bold text-primary"
+        >
           {copy.heading}
         </h2>
 
-        <RevealRoot className="mt-10 divide-y divide-hairline border-y border-hairline">
+        <Items gsap={gsap}>
           {copy.items.map((item, i) => (
-            <details key={item.question} data-reveal className="group py-5" open={i === 0}>
+            <details
+              key={item.question}
+              {...(gsap ? { "data-m-child": "" } : { "data-reveal": "" })}
+              className="group py-5"
+              open={i === 0}
+            >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-display text-title font-semibold text-primary">
                 {item.question}
                 <Chevron />
@@ -50,10 +62,22 @@ export default function FaqSection({
               <p className="mt-3 max-w-2xl text-body-lg text-muted">{item.answer}</p>
             </details>
           ))}
-        </RevealRoot>
+        </Items>
       </div>
     </section>
   );
+}
+
+function Items({ gsap, children }: { gsap: boolean; children: React.ReactNode }) {
+  const cls = "mt-10 divide-y divide-hairline border-y border-hairline";
+  if (gsap) {
+    return (
+      <div data-m="reveal" className={cls}>
+        {children}
+      </div>
+    );
+  }
+  return <RevealRoot className={cls}>{children}</RevealRoot>;
 }
 
 export function PrintVerifyFaqSection() {
