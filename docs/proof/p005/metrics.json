@@ -21,8 +21,8 @@
       "max": 14
     },
     "duration_ms": {
-      "median": 600,
-      "max": 1133
+      "median": 583,
+      "max": 1100
     },
     "scrollTriggers": 0,
     "jsErrors": 0,
@@ -58,5 +58,8 @@
     "jsErrors": 0,
     "errors": [],
     "gifFps": 12
+  },
+  "slowNetwork": {
+    "inViewBelowHalfOpacity": 0
   }
 }

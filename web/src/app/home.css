@@ -1561,7 +1561,8 @@
 
   .hp-scard {
     position: sticky;
-    top: calc(84px + var(--i, 0) * 14px);
+    top: calc(var(--stack-top, 84px) + var(--i, 0) * 14px);
+    transition: top 0.32s cubic-bezier(0.22, 1, 0.36, 1);
     padding: 22px 20px 24px;
     overflow: hidden;
     border-radius: var(--h-radius-sm);
@@ -1627,5 +1628,13 @@
     color: var(--accent);
     font-size: 0.8125rem;
     font-weight: 500;
+  }
+}
+
+/* While the header is hidden (scrolling down) the sticky cards use that room
+   instead of leaving an empty band under it; they drop back when it returns. */
+@media (max-width: 767px) {
+  html:has(.ps-header[data-hide="true"]) .hp-stack {
+    --stack-top: 16px;
   }
 }

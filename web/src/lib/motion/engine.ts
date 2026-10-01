@@ -263,16 +263,17 @@ function scrubIn(c: Ctx, el: HTMLElement) {
     el,
     {
       scale: 0.86,
-      y: c.mobile ? 100 : 120,
+      y: c.mobile ? 80 : 120,
       clipPath: "inset(0 6% round 60px)",
       transformOrigin: "50% 0%",
       willChange: "transform, clip-path",
     },
     { scale: 1, y: 0, clipPath: `inset(0 0% round ${radiusOf(el)}px)` },
-    // Starts below the fold on a phone, so the top of the panel is already
-    // peeking in (and mostly resolved) in the first viewport.
-    c.mobile ? "top 160%" : "top 100%",
-    "top 45%",
+    // On a phone the panel's top already peeks into the first viewport, so the
+    // range starts there: at scroll 0 it sits near scale .90 / y 57 / inset 4%
+    // and is fully in place once its top reaches 40% of the screen.
+    c.mobile ? "top 87%" : "top 100%",
+    c.mobile ? "top 40%" : "top 45%",
   );
 }
 
@@ -329,6 +330,8 @@ function counter(c: Ctx, el: HTMLElement) {
   const { gsap } = c.libs;
   const node = el.firstChild;
   if (!node || node.nodeType !== Node.TEXT_NODE) return;
+  // The server-rendered final value stays in place until the element is on
+  // screen, so nothing (a reader, the bottom edge of the screen) ever sees "0".
   const finalText = node.nodeValue ?? "";
   const tokens = Array.from(finalText.matchAll(NUMBER)).map((m) => {
     const raw = m[0];
@@ -346,6 +349,7 @@ function counter(c: Ctx, el: HTMLElement) {
   if (!tokens.length) return;
 
   let lastWritten = finalText;
+  let spoken: HTMLElement | null = null;
   const write = (p: number) => {
     let out = "";
     let cursor = 0;
@@ -363,24 +367,45 @@ function counter(c: Ctx, el: HTMLElement) {
     lastWritten = out;
     node.nodeValue = out;
   };
+  /** While counting: the animated number is hidden from assistive tech and a visually-hidden copy of the final text stands in. */
+  const speak = (on: boolean) => {
+    if (on && !spoken) {
+      spoken = document.createElement("span");
+      spoken.className = "sr-only";
+      spoken.textContent = finalText;
+      el.setAttribute("aria-hidden", "true");
+      el.after(spoken);
+    } else if (!on && spoken) {
+      spoken.remove();
+      spoken = null;
+      el.removeAttribute("aria-hidden");
+    }
+  };
+  const finish = () => {
+    // React may have re-rendered a new value meanwhile: only restore our own text.
+    if (node.nodeValue === lastWritten) node.nodeValue = finalText;
+    speak(false);
+  };
 
   const state = { p: 0 };
-  write(0);
-  c.cleanups.push(() => {
-    if (node.nodeValue === lastWritten) node.nodeValue = finalText;
-  });
   const tween = gsap.to(state, {
     p: 1,
     paused: true,
     duration: DUR.xslow,
     ease: "power2.out",
+    onStart: () => speak(true),
     onUpdate: () => write(state.p),
-    onComplete() {
-      // React may have re-rendered a new value meanwhile: only restore our own text.
-      if (node.nodeValue === lastWritten) node.nodeValue = finalText;
-    },
+    onComplete: finish,
   });
-  onceInView(c, el, 85, () => tween.play());
+  onceInView(c, el, 85, () => {
+    speak(true);
+    write(0);
+    tween.play();
+  });
+  c.cleanups.push(() => {
+    tween.kill();
+    finish();
+  });
 }
 
 /* ------------------------------------------------------------- case study */
@@ -470,7 +495,8 @@ function stack(c: Ctx, el: HTMLElement) {
     const next = cards[i + 1];
     if (!next) return;
     const veil = card.querySelector<HTMLElement>("[data-m-veil]");
-    const trigger = { trigger: next, start: "top 85%", end: `top ${84 + (i + 1) * 14}px`, scrub: c.scrub };
+    // The header is hidden while scrolling down, which is when this scrubs: cards stick at 16px + 14px each.
+    const trigger = { trigger: next, start: "top 85%", end: `top ${16 + (i + 1) * 14}px`, scrub: c.scrub };
     gsap.to(card, { scale: 0.92, y: -12, ease: "none", transformOrigin: "50% 0%", scrollTrigger: trigger });
     if (veil) gsap.to(veil, { opacity: 0.16, ease: "none", scrollTrigger: trigger });
   });
@@ -719,7 +745,10 @@ function tilt(c: Ctx) {
  * Builds everything. `reduce` visitors never reach this: they get no motion
  * contexts at all, so content simply sits at its final state.
  */
-export function buildMotion(libs: MotionLibs): Cleanup {
+export function buildMotion(libs: MotionLibs, opts: { entrances?: boolean } = {}): Cleanup {
+  // When the page has already been shown (failsafe `motion-off`), entrance
+  // builders must not run: they would hide content again.
+  const entrances = opts.entrances !== false;
   const { gsap, ScrollTrigger } = libs;
   const mm = gsap.matchMedia();
 
@@ -759,16 +788,18 @@ export function buildMotion(libs: MotionLibs): Cleanup {
     each("clip", clip);
     if (c.mobile) each("stack", stack);
     each("parallax", parallax);
-    each("words", words);
+    if (entrances) each("words", words);
     each("flip", flip);
     each("letters", letters);
     // Reads first, then writes: heights are measured once, before any entrance styles change.
-    queue.push(() => byM("reveal", c).forEach((el) => c.heights.set(el, el.offsetHeight)));
-    each("reveal", reveal);
-    each("pop", pop);
-    each("plates", plateChips);
-    each("counter", counter);
-    each("lines", lines);
+    if (entrances) {
+      queue.push(() => byM("reveal", c).forEach((el) => c.heights.set(el, el.offsetHeight)));
+      each("reveal", reveal);
+      each("pop", pop);
+      each("plates", plateChips);
+      each("counter", counter);
+      each("lines", lines);
+    }
     each("marquee", marquee);
     queue.push(
       () => press(c),

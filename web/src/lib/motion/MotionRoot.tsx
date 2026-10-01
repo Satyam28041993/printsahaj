@@ -13,8 +13,10 @@ const GSAP_TIMEOUT_MS = 8000;
  * page declared. Renders nothing.
  *
  * Reduced motion gets no motion contexts at all: GSAP is not even downloaded.
- * If the library fails to arrive, `motion-off` drops every hidden pre-state so
- * the page stays complete.
+ * `motion-ready` is set only once the library has arrived, so the inline
+ * failsafe in layout.tsx (load + 1.5s) still applies on a slow network: it drops
+ * every hidden pre-state (`motion-off`) and the late library then skips the
+ * entrance builders. A failed import does the same (giveUp).
  */
 export default function MotionRoot() {
   const pathname = usePathname();
@@ -25,9 +27,6 @@ export default function MotionRoot() {
 
     let cancelled = false;
     let teardown: (() => void) | undefined;
-    // We own the hand-over from here: the inline failsafe stands down.
-    root.classList.add("motion-ready");
-
     const giveUp = () => {
       root.classList.add("motion-off");
       root.classList.remove("js-motion");
@@ -45,7 +44,11 @@ export default function MotionRoot() {
           if (cancelled) return;
           const { buildMotion } = await import("./engine");
           if (cancelled) return;
-          teardown = buildMotion(libs);
+          // Only now does the inline failsafe stand down. If it already fired
+          // (motion-off), the page is shown: skip the entrances that would hide it again.
+          const shown = root.classList.contains("motion-off");
+          if (!shown) root.classList.add("motion-ready");
+          teardown = buildMotion(libs, { entrances: !shown });
         })
         .catch(giveUp);
     });

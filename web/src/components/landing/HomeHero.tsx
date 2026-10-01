@@ -7,18 +7,15 @@ import { printSahajSite } from "@content/site";
 
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
-/** The words that get the gradient sweep. They are part of the headline copy. */
-const SWEEP = "working systems";
-
 /**
  * The headline, one span per word. The word stagger is pure CSS so the H1 is
  * painted at the first frame (it is the LCP element) and never waits for JS.
  */
-function HeadlineWords({ text }: { text: string }) {
+function HeadlineWords({ text, sweepWords }: { text: string; sweepWords: string }) {
   const words = text.split(" ");
-  const at = text.indexOf(SWEEP);
+  const at = sweepWords ? text.indexOf(sweepWords) : -1;
   const sweepFrom = at < 0 ? -1 : text.slice(0, at).split(" ").length - 1;
-  const sweepTo = at < 0 ? -1 : sweepFrom + SWEEP.split(" ").length - 1;
+  const sweepTo = at < 0 ? -1 : sweepFrom + sweepWords.split(" ").length - 1;
   return (
     <>
       {words.map((word, i) => {
@@ -57,7 +54,7 @@ export default function HomeHero() {
             {hero.eyebrow}
           </p>
           <h1 id="hero-heading" className="h-title h-title--xl h-hero-title mt-4 max-w-[19ch] sm:mt-7 sm:max-w-none">
-            <HeadlineWords text={hero.headline} />
+            <HeadlineWords text={hero.headline} sweepWords={hero.sweepWords} />
           </h1>
           <p className="h-lead h-rise h-rise--solid mt-3 max-w-[52ch] sm:mt-6" style={rise(2)}>
             {hero.supporting}

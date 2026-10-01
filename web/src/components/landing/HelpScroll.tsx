@@ -190,7 +190,7 @@ export default function HelpScroll() {
             tabIndex={0}
           >
             <div className="hp-info m-swap" key={`info-${service}`}>
-              <p className="hp-index m-num" data-m="counter">
+              <p className="hp-index m-num">
                 {`${pad(service + 1)} / ${pad(services.length)}`}
               </p>
               <h3 className="h-title mt-3 text-[clamp(1.6rem,1.1rem+1.6vw,2.5rem)]">{current.title}</h3>

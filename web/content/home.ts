@@ -193,6 +193,8 @@ export interface HomeContent {
   hero: {
     eyebrow: string;
     headline: string;
+    /** The words of `headline` that get the gradient sweep (motion only; must be a substring). */
+    sweepWords: string;
     supporting: string;
     specialization: string;
     /** One honest line under the buttons. Facts from the founder section only. */
@@ -297,6 +299,7 @@ export const home: HomeContent = {
   hero: {
     eyebrow: "Technology, AI & digital solutions for modern businesses.",
     headline: "We turn business problems into working systems.",
+    sweepWords: "working systems",
     supporting:
       "Software, AI, automation and digital growth — connected so the work actually moves.",
     specialization: "Deep expertise in printing & packaging.",

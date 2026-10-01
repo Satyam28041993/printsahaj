@@ -77,14 +77,16 @@ html.js-motion [data-motion-page] [data-m="lines"]:not(.m-split) {
 }
 
 html.js-motion [data-motion-page] [data-m="scrub-in"]:not(.m-done) {
-  transform: translateY(100px) scale(0.86);
+  /* Phone: the state the scrub is in at scroll 0 (see scrubIn in engine.ts). */
+  transform: translateY(57px) scale(0.9);
   transform-origin: 50% 0;
-  clip-path: inset(0 6% round 60px);
+  clip-path: inset(0 4% round 60px);
 }
 
 @media (min-width: 768px) {
   html.js-motion [data-motion-page] [data-m="scrub-in"]:not(.m-done) {
     transform: translateY(120px) scale(0.86);
+    clip-path: inset(0 6% round 60px);
   }
 }
 
@@ -92,9 +94,13 @@ html.js-motion [data-motion-page] [data-m="clip"]:not(.m-done) {
   clip-path: inset(12% 8% round 40px);
 }
 
-/* data-m-only="desktop|mobile": the pre-state only applies where the hook runs. */
+/* data-m-only="desktop|mobile": the hook only runs at one breakpoint, so the
+   hidden pre-state must not apply at the other. These selectors are more
+   specific than every pre-state above (and come last), including the
+   :has() / [data-m-child] ones. */
 @media (max-width: 767px) {
-  html.js-motion [data-motion-page] [data-m-only="desktop"]:not(.m-done) {
+  html.js-motion [data-motion-page] [data-m][data-m-only="desktop"]:not(.m-done):not(.m-never),
+  html.js-motion [data-motion-page] [data-m-only="desktop"] [data-m-child]:not(.m-done):not(.m-never) {
     opacity: 1;
     transform: none;
     clip-path: none;
@@ -102,9 +108,11 @@ html.js-motion [data-motion-page] [data-m="clip"]:not(.m-done) {
 }
 
 @media (min-width: 768px) {
-  html.js-motion [data-motion-page] [data-m-only="mobile"]:not(.m-done) {
+  html.js-motion [data-motion-page] [data-m][data-m-only="mobile"]:not(.m-done):not(.m-never),
+  html.js-motion [data-motion-page] [data-m-only="mobile"] [data-m-child]:not(.m-done):not(.m-never) {
     opacity: 1;
     transform: none;
+    clip-path: none;
   }
 }
 

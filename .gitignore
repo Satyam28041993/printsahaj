@@ -69,3 +69,8 @@ tools/artwork-verification/jobs/
 tools/artwork-verification/app/build/
 printsahaj-site.zip
 artwork-deploy-key.json
+
+# P-005 motion proof: heavy captures stay local (attach to the PR instead)
+docs/proof/**/*.gif
+docs/proof/**/*.mp4
+web/scripts/.proof-out/

@@ -4,7 +4,7 @@
  *
  *   npm i --no-save playwright-core        # in web/, or anywhere resolvable
  *   node scripts/motion-proof.mjs --before <dir-of-main-out> --after <dir-of-branch-out> \
- *        [--out ../docs/proof/p005] [--chrome /path/to/chrome]
+ *        [--out <dir, default web/scripts/.proof-out (git-ignored)>] [--chrome /path/to/chrome]
  *
  * For each build, at 390x844 (isMobile + hasTouch + Android UA) and 1440x900, it
  * records a video of one deterministic script (2s at top, scroll 120px every 90ms,
@@ -13,6 +13,12 @@
  * before/after frame strips (0/150/300/600/1000ms after entry), and logs measured
  * numbers: max translateY per entrance and its duration (rAF sampling), the
  * ScrollTrigger count (html[data-m-triggers]) and JS errors.
+ *
+ * It also ASSERTS (exit code 1 on failure, offenders printed):
+ *  - visibility: after a full scroll, no visible [data-m] / [data-m-child] element
+ *    has an effective opacity below 0.5 (390 and 1440);
+ *  - slow network: with the lazy motion chunks delayed 6s, 3s after load nothing
+ *    in view has an effective opacity below 0.5.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -29,7 +35,8 @@ const arg = (name, fallback) => {
 };
 const BEFORE = path.resolve(arg("before"));
 const AFTER = path.resolve(arg("after"));
-const OUT = path.resolve(arg("out", "../docs/proof/p005"));
+// Default output is git-ignored: GIF/MP4/PNG captures are attached to the PR, not committed.
+const OUT = path.resolve(arg("out", path.join(path.dirname(new URL(import.meta.url).pathname), ".proof-out")));
 const CHROME = arg("chrome", process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome");
 const UA =
   "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36";
@@ -88,6 +95,34 @@ const SAMPLER = () => {
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
+};
+
+
+/** Effective-opacity audit run inside the page. `inView` limits it to the viewport. */
+const AUDIT = (inView) => {
+  const eff = (el) => {
+    let o = 1;
+    for (let e = el; e && e !== document.documentElement; e = e.parentElement) o *= parseFloat(getComputedStyle(e).opacity);
+    return o;
+  };
+  const out = [];
+  document.querySelectorAll("[data-m], [data-m-child]").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || getComputedStyle(el).visibility === "hidden") return; // display:none / empty
+    if (inView && (r.bottom < 0 || r.top > innerHeight)) return;
+    const o = eff(el);
+    if (o < 0.5) out.push(`${el.tagName.toLowerCase()}[data-m=${el.dataset.m ?? "child"}] ${(el.className || "").toString().slice(0, 40)} opacity=${o.toFixed(2)}`);
+  });
+  return out;
+};
+
+const failures = [];
+const assert = (ok, label, detail) => {
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}`);
+  if (!ok) {
+    failures.push(label);
+    console.log("  offenders:\n   " + detail.join("\n   "));
+  }
 };
 
 async function newPage(browser, url, { w, h, mobile, video, jsOff, reduce }) {
@@ -227,6 +262,20 @@ for (const [label, dir] of [["before", BEFORE], ["after", AFTER]]) {
     const vdir = path.join(tmp, `v_${key}`);
     const { ctx, page, errors } = await newPage(browser, url, { ...vp, video: vdir });
     await runScript(page, vp);
+    if (label === "after") {
+      // runScript ends back at the top and on /contact after the tap: audit a fresh pass.
+      const a = await newPage(browser, url, vp);
+      await sleep(2500);
+      const max = await a.page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      for (let y = 0; y <= max; y += 120) {
+        await a.page.evaluate((v) => window.scrollTo(0, v), y);
+        await sleep(60);
+      }
+      await sleep(2500);
+      const bad = await a.page.evaluate(`(${AUDIT.toString()})(false)`);
+      assert(bad.length === 0, `visibility after full scroll @${vp.w}`, bad);
+      await a.ctx.close();
+    }
     results[key] = { ...(await measure(page)), jsErrors: errors.length, errors };
     const video = page.video();
     await ctx.close();
@@ -247,9 +296,28 @@ for (const [label, dir] of [["before", BEFORE], ["after", AFTER]]) {
   server.close();
 }
 
-// 3. Reduced-motion and no-JS screenshots of the branch build.
+// 3. Slow network, reduced motion and no-JS checks on the branch build.
 {
   const { server, url } = await serve(AFTER);
+  {
+    // Lazy motion chunks (everything not in the initial HTML) arrive 6s late.
+    const html = fs.readFileSync(path.join(AFTER, "index.html"), "utf8");
+    const initial = new Set([...html.matchAll(/\/_next\/static\/chunks\/[^"']+\.js/g)].map((m) => m[0]));
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: UA });
+    await ctx.route("**/_next/static/chunks/*.js", async (route) => {
+      const u = new URL(route.request().url()).pathname;
+      if (!initial.has(u)) await sleep(6000);
+      await route.continue();
+    });
+    const page = await ctx.newPage();
+    await page.goto(url, { waitUntil: "load" });
+    await page.evaluate(() => window.scrollTo(0, 3000));
+    await sleep(3000);
+    const bad = await page.evaluate(`(${AUDIT.toString()})(true)`);
+    results.slowNetwork = { inViewBelowHalfOpacity: bad.length };
+    assert(bad.length === 0, "slow network: nothing in view hidden 3s after load @390 (motion chunks +6s)", bad);
+    await ctx.close();
+  }
   const r = await newPage(browser, url, { w: 390, h: 844, mobile: true, reduce: true });
   await sleep(1500);
   await r.page.evaluate(() => window.scrollTo(0, 1200));
@@ -266,3 +334,7 @@ await browser.close();
 fs.rmSync(tmp, { recursive: true, force: true });
 fs.writeFileSync(path.join(OUT, "metrics.json"), JSON.stringify(results, null, 2));
 console.log("\n" + JSON.stringify(results, null, 2));
+if (failures.length) {
+  console.error(`\n${failures.length} assertion(s) failed: ${failures.join("; ")}`);
+  process.exit(1);
+}
