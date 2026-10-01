@@ -306,9 +306,9 @@ function HelpStack() {
           >
             <span className="hp-scard__veil" data-m-veil aria-hidden="true" />
             <p className="hp-index">{`${pad(i + 1)} / ${pad(services.length)}`}</p>
-            <h3 className="h-title mt-3 text-[clamp(1.5rem,1.1rem+1.6vw,2.2rem)]">{service.title}</h3>
-            <p className="h-lead mt-3 font-medium !text-primary">{service.promise}</p>
-            <p className="mt-3 text-muted">{service.body}</p>
+            <h3 className="h-title hp-scard__title">{service.title}</h3>
+            <p className="h-lead hp-scard__promise font-medium !text-primary">{service.promise}</p>
+            <p className="hp-scard__body text-muted">{service.body}</p>
             <ul className="hp-scard__points">
               {service.points.map((point) => (
                 <li key={point.title}>

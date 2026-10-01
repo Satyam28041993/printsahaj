@@ -206,7 +206,9 @@ html[data-hidden] *::after {
   z-index: 0;
   border-radius: 50%;
   pointer-events: none;
-  background: color-mix(in srgb, var(--pill-fg) 35%, transparent);
+  /* Solid colour: the engine fades the whole circle (opacity .6 → 0), so a
+     translucent fill here would multiply down to nothing. */
+  background: color-mix(in srgb, var(--pill-fg) 80%, transparent);
 }
 
 .m-ripple[data-tone="ghost"] {
@@ -223,7 +225,7 @@ html[data-hidden] *::after {
 
 .sc-tab .m-ripple,
 .hp-pill .m-ripple {
-  background: color-mix(in srgb, var(--brand-b) 40%, transparent);
+  background: var(--brand-b);
 }
 
 /* Idle shine: the primary CTAs sweep on their own every 4.5s while in view, on

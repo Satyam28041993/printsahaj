@@ -319,7 +319,11 @@ function heroOut(c: Ctx, el: HTMLElement) {
     scrollTrigger: { trigger: el, start: "top top", end: "bottom top", scrub: c.scrub },
   });
   tl.to(panel, { scale: 0.92, y: -60, "--h-radius": "44px", transformOrigin: "50% 100%" }, 0);
-  if (content) tl.to(content, { opacity: 0.35 }, 0);
+  if (content) {
+    // The text recedes, the buttons never do: "Start a Project" must not look disabled.
+    const fading = Array.from(content.children).filter((child) => !child.matches(".pill") && !child.querySelector(".pill"));
+    tl.to(fading, { opacity: 0.35 }, 0);
+  }
 }
 
 /* ---------------------------------------------------------------- counters */
@@ -442,13 +446,16 @@ function flip(c: Ctx, el: HTMLElement) {
     { opacity: 0 },
     {
       opacity: 1,
-      ease: "none",
+      // Front-loaded: the dark panel arrives quickly (about half opaque at 30% of
+      // the range), and the text flips right there, where both colours have the
+      // same contrast. That removes the long grey-on-grey middle.
+      ease: "power2.out",
       scrollTrigger: {
         trigger: el,
         start: "top 80%",
         end: "top 30%",
         scrub: c.scrub,
-        onUpdate: (self) => el.setAttribute("data-flip", String(self.progress >= 0.5)),
+        onUpdate: (self) => el.setAttribute("data-flip", String(self.progress >= 0.3)),
       },
     },
   );
@@ -668,7 +675,7 @@ function press(c: Ctx) {
       el.appendChild(ripple);
       gsap.fromTo(
         ripple,
-        { scale: 0, opacity: 0.32 },
+        { scale: 0.2, opacity: 0.6 },
         { scale: 2.4, opacity: 0, duration: 0.55, ease: "power2.out", onComplete: () => ripple.remove() },
       );
     });
