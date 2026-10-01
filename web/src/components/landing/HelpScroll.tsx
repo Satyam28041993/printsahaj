@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Pill from "./Pill";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
-import { useInViewState, usePrefersReducedMotion, useRevealOnView, useSpotlight } from "@/lib/useHomeMotion";
+import { useInViewState, usePrefersReducedMotion, useSpotlight } from "@/lib/useHomeMotion";
 import { help } from "@content/help";
 
 type Icon = React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
@@ -59,7 +59,6 @@ export default function HelpScroll() {
   const reduced = usePrefersReducedMotion();
   const { ref: viewRef, inView } = useInViewState<HTMLDivElement>();
   const spotRef = useSpotlight<HTMLDivElement>();
-  const revealRef = useRevealOnView<HTMLElement>();
   const pillRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const pillsRowRef = useRef<HTMLDivElement>(null);
   const touchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -117,10 +116,12 @@ export default function HelpScroll() {
   };
 
   return (
-    <section ref={revealRef} aria-labelledby="help-heading" className="h-wrap mt-4 sm:mt-6">
+    <section aria-labelledby="help-heading" className="h-wrap mt-4 sm:mt-6">
       <div
         ref={spotRef}
         className="h-panel hp"
+        data-m="scrub-in"
+        data-m-only="desktop"
         data-play={running ? "running" : "paused"}
         data-auto={auto ? "on" : "off"}
         data-inview={inView}
@@ -133,7 +134,7 @@ export default function HelpScroll() {
         onTouchStart={onTouchStart}
       >
         <div ref={viewRef}>
-          <header className="hp__head h-reveal">
+          <header className="hp__head" data-m="reveal" data-m-only="mobile">
             <div>
               <p className="h-kicker">{help.eyebrow}</p>
               <h2 id="help-heading" className="h-title h-title--lg mt-3">
@@ -155,8 +156,7 @@ export default function HelpScroll() {
 
           <div
             ref={pillsRowRef}
-            className="hp-pills m-tabs m-tabs--dark h-reveal"
-            style={{ "--i": 1 } as React.CSSProperties}
+            className="hp-pills m-tabs m-tabs--dark"
             role="tablist"
             aria-label={help.tablistLabel}
             onKeyDown={onPillKeyDown}
@@ -183,16 +183,15 @@ export default function HelpScroll() {
           </div>
 
           <div
-            className="hp-card h-reveal"
-            style={{ "--i": 2 } as React.CSSProperties}
+            className="hp-card"
             role="tabpanel"
             id="help-panel"
             aria-labelledby={`help-tab-${service}`}
             tabIndex={0}
           >
             <div className="hp-info m-swap" key={`info-${service}`}>
-              <p className="hp-index">
-                {pad(service + 1)} / {pad(services.length)}
+              <p className="hp-index m-num" data-m="counter">
+                {`${pad(service + 1)} / ${pad(services.length)}`}
               </p>
               <h3 className="h-title mt-3 text-[clamp(1.6rem,1.1rem+1.6vw,2.5rem)]">{current.title}</h3>
               <p className="h-lead mt-3 font-medium !text-primary">{current.promise}</p>
@@ -250,9 +249,11 @@ export default function HelpScroll() {
             </div>
           </div>
 
+          <HelpStack />
+
           <section
-            className="hp-consult h-ring h-reveal"
-            style={{ "--i": 3 } as React.CSSProperties}
+            className="hp-consult h-ring"
+            data-m="clip"
             data-inview={inView}
             aria-labelledby="help-consult"
           >
@@ -263,9 +264,11 @@ export default function HelpScroll() {
               </h3>
               <p className="h-lead mt-3 font-medium !text-primary">{consult.promise}</p>
               <p className="mt-3 max-w-[60ch] text-muted">{consult.body}</p>
-              <ul className="hp-consult__points">
+              <ul className="hp-consult__points" data-m="pop">
                 {consult.points.map((point) => (
-                  <li key={point}>{point}</li>
+                  <li key={point} data-m-child>
+                    {point}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -279,5 +282,56 @@ export default function HelpScroll() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Phone layout of "Where we can help": every service as its own card in a
+ * sticky stack. Each card sticks near the top; the next one slides over it and
+ * pushes it back (data-m="stack"). CSS shows this only below 768px; the tabbed
+ * card above is used from 768px up.
+ */
+function HelpStack() {
+  const { services } = help;
+  return (
+    <ol className="hp-stack" data-m="stack">
+      {services.map((service, i) => {
+        const Icons = FLOW_ICONS[i];
+        return (
+          <li
+            key={service.title}
+            className="hp-scard"
+            data-m-stack-card
+            style={{ "--i": i } as React.CSSProperties}
+          >
+            <span className="hp-scard__veil" data-m-veil aria-hidden="true" />
+            <p className="hp-index">{`${pad(i + 1)} / ${pad(services.length)}`}</p>
+            <h3 className="h-title mt-3 text-[clamp(1.5rem,1.1rem+1.6vw,2.2rem)]">{service.title}</h3>
+            <p className="h-lead mt-3 font-medium !text-primary">{service.promise}</p>
+            <p className="mt-3 text-muted">{service.body}</p>
+            <ul className="hp-scard__points">
+              {service.points.map((point) => (
+                <li key={point.title}>
+                  <b>{point.title}</b>
+                  <span>{point.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="sr-only">{`${help.flowLabel} ${service.flow.join(", ")}`}</p>
+            <div className="hp-scard__flow" aria-hidden="true">
+              {service.flow.map((label, step) => {
+                const Node = Icons[step];
+                return (
+                  <span key={label} className="hp-scard__node">
+                    <Node size={16} aria-hidden />
+                    {label}
+                  </span>
+                );
+              })}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

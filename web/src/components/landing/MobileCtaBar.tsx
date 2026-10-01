@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { PhoneGlyph } from "./Pill";
 import Pill from "./Pill";
 import { printSahajSite } from "@content/site";
@@ -52,13 +52,22 @@ export default function MobileCtaBar() {
 
   const show = pastHero && !typing && !onShowcase;
 
+  // One arrow nudge the first time the bar slides in, never again.
+  const nudged = useRef(false);
+  const [nudge, setNudge] = useState(false);
+  useEffect(() => {
+    if (!show || nudged.current) return;
+    nudged.current = true;
+    setNudge(true);
+  }, [show]);
+
   useEffect(() => {
     document.documentElement.classList.toggle("has-mbar", show);
     return () => document.documentElement.classList.remove("has-mbar");
   }, [show]);
 
   return (
-    <div className="mbar" data-show={show} inert={!show ? true : undefined}>
+    <div className="mbar" data-show={show} data-nudge={nudge} inert={!show ? true : undefined}>
       <Pill href={primary.href}>{primary.label}</Pill>
       <a href={callCta.href} className="mbar__call" aria-label={`${callCta.label}: ${callCta.number}`}>
         <PhoneGlyph size={20} />

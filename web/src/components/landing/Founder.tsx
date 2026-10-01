@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { useInViewState } from "@/lib/useHomeMotion";
-import { useReveal } from "@/lib/useReveal";
 import { home } from "@content/home";
 
 function LinkedInIcon() {
@@ -14,20 +13,17 @@ function LinkedInIcon() {
   );
 }
 
-const idx = (i: number) => ({ "--i": i }) as React.CSSProperties;
-
 /** Homepage founder panel: framed portrait with a slow gradient border, credentials, quote. */
 export default function Founder() {
   const copy = home.founder;
-  const revealRef = useReveal<HTMLDivElement>();
   const { ref: frameRef, inView } = useInViewState<HTMLElement>();
 
   return (
     <section aria-labelledby="founder-heading" className="h-wrap py-[clamp(24px,4vw,56px)]">
-      <div ref={revealRef} className="fd">
+      <div className="fd">
         <div className="fd__grid">
-          <div className="fd__stage" data-reveal style={idx(0)}>
-            <figure ref={frameRef} className="fd__frame" data-inview={inView}>
+          <div className="fd__stage">
+            <figure ref={frameRef} className="fd__frame" data-m="reveal" data-m-y="0" data-m-scale="0.9" data-m-rotate="-2" data-m-dur="0.8" data-m-no-blur data-inview={inView}>
               <div className="fd__photo">
                 {copy.photo ? (
                   // Static export ships images unoptimized; next/image is not used elsewhere on this site.
@@ -39,10 +35,13 @@ export default function Founder() {
                     height={copy.photoHeight}
                     loading="lazy"
                     decoding="async"
+                    data-m="parallax"
+                    data-m-speed="7"
+                    data-m-zoom="1.14"
                   />
                 ) : null}
               </div>
-              <figcaption className="fd__badge">
+              <figcaption className="fd__badge" data-m="pop" data-m-scale="0.5" data-m-ease="back.out(2)">
                 <i aria-hidden="true" />
                 {copy.badge}
               </figcaption>
@@ -50,42 +49,45 @@ export default function Founder() {
           </div>
 
           <div>
-            <p className="h-kicker" data-reveal style={idx(0)}>
-              {copy.eyebrow}
-            </p>
+            <div data-m="reveal">
+              <p className="h-kicker" data-m-child>
+                {copy.eyebrow}
+              </p>
+            </div>
             <h2
               id="founder-heading"
               className="h-title h-title--lg mt-4 max-w-[20ch]"
-              data-reveal
-              style={idx(1)}
+              data-m="lines"
             >
               {copy.heading}
             </h2>
-            <p className="fd__name" data-reveal style={idx(2)}>
-              {copy.name}
-            </p>
-            <p className="fd__role" data-reveal style={idx(2)}>
-              {copy.role}
-            </p>
-            <p className="h-lead mt-5 max-w-[62ch]" data-reveal style={idx(3)}>
-              {copy.description}
-            </p>
+            <div data-m="reveal">
+              <p className="fd__name" data-m-child>
+                {copy.name}
+              </p>
+              <p className="fd__role" data-m-child>
+                {copy.role}
+              </p>
+              <p className="h-lead mt-5 max-w-[62ch]" data-m-child>
+                {copy.description}
+              </p>
+            </div>
 
-            <ul className="fd__chips" aria-label={copy.chipsLabel}>
-              {copy.focus.map((item, i) => (
-                <li key={item} className="fd__chip" data-reveal style={idx(4 + i)}>
+            <ul className="fd__chips" aria-label={copy.chipsLabel} data-m="pop">
+              {copy.focus.map((item) => (
+                <li key={item} className="fd__chip" data-m-child>
                   {item}
                 </li>
               ))}
             </ul>
 
-            <dl className="fd__facts">
-              {copy.facts.map((fact, i) => (
+            <dl className="fd__facts" data-m="reveal">
+              {copy.facts.map((fact) => (
                 <div
                   key={fact.label}
                   className={`fd__fact m-lift${fact.past ? " fd__fact--past" : ""}`}
-                  data-reveal
-                  style={idx(i)}
+                  data-m-child
+                  data-m-card
                 >
                   <dt className="h-kicker !text-[10px]">{fact.label}</dt>
                   <dd className="mt-1.5">
@@ -96,11 +98,11 @@ export default function Founder() {
               ))}
             </dl>
 
-            <blockquote className="fd__quote" data-reveal style={idx(1)}>
+            <blockquote className="fd__quote" data-m="words">
               {copy.throughline}
             </blockquote>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3" data-reveal style={idx(2)}>
+            <div className="mt-8 flex flex-wrap items-center gap-3" data-m="reveal">
               <a href={copy.linkedin} target="_blank" rel="noopener noreferrer" className="founder-linkedin">
                 <LinkedInIcon />
                 {copy.linkedinLabel}

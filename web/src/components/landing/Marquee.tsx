@@ -4,7 +4,8 @@ import React from "react";
 import { useInViewState } from "@/lib/useHomeMotion";
 
 /**
- * Slow, edge-faded marquee. The list is drawn twice so the loop is seamless;
+ * Edge-faded marquee of chips. The CSS loop runs until GSAP arrives, then the
+ * engine takes over and ties its speed and direction to the scroll. The list is drawn twice so the loop is seamless;
  * the copy is hidden from assistive tech. It pauses while off-screen.
  */
 export default function Marquee({ items, label }: { items: string[]; label: string }) {
@@ -19,7 +20,7 @@ export default function Marquee({ items, label }: { items: string[]; label: stri
     </div>
   );
   return (
-    <div ref={ref} className="h-marquee" data-inview={inView} role="group" aria-label={label}>
+    <div ref={ref} className="h-marquee" data-m="marquee" data-inview={inView} role="group" aria-label={label}>
       <div className="h-marquee__track">
         {group}
         <div aria-hidden="true" className="contents">

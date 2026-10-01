@@ -1,30 +1,14 @@
-"use client";
+import React from "react";
 
-import React, { useEffect, useState } from "react";
-
+/**
+ * 3px brand-gradient bar. Its scaleX is driven by a scrubbed ScrollTrigger
+ * (data-m="progress", see lib/motion/engine.ts): no React state, no scroll
+ * listener. Without the motion layer it simply stays empty.
+ */
 export default function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
-    <div
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 bg-transparent"
-      aria-hidden="true"
-    >
-      <span
-        className="block h-full origin-left bg-accent"
-        style={{ transform: `scaleX(${progress})` }}
-      />
+    <div className="scroll-progress" aria-hidden="true">
+      <span data-m="progress" />
     </div>
   );
 }

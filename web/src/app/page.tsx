@@ -13,10 +13,12 @@ import Founder from "@/components/landing/Founder";
 import FaqSection from "@/components/landing/FaqSection";
 import HomeFinalCta from "@/components/landing/HomeFinalCta";
 import SiteFooter from "@/components/landing/SiteFooter";
+import MotionRoot from "@/lib/motion/MotionRoot";
 
 export default function HomePage() {
   return (
-    <>
+    <div data-motion-page>
+      <MotionRoot />
       <a href="#main" className="skip-link">
         Skip to content
       </a>
@@ -32,11 +34,11 @@ export default function HomePage() {
         <Pillars />
         <CaseStudy />
         <Founder />
-        <FaqSection />
+        <FaqSection gsap />
         <HomeFinalCta />
       </main>
       <SiteFooter />
       <MobileCtaBar />
-    </>
+    </div>
   );
 }

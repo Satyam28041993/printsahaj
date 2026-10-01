@@ -103,7 +103,7 @@
 }
 
 .h-title--xl {
-  font-size: clamp(2.3rem, 1rem + 4.6vw, 4.5rem);
+  font-size: clamp(2.1rem, 0.85rem + 4.9vw, 4.5rem);
 }
 
 .h-title--lg {
@@ -120,6 +120,7 @@
 /* ---- pill buttons ------------------------------------------------------- */
 
 .pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -133,11 +134,13 @@
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
+  /* No `transform` here: GSAP owns the press scale and the magnet. Lift on
+     hover uses the independent `translate` property instead. */
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease,
-    transform 0.15s ease;
+    translate 0.2s var(--h-ease);
 }
 
 .pill > svg {
@@ -146,11 +149,7 @@
 }
 
 .pill:hover > svg.pill__arrow {
-  transform: translateX(3px);
-}
-
-.pill:active {
-  transform: scale(0.98);
+  transform: translateX(5px);
 }
 
 .pill--dark {
@@ -161,7 +160,6 @@
 .pill--dark:hover {
   background: var(--pill-bg-hover);
   box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--pill-bg) 70%, transparent);
-  transform: translateY(-1px);
 }
 
 .pill--ghost {
@@ -201,8 +199,25 @@
 @media (max-width: 599px) {
   .h-chip {
     border-radius: 20px;
+    padding-block: 0.3rem;
     text-align: left;
-    line-height: 1.35;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+  }
+
+  /* The home hero is compact on a phone so the top of the showcase panel
+     already peeks into the first viewport. */
+  .home-hero .h-lead {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .home-hero .pill {
+    min-height: 46px;
+  }
+
+  .home-hero .h-marquee__item {
+    padding-block: 0.4rem;
   }
 }
 
@@ -218,20 +233,22 @@
 
 /* ---- entrance ----------------------------------------------------------- */
 
-/* Hero: pure CSS, runs on load, needs no JS. */
+/* Hero: pure CSS, runs on load, needs no JS. `backwards` (not `both`) so the
+   element returns to its natural style afterwards and GSAP can own it. */
 .h-rise {
-  animation: h-rise 0.75s var(--h-ease) both;
+  animation: h-rise 0.9s var(--h-ease) backwards;
   animation-delay: calc(var(--i, 0) * 90ms);
 }
 
-/* The H1 is the LCP element: it never starts transparent, it only slides up. */
-.h-rise--move {
-  animation-name: h-rise-move;
+/* Text that is a largest-contentful-paint candidate never starts transparent:
+   it only rises, so it is painted at the first frame. */
+.h-rise--solid {
+  animation-name: h-rise-solid;
 }
 
-@keyframes h-rise-move {
+@keyframes h-rise-solid {
   from {
-    transform: translateY(18px);
+    transform: translateY(40px) scale(0.97);
   }
   to {
     transform: none;
@@ -241,11 +258,70 @@
 @keyframes h-rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(40px) scale(0.97);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* The H1 is the LCP element: painted at the first frame, opacity is never
+   below 1. Words only drop in (24px, tilted 35deg), one 50ms apart. */
+.h-hero-title {
+  perspective: 700px;
+}
+
+.h-word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  animation: h-word 0.8s var(--h-ease) backwards;
+  animation-delay: calc(var(--w, 0) * 50ms + 120ms);
+}
+
+@keyframes h-word {
+  from {
+    transform: translateY(24px) rotateX(35deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Gradient sweep across "working systems". At rest the gradient is the plain
+   text colour, so nothing changes; a brand-colour band travels across it every
+   8s, only while the hero is in view (data-shine, set by the motion layer). */
+.h-sweep {
+  background-image: linear-gradient(
+    100deg,
+    var(--text-primary) 0 36%,
+    var(--brand-a) 43%,
+    var(--brand-b) 50%,
+    var(--brand-c) 57%,
+    var(--text-primary) 64% 100%
+  );
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.h-sweep[data-shine="on"] {
+  animation:
+    h-word 0.8s var(--h-ease) backwards,
+    h-sweep 8s ease-in-out infinite;
+  animation-delay: calc(var(--w, 0) * 50ms + 120ms), calc(1s + var(--s, 0) * 0.18s);
+}
+
+@keyframes h-sweep {
+  0% {
+    background-position: 100% 0;
+  }
+  20%,
+  100% {
+    background-position: 0% 0;
   }
 }
 
@@ -263,6 +339,7 @@
 
 .h-marquee {
   overflow: hidden;
+  padding-block: 2px;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
@@ -270,7 +347,7 @@
 .h-marquee__track {
   display: flex;
   width: max-content;
-  animation: h-marquee 60s linear infinite;
+  animation: h-marquee 32s linear infinite;
 }
 
 .h-marquee[data-inview="false"] .h-marquee__track {
@@ -281,27 +358,23 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 2.5rem;
-  padding-right: 2.5rem;
+  gap: 0.6rem;
+  padding-right: 0.6rem;
 }
 
+/* Full-contrast chips: readable while they move. */
 .h-marquee__item {
   display: inline-flex;
   align-items: center;
-  gap: 2.5rem;
-  font-size: 0.9375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-faint);
+  line-height: 1.2;
+  color: var(--text-primary);
   white-space: nowrap;
-}
-
-.h-marquee__item::after {
-  content: "";
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--brand-b);
-  opacity: 0.6;
 }
 
 @keyframes h-marquee {
@@ -592,6 +665,8 @@
 
 .sc-stage {
   position: relative;
+  /* Horizontal swipes switch tab; vertical pans stay native. */
+  touch-action: pan-y;
   display: grid;
   place-items: center;
   min-width: 0;
@@ -924,6 +999,9 @@
   --step: 4.5s;
   --play: running;
   padding: clamp(20px, 3.5vw, 56px);
+  /* clip, not hidden: hidden would make the panel the scroll container and
+     stop the phone card stack from sticking to the viewport. */
+  overflow: clip;
 }
 
 .hp[data-play="paused"] {
@@ -1353,8 +1431,23 @@
   transform: translateY(calc(100% + 32px));
   visibility: hidden;
   transition:
-    transform 0.35s var(--h-ease),
-    visibility 0s linear 0.35s;
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.6s;
+}
+
+/* One arrow nudge the first time the bar slides in (data-nudge is set once). */
+.mbar[data-nudge="true"] .pill__arrow {
+  animation: mbar-nudge 0.5s ease-in-out 0.65s 1;
+}
+
+@keyframes mbar-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(6px);
+  }
 }
 
 .mbar[data-show="true"] {
@@ -1437,4 +1530,102 @@
   margin-top: -0.55rem;
   font-size: 0.8125rem;
   color: var(--text-faint);
+}
+
+
+/* ---------------------------------------------------------------------------
+   Where we can help: phone card stack (data-m="stack"). Below 768px the tabbed
+   card gives way to one sticky card per service; each card sticks a little
+   lower than the one before, and ScrollTrigger scales the one underneath back
+   as the next slides over it. From 768px up the tabbed layout is unchanged.
+   --------------------------------------------------------------------------- */
+
+.hp-stack {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .hp-pills,
+  .hp-card,
+  .hp .sc-toggle {
+    display: none;
+  }
+
+  .hp-stack {
+    display: grid;
+    gap: 20px;
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hp-scard {
+    position: sticky;
+    top: calc(84px + var(--i, 0) * 14px);
+    padding: 22px 20px 24px;
+    overflow: hidden;
+    border-radius: var(--h-radius-sm);
+    border: 1px solid var(--border-hover);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-lift);
+    transform-origin: 50% 0;
+  }
+
+  /* Dims the card as the next one covers it (cheaper than a brightness filter). */
+  .hp-scard__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: inherit;
+    background: var(--bg-sunken);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hp-scard__points {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hp-scard__points li {
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--accent-line);
+  }
+
+  .hp-scard__points b {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .hp-scard__points span {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .hp-scard__flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1.1rem;
+  }
+
+  .hp-scard__node {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--accent-weak);
+    color: var(--accent);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
 }
