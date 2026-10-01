@@ -39,30 +39,43 @@ export function loadMotion(): Promise<MotionLibs> {
 }
 
 /**
- * Calls `run` once the page has painted and gone idle, or sooner on the first
- * scroll / pointerdown / key press. Returns a cancel function.
+ * Calls `run` once, at the first of:
+ *  - the first scroll / pointerdown / key press / touchstart (the visitor is about
+ *    to see below-the-fold content, so the library is wanted now);
+ *  - `delay` ms after the window `load` event (a visitor who just reads the hero
+ *    pays nothing for motion that is not on screen yet);
+ *  - the next idle moment, if `now` (content that is hidden until the library
+ *    arrives is already in view).
+ * Returns a cancel function.
  */
-export function whenIdle(run: () => void, timeout = 1200): () => void {
+export function whenWanted(run: () => void, { delay, now }: { delay: number; now: boolean }): () => void {
   let done = false;
-  let idleId: number | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let idleId: number | undefined;
   const events = ["scroll", "pointerdown", "keydown", "touchstart"] as const;
 
-  const fire = () => {
+  const cleanup = () => {
+    events.forEach((name) => window.removeEventListener(name, fire));
+    window.removeEventListener("load", onLoad);
+    if (timer) clearTimeout(timer);
+    if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+  };
+  function fire() {
     if (done) return;
     done = true;
     cleanup();
     run();
-  };
-  const cleanup = () => {
-    events.forEach((name) => window.removeEventListener(name, fire));
-    if (idleId !== undefined && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
-    if (timer) clearTimeout(timer);
-  };
+  }
+  function onLoad() {
+    timer = setTimeout(fire, delay);
+  }
 
   events.forEach((name) => window.addEventListener(name, fire, { passive: true, once: true }));
-  if ("requestIdleCallback" in window) idleId = window.requestIdleCallback(fire, { timeout });
-  else timer = setTimeout(fire, timeout);
+  if (now) {
+    if ("requestIdleCallback" in window) idleId = window.requestIdleCallback(fire, { timeout: 1200 });
+    else timer = setTimeout(fire, 1200);
+  } else if (document.readyState === "complete") onLoad();
+  else window.addEventListener("load", onLoad, { once: true });
 
   return () => {
     done = true;
