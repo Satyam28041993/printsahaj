@@ -15,33 +15,49 @@ DirectorySlash On
 
 ErrorDocument 404 /404.html
 
-# Build assets carry a content hash in the filename, so they never change.
-<IfModule mod_expires.c>
-  ExpiresActive On
-  <FilesMatch "\.(js|css|woff2|png|jpg|jpeg|svg|ico)$">
-    ExpiresDefault "access plus 1 year"
-  </FilesMatch>
+# --- Compression ---------------------------------------------------------
+# Harmless on LiteSpeed, which normally compresses at server level; mod_brotli /
+# mod_deflate are honoured where present. Uncompressed, the home page is ~1 MB
+# instead of ~420 KB and mobile Lighthouse drops by ~20 points.
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+</IfModule>
+<IfModule mod_headers.c>
+  Header append Vary Accept-Encoding
 </IfModule>
 
-# HTML must not be cached, or a deploy takes hours to show up.
+# --- Caching -------------------------------------------------------------
+# Only /_next/static/ is content-hashed: cache it forever.
 <IfModule mod_headers.c>
-  <FilesMatch "\.html$">
+  SetEnvIf Request_URI "^/_next/static/" PS_IMMUTABLE
+  Header set Cache-Control "public, max-age=31536000, immutable" env=PS_IMMUTABLE
+  # Documents and data must revalidate so a deploy shows up at once.
+  <FilesMatch "\.(html|json|txt|vcf|xml|webmanifest)$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
-  <FilesMatch "\.(js|css|woff2)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </FilesMatch>
+</IfModule>
+# Un-hashed images, icons and fonts outside /_next/static: 7 days.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 7 days"
+  ExpiresByType image/png "access plus 7 days"
+  ExpiresByType image/webp "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 7 days"
+  ExpiresByType image/x-icon "access plus 7 days"
+  ExpiresByType image/vnd.microsoft.icon "access plus 7 days"
 </IfModule>
 
-# The deploy state file belongs to the deploy tool, not to visitors: it lists
-# every file on the site. Matches every state-name version (v2, v3, ...).
-# Both syntaxes so it works on Apache 2.4 and on older/LiteSpeed setups.
+# --- Never serve deploy-tool state files ---------------------------------
+# The deploy no longer writes them (and retires old ones), but the rule stays as
+# a guard. No Order/Deny fallback: that Apache 2.2 syntax answered HTTP 500 on
+# LiteSpeed.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule "^\.ftp-deploy-sync-state" - [F,L]
+</IfModule>
 <FilesMatch "^\.ftp-deploy-sync-state.*\.json$">
-  <IfModule mod_authz_core.c>
-    Require all denied
-  </IfModule>
-  <IfModule !mod_authz_core.c>
-    Order allow,deny
-    Deny from all
-  </IfModule>
+  Require all denied
 </FilesMatch>

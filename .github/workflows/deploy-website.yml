@@ -7,9 +7,52 @@ on:
       - "web/**"
       - ".github/workflows/deploy-website.yml"
   workflow_dispatch:
+    inputs:
+      diagnose:
+        description: "Read-only: print the FTP login directory and compare relative vs absolute listings, then stop"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Build, then print what the full-site mirror WOULD upload/delete. Uploads and deletes nothing"
+        type: boolean
+        default: false
+
+# Why lftp and not FTP-Deploy-Action (what went wrong in run #31):
+# every Next build has a new buildId, so every deploy must delete the previous
+# _next/static/<oldBuildId>/ folder. FTP-Deploy-Action tolerates a missing FILE
+# on delete but not a missing FOLDER, and removes folders by ABSOLUTE path
+# ("/_next/static/<id>") while every upload uses a path relative to the login
+# directory. When the FTP account's root is not the web root, that absolute path
+# does not exist: "550 No such file or directory", after everything was uploaded.
+# It is deterministic, so the old retry step could never help, and the sync state
+# is only written after a full success, so every later deploy diffed against the
+# same stale state and failed the same way.
+# lftp mirror computes its deletes from a live listing of the server (no state
+# file) and works relative to the login directory, so a folder that is already
+# gone is simply not in the plan, and a re-run converges.
 
 jobs:
+  # Read-only. Run from the Actions tab: "Run workflow" -> diagnose = true.
+  diagnose:
+    if: ${{ inputs.diagnose }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      - name: Show the FTP login directory and listings
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set +e
+          echo "--- login directory, relative listing of _next/static/, absolute listing of /_next/static/ ---"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "set ftp:ssl-allow true; set ssl:verify-certificate no; pwd; echo --- relative _next/static/; cls -1 _next/static/ | head -20; echo --- absolute /_next/static/; cls -1 /_next/static/ | head -5; bye"
+          echo "If the relative listing shows folders and the absolute one is empty or errors, the FTP root is not the web root: that is the 550."
+
   deploy:
+    if: ${{ !inputs.diagnose }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,14 +83,8 @@ jobs:
           test -f out/tools/index.html || { echo "route folders have no index.html — is trailingSlash still set?"; exit 1; }
 
       # Next.js creates an EMPTY out/_next/<buildId>/ folder on every build (the
-      # real per-build files live in out/_next/static/<buildId>/). FTP-Deploy-
-      # Action records that folder in its sync state but never creates it on
-      # the server (git-style tools and FTP skip empty dirs), so the next
-      # deploy, whose buildId differs, tries to delete a folder that does not
-      # exist and dies with "550 No such file or directory" after all files
-      # are uploaded. Removing empty directories here means they are never
-      # tracked, so there is nothing to delete later. This holds for every
-      # deploy, not just the next one.
+      # real per-build files live in out/_next/static/<buildId>/). FTP never
+      # creates empty dirs, so mirroring them only adds noise. Remove them here.
       - name: Remove empty directories from the export
         working-directory: web
         run: |
@@ -60,68 +97,94 @@ jobs:
           done
           test -z "$(find out -type d -empty -print -quit)" || { echo "empty dirs remain"; exit 1; }
 
-      # This Hostinger FTP user is already jailed to public_html ("Folder to
-      # upload files" in hPanel). Uploading to /public_html/ again nests a
-      # second folder and the live site stays empty (403). "./" is the
-      # website root. FTP_SERVER_DIR can still override if an account differs.
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+
+      # The Hostinger FTP user is jailed to public_html, so "." is the website
+      # root (uploading to /public_html/ again would nest a second folder).
+      # FTP_SERVER_DIR can still override if an account differs.
       #
-      # state-name v3: the v2 state on the server still lists a stale empty
-      # _next/<buildId> folder. A new name makes the first deploy upload
-      # everything and delete nothing; old orphaned chunks stay behind
-      # harmlessly. Later deploys diff against the v3 file as usual.
-      # continue-on-error only lets the retry step below run; the job still
-      # fails if the retry fails too.
-      - name: Deploy to Hostinger via FTP
-        id: ftp
+      # Two passes so new hashed assets are on the server before any HTML points
+      # at them: (1) _next/ without delete, (2) the whole site WITH delete. The
+      # delete list comes from the live remote listing. Up to two attempts: a
+      # mirror re-run is idempotent, so the second only does what is left.
+      # dry_run: pass 2 only, with --dry-run; prints the plan, changes nothing.
+      # continue-on-error: the job is judged by the verification step below.
+      - name: Deploy to Hostinger via lftp mirror
+        id: deploy
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: web/out/
-          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v3.json
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-
-      # One retry for transient FTP trouble. The sync state is only written
-      # after a full success, so a re-run re-diffs from the last good state.
-      # If this fails too, the step (and the job) is red.
-      - name: Deploy to Hostinger via FTP (retry)
-        if: steps.ftp.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: web/out/
-          server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v3.json
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-
-      # A successful FTP sync can still land in the wrong Hostinger folder.
-      # Fail the job if the live homepage is not a real page.
-      # Runs even when FTP failed (to show what is actually live), but not
-      # when the run was cancelled. A failed FTP step still turns the job red.
-      - name: Check the live homepage
-        if: ${{ !cancelled() }}
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_SERVER_DIR || '.' }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          set -euo pipefail
-          code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 https://printsahaj.com/)
+          set -uo pipefail
+          EXCLUDES="--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftp-deploy-sync-state* --exclude-glob .user.ini --exclude-glob .htpasswd --exclude-glob default.php"
+          SETTINGS="set ftp:ssl-allow true; set ssl:verify-certificate no; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5; set cmd:fail-exit yes"
+          SITE="mirror --reverse --delete --no-perms --parallel=4 --verbose $EXCLUDES web/out/ $FTP_DIR/"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "DRY RUN: planned changes for the whole site (nothing is uploaded or deleted)."
+            echo "Review every 'rm' / 'rmdir' line: only old site files may appear."
+            lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "$SETTINGS; ${SITE/mirror /mirror --dry-run }; bye"
+            exit $?
+          fi
+
+          ok=0
+          for i in 1 2; do
+            echo "== attempt $i =="
+            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "$SETTINGS; mirror --reverse --no-perms --parallel=4 --verbose web/out/_next/ $FTP_DIR/_next/; $SITE; bye"; then
+              ok=1
+              break
+            fi
+            echo "attempt $i failed"
+            sleep 20
+          done
+          [ "$ok" = "1" ] || exit 1
+
+          # Retire the old FTP-Deploy-Action state files (they list the whole site). rm -f must never fail the step.
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "set ftp:ssl-allow true; set ssl:verify-certificate no; set cmd:fail-exit no; rm -f $FTP_DIR/.ftp-deploy-sync-state.json $FTP_DIR/.ftp-deploy-sync-state-v2.json $FTP_DIR/.ftp-deploy-sync-state-v3.json; bye" || true
+
+      # The only thing that decides whether the job is green. Not for dry runs.
+      - name: Verify the live site
+        id: verify
+        if: ${{ !cancelled() && !inputs.dry_run }}
+        run: |
+          set -uo pipefail
+          fail=0
+
+          code=$(curl -sS -o /tmp/home.html -w "%{http_code}" --max-time 30 https://printsahaj.com/ || echo 000)
           echo "Homepage HTTP $code"
           if [ "$code" != "200" ]; then
             echo "printsahaj.com returned HTTP $code. FTP_SERVER_DIR is likely not the domain document root in hPanel."
-            exit 1
-          fi
-          grep -qi "printsahaj" /tmp/home.html || {
+            fail=1
+          elif ! grep -qi "printsahaj" /tmp/home.html; then
             echo "Homepage did not contain PrintSahaj"
-            exit 1
-          }
+            fail=1
+          fi
+
+          # Proves this build's assets are live: one CSS and one JS chunk named in the local index.html.
+          css=$(grep -oE '/_next/static/chunks/[^"]+\.css' web/out/index.html | head -1)
+          js=$(grep -oE '/_next/static/chunks/[^"]+\.js' web/out/index.html | head -1)
+          for path in "$css" "$js"; do
+            [ -n "$path" ] || { echo "no asset path found in web/out/index.html"; fail=1; continue; }
+            c=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 "https://printsahaj.com$path" || echo 000)
+            echo "$path -> HTTP $c"
+            [ "$c" = "200" ] || fail=1
+          done
+
+          # The deploy state file must not be readable (403 or 404 are fine).
+          s=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://printsahaj.com/.ftp-deploy-sync-state-v3.json || echo 000)
+          echo "state file -> HTTP $s"
+          if [ "$s" = "200" ]; then
+            echo "The deploy state file is publicly readable."
+            fail=1
+          fi
+
+          exit $fail
+
+      - name: Note an FTP error that the live site survived
+        if: ${{ !cancelled() && !inputs.dry_run && steps.deploy.outcome == 'failure' && steps.verify.outcome == 'success' }}
+        run: echo "::warning::FTP sync reported an error but the live site verifies"

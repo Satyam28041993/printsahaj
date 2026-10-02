@@ -270,7 +270,7 @@ html[data-hidden] *::after {
   background: linear-gradient(
     105deg,
     transparent 15%,
-    color-mix(in srgb, var(--pill-fg) 34%, transparent) 50%,
+    color-mix(in srgb, var(--pill-shine) var(--pill-shine-strength), transparent) 50%,
     transparent 85%
   );
   transform: translateX(-130%) skewX(-12deg);
@@ -486,6 +486,7 @@ html:not(.m-press) .m-press:active {
   position: relative;
   isolation: isolate;
   /* clip, not hidden: hidden would make .fd a scroll container and break the sticky photo. */
+  overflow: hidden; /* Safari < 16 fallback (no `clip`) */
   overflow: clip;
   border-radius: var(--h-radius);
   border: 1px solid var(--border);

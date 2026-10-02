@@ -92,6 +92,10 @@
   --cta-flip-fg: #f5f6f7;
   --cta-flip-muted: #b4bac3;
   --scroll-bar-h: 3px;
+
+  /* Button shine band. White on the dark light-mode pill. */
+  --pill-shine: #ffffff;
+  --pill-shine-strength: 34%;
 }
 
 .dark {
@@ -137,6 +141,11 @@
   --cta-flip-bg: #0f2a2b;
   --cta-flip-fg: #f5f6f7;
   --cta-flip-muted: #a9c4c4;
+
+  /* Button shine band. The dark-mode pill is near-white, so a white band would
+     vanish: use a stronger brand-cyan tint (the pill text stays AA on it). */
+  --pill-shine: var(--brand-b);
+  --pill-shine-strength: 50%;
 }
 
 /* Expose tokens to Tailwind as utilities: bg-base, text-muted, border-hairline, … */
