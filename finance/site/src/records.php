@@ -59,9 +59,10 @@ final class Income
     /** Salary is fixed; incentives and side income are never treated as guaranteed. */
     private const FORCED = ['salary' => 'fixed', 'incentive' => 'variable', 'commission' => 'variable', 'crm' => 'variable', 'freelance' => 'variable'];
 
-    public static function list(array $user, string $month): array
+    /** One month, or an explicit from/to range (inclusive) when $range is given. */
+    public static function list(array $user, string $month, ?array $range = null): array
     {
-        [$from, $to] = monthRange($month);
+        [$from, $to] = $range ?? monthRange($month);
         [$where, $params] = Scope::visible($user, 'i');
         return Db::all(
             "SELECT i.*, u.name AS member_name FROM income i JOIN users u ON u.id = i.user_id
@@ -118,9 +119,9 @@ final class Expenses
         'travel', 'shopping', 'entertainment', 'household', 'rent', 'insurance', 'other',
     ];
 
-    public static function list(array $user, string $month, string $search = '', string $category = ''): array
+    public static function list(array $user, string $month, string $search = '', string $category = '', ?array $range = null): array
     {
-        [$from, $to] = monthRange($month);
+        [$from, $to] = $range ?? monthRange($month);
         [$where, $params] = Scope::visible($user, 'e');
         $sql = "SELECT e.*, u.name AS member_name FROM expenses e JOIN users u ON u.id = e.user_id
                 WHERE $where AND e.spent_on BETWEEN ? AND ?";

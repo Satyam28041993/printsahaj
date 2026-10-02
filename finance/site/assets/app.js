@@ -71,6 +71,80 @@
     const d = new Date(ym + '-01T00:00:00');
     return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
   }
+  function isoShift(iso, days) {
+    const d = new Date(iso + 'T12:00:00');
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  /** Query string for the list being shown: the chosen date range, else the selected month. */
+  function periodQuery() {
+    const r = state.range;
+    return r ? `from=${r.from}&to=${r.to}` : `month=${state.month}`;
+  }
+  /** "2 Oct 2026" for one day, "1 Oct – 5 Oct 2026" for a range, the month name otherwise. */
+  function periodLabel() {
+    const r = state.range;
+    if (!r) return monthLabel(state.month);
+    if (r.from === r.to) return fullDate(r.from);
+    return `${fullDate(r.from)} – ${fullDate(r.to)}`;
+  }
+  /**
+   * Date filter shared by Spending and Income: quick choices (whole month, today,
+   * yesterday, last 7 / 30 days) and a From/To pair. The same day in both boxes
+   * shows a single day. `onChange` reloads the list.
+   */
+  function rangeBar(onChange) {
+    const card = h('div', { class: 'card range-bar' });
+    const from = input('from', state.range ? state.range.from : '', { type: 'date', 'aria-label': 'From date' });
+    const to = input('to', state.range ? state.range.to : '', { type: 'date', 'aria-label': 'To date' });
+    const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Quick date choices' });
+    const today = todayIso();
+    const quick = [
+      ['month', 'Whole month', null],
+      ['today', 'Today', { from: today, to: today }],
+      ['yesterday', 'Yesterday', { from: isoShift(today, -1), to: isoShift(today, -1) }],
+      ['7', 'Last 7 days', { from: isoShift(today, -6), to: today }],
+      ['30', 'Last 30 days', { from: isoShift(today, -29), to: today }],
+    ];
+    const sync = () => {
+      const r = state.range;
+      from.value = r ? r.from : '';
+      to.value = r ? r.to : '';
+      for (const b of chips.children) {
+        const q = quick.find((x) => x[0] === b.dataset.value);
+        const on = q[2] ? !!r && r.from === q[2].from && r.to === q[2].to : !r;
+        b.setAttribute('aria-pressed', String(on));
+      }
+    };
+    for (const [key, label, range] of quick) {
+      chips.append(h('button', { type: 'button', dataset: { value: key }, onclick: () => { state.range = range; sync(); onChange(); } }, label));
+    }
+    const custom = () => {
+      if (!from.value && !to.value) { state.range = null; sync(); onChange(); return; }
+      // One box filled: treat it as a single day until the other is chosen.
+      const a = from.value || to.value;
+      const b = to.value || from.value;
+      state.range = a <= b ? { from: a, to: b } : { from: b, to: a };
+      sync();
+      onChange();
+    };
+    from.addEventListener('change', custom);
+    to.addEventListener('change', custom);
+    card.append(chips, h('div', { class: 'grid-2' }, field('From', from), field('To', to)));
+    card.append(h('p', { class: 'faint', text: 'Pick the same date in both boxes to see a single day. “Whole month” uses the month at the top.' }));
+    sync();
+    return card;
+  }
+  /** Rows grouped by day (newest first, as the server sends them): [[iso, rows, totalPaise], …]. */
+  function groupByDay(rows, key) {
+    const out = [];
+    for (const r of rows) {
+      const last = out[out.length - 1];
+      if (last && last[0] === r[key]) { last[1].push(r); last[2] += r.amount_paise; }
+      else out.push([r[key], [r], r.amount_paise]);
+    }
+    return out;
+  }
   function toast(msg) {
     const t = $('#toast');
     t.textContent = msg;
@@ -302,6 +376,7 @@
   $('#month').addEventListener('change', (e) => {
     if (/^\d{4}-\d{2}$/.test(e.target.value)) {
       state.month = e.target.value;
+      state.range = null; // picking a month goes back to "whole month"
       render();
     }
   });
@@ -662,12 +737,12 @@
     const q = input('q', state.expQuery || '', { type: 'search', placeholder: 'Search notes', 'aria-label': 'Search notes' });
     const listBox = h('div');
     filters.append(h('div', { class: 'grid-2' }, cat, q));
-    root.append(h('button', { class: 'btn primary', type: 'button', onclick: () => openExpenseForm(), text: '+ Add spending' }), filters, listBox);
+    root.append(h('button', { class: 'btn primary', type: 'button', onclick: () => openExpenseForm(), text: '+ Add spending' }), rangeBar(() => load()), filters, listBox);
 
     const load = async () => {
       state.expCategory = cat.value;
       state.expQuery = q.value.trim();
-      const params = `expenses&month=${state.month}&category=${encodeURIComponent(cat.value)}&q=${encodeURIComponent(state.expQuery)}`;
+      const params = `expenses&${periodQuery()}&category=${encodeURIComponent(cat.value)}&q=${encodeURIComponent(state.expQuery)}`;
       const rows = await get(params);
       listBox.replaceChildren(expenseList(rows));
     };
@@ -766,20 +841,17 @@
   function expenseList(rows) {
     const card = h('section', { class: 'card' });
     const total = rows.reduce((n, r) => n + r.amount_paise, 0);
-    card.append(h('div', { class: 'card-head' }, h('h2', { text: monthLabel(state.month) }), h('span', { class: 'money', text: fmt(total) })));
+    card.append(h('div', { class: 'card-head' }, h('h2', { text: periodLabel() }), h('span', { class: 'money', text: fmt(total) })));
     if (!rows.length) {
-      card.append(h('p', { class: 'empty', text: 'Nothing here yet.' }));
+      card.append(h('p', { class: 'empty', text: state.range ? 'No spending on these dates.' : 'Nothing here yet.' }));
       return card;
     }
-    let day = '';
-    let list = null;
-    for (const r of rows) {
-      if (r.spent_on !== day) {
-        day = r.spent_on;
-        card.append(h('div', { class: 'day-head', text: dayLabel(day) }));
-        list = h('ul', { class: 'list' });
-        card.append(list);
-      }
+    for (const [day, dayRows, dayTotal] of groupByDay(rows, 'spent_on')) {
+      // The day's total sits next to its date.
+      card.append(h('div', { class: 'day-head' }, h('span', { text: dayLabel(day) }), h('span', { class: 'day-total money', text: fmt(dayTotal) })));
+      const list = h('ul', { class: 'list' });
+      card.append(list);
+      for (const r of dayRows) {
       const [label, icon] = CATEGORY[r.category] || [r.category, '•'];
       list.append(h('li', {},
         h('span', { class: 'icon', text: icon }),
@@ -790,6 +862,7 @@
         h('div', { class: 'money', text: fmt(r.amount_paise) }),
         h('button', { class: 'icon-btn', type: 'button', 'aria-label': `Edit ${label}`, onclick: () => openExpenseForm(r), text: '✎' }),
       ));
+      }
     }
     return card;
   }
@@ -858,30 +931,40 @@
 
   // ---------- income ----------
   async function viewIncome() {
-    const rows = await get(`income&month=${state.month}`);
     const root = h('div', { class: 'stack' });
-    const fixed = rows.filter((r) => r.stability === 'fixed').reduce((n, r) => n + r.amount_paise, 0);
-    const variable = rows.filter((r) => r.stability === 'variable').reduce((n, r) => n + r.amount_paise, 0);
+    const box = h('div', { class: 'stack' });
     root.append(h('button', { class: 'btn primary', type: 'button', onclick: () => openIncomeForm(), text: '+ Add income' }));
-    root.append(h('div', { class: 'kpis' },
-      h('div', { class: 'card kpi' }, h('div', { class: 'label', text: 'Fixed (salary)' }), h('div', { class: 'value', text: fmt(fixed) })),
-      h('div', { class: 'card kpi' }, h('div', { class: 'label', text: 'Variable (incentive, CRM…)' }), h('div', { class: 'value', text: fmt(variable) }), h('div', { class: 'note', text: 'Never counted before it arrives' })),
-    ));
-    root.append(h('p', { class: 'notice info', text: 'Salary is what you earn. The family pool (in Settings) is what each person puts in for the house — they can be different.' }));
-    const card = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: monthLabel(state.month) })));
-    if (!rows.length) card.append(h('p', { class: 'empty', text: 'No income entered for this month.' }));
-    else {
-      card.append(h('ul', { class: 'list' }, rows.map((r) => h('li', {},
-        h('span', { class: 'icon', text: r.stability === 'fixed' ? '🏦' : '✨' }),
-        h('div', { class: 'main' },
-          h('div', { class: 't', text: `${INCOME[r.income_type] || r.income_type} — ${r.member_name}` }),
-          h('div', { class: 's', text: [dayLabel(r.received_on), r.stability, r.visibility === 'private' ? 'private' : null, r.notes || null].filter(Boolean).join(' · ') }),
-        ),
-        h('div', { class: 'money', text: fmt(r.amount_paise) }),
-        h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Edit income', onclick: () => openIncomeForm(r), text: '✎' }),
-      ))));
-    }
-    root.append(card);
+    root.append(rangeBar(() => load()));
+    root.append(box);
+    const load = async () => {
+      const rows = await get(`income&${periodQuery()}`);
+      const fixed = rows.filter((r) => r.stability === 'fixed').reduce((n, r) => n + r.amount_paise, 0);
+      const variable = rows.filter((r) => r.stability === 'variable').reduce((n, r) => n + r.amount_paise, 0);
+      const total = fixed + variable;
+      const kpis = h('div', { class: 'kpis' },
+        h('div', { class: 'card kpi' }, h('div', { class: 'label', text: 'Fixed (salary)' }), h('div', { class: 'value', text: fmt(fixed) })),
+        h('div', { class: 'card kpi' }, h('div', { class: 'label', text: 'Variable (incentive, CRM…)' }), h('div', { class: 'value', text: fmt(variable) }), h('div', { class: 'note', text: 'Never counted before it arrives' })),
+      );
+      const notice = h('p', { class: 'notice info', text: 'Salary is what you earn. The family pool (in Settings) is what each person puts in for the house — they can be different.' });
+      const card = h('section', { class: 'card' }, h('div', { class: 'card-head' }, h('h2', { text: periodLabel() }), h('span', { class: 'money', text: fmt(total) })));
+      if (!rows.length) card.append(h('p', { class: 'empty', text: state.range ? 'No income on these dates.' : 'No income entered for this month.' }));
+      else {
+        for (const [day, dayRows, dayTotal] of groupByDay(rows, 'received_on')) {
+          card.append(h('div', { class: 'day-head' }, h('span', { text: dayLabel(day) }), h('span', { class: 'day-total money', text: fmt(dayTotal) })));
+          card.append(h('ul', { class: 'list' }, dayRows.map((r) => h('li', {},
+            h('span', { class: 'icon', text: r.stability === 'fixed' ? '🏦' : '✨' }),
+            h('div', { class: 'main' },
+              h('div', { class: 't', text: `${INCOME[r.income_type] || r.income_type} — ${r.member_name}` }),
+              h('div', { class: 's', text: [r.stability, r.visibility === 'private' ? 'private' : null, r.notes || null].filter(Boolean).join(' · ') }),
+            ),
+            h('div', { class: 'money', text: fmt(r.amount_paise) }),
+            h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Edit income', onclick: () => openIncomeForm(r), text: '✎' }),
+          ))));
+        }
+      }
+      box.replaceChildren(kpis, notice, card);
+    };
+    await load();
     return root;
   }
 

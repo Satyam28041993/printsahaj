@@ -337,6 +337,35 @@ function monthRange(string $month): array
     return [$first->format('Y-m-d'), $first->modify('last day of this month')->format('Y-m-d')];
 }
 
+/**
+ * An optional from/to date range (inclusive, YYYY-MM-DD each). Null when neither is
+ * given, so callers fall back to the month. Both are required together; a range is
+ * capped at 10 years so a typo cannot ask for the whole database.
+ */
+function dateRange(?string $from, ?string $to): ?array
+{
+    $from = $from === '' ? null : $from;
+    $to = $to === '' ? null : $to;
+    if ($from === null && $to === null) {
+        return null;
+    }
+    if ($from === null || $to === null) {
+        throw new HttpError(422, 'Give both a from and a to date.');
+    }
+    $a = DateTimeImmutable::createFromFormat('!Y-m-d', $from);
+    $b = DateTimeImmutable::createFromFormat('!Y-m-d', $to);
+    if ($a === false || $b === false || $a->format('Y-m-d') !== $from || $b->format('Y-m-d') !== $to) {
+        throw new HttpError(422, 'Dates must look like 2026-10-02.');
+    }
+    if ($a > $b) {
+        throw new HttpError(422, 'The from date is after the to date.');
+    }
+    if ($a->diff($b)->days > 3660) {
+        throw new HttpError(422, 'Pick a range of at most 10 years.');
+    }
+    return [$from, $to];
+}
+
 /** Whole months from one YYYY-MM-DD to another, by calendar month. */
 function monthsBetween(string $from, string $to): int
 {
@@ -347,7 +376,8 @@ function monthsBetween(string $from, string $to): int
 
 function addMonths(string $ym, int $months): string
 {
-    return (new DateTimeImmutable($ym . '-01'))->modify("+$months months")->format('Y-m');
+    // sprintf keeps the sign single ("-5 months"): "+-5 months" is read differently by newer PHP.
+    return (new DateTimeImmutable($ym . '-01'))->modify(sprintf('%+d months', $months))->format('Y-m');
 }
 
 final class Audit
