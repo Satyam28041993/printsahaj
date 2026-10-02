@@ -66,6 +66,7 @@ try {
     }
     $in = new Input($method === 'POST' ? Http::body() : $_GET);
     $month = static fn () => (string) ($_GET['month'] ?? substr(today(), 0, 7));
+    $range = static fn () => dateRange((string) ($_GET['from'] ?? ''), (string) ($_GET['to'] ?? ''));
     $id = isset($parts[1]) && ctype_digit($parts[1]) ? (int) $parts[1] : null;
     // Either resource/:id/action or resource/action.
     $action = $id !== null ? ($parts[2] ?? '') : ($parts[1] ?? '');
@@ -106,7 +107,7 @@ try {
 
         'GET dashboard' => Dashboard::get($user, $month()),
 
-        'GET income' => Income::list($user, $month()),
+        'GET income' => Income::list($user, $month(), $range()),
         'POST income' => Income::create($user, $in),
         'POST income/:id/update' => Income::update($user, $id, $in),
         'POST income/:id/delete' => (function () use ($user, $id) {
@@ -114,7 +115,7 @@ try {
             return ['ok' => true];
         })(),
 
-        'GET expenses' => Expenses::list($user, $month(), (string) ($_GET['q'] ?? ''), (string) ($_GET['category'] ?? '')),
+        'GET expenses' => Expenses::list($user, $month(), (string) ($_GET['q'] ?? ''), (string) ($_GET['category'] ?? ''), $range()),
         'POST expenses' => Expenses::create($user, $in),
         'POST expenses/:id/update' => Expenses::update($user, $id, $in),
         'POST expenses/:id/delete' => (function () use ($user, $id) {

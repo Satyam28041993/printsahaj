@@ -181,6 +181,22 @@ expectStatus('delete own expense', $a->post("expenses/{$private['id']}/delete"),
 check('deleted row is hidden', !in_array($private['id'], array_column($a->get("expenses&month=$month")[1], 'id'), true));
 check('deleted row is kept (soft delete)', (int) $pdo->query("SELECT COUNT(*) FROM expenses WHERE id = {$private['id']} AND deleted_at IS NOT NULL")->fetchColumn() === 1);
 
+// Date range (from/to, inclusive) instead of a month. Old dates so the month totals below stay untouched.
+$a->post('expenses', ['amount' => '40', 'category' => 'milk', 'spent_on' => '2020-03-10']);
+$a->post('expenses', ['amount' => '60', 'category' => 'milk', 'spent_on' => '2020-03-11']);
+$a->post('expenses', ['amount' => '5', 'category' => 'milk', 'spent_on' => '2020-03-20']);
+$range = $a->get('expenses&from=2020-03-10&to=2020-03-11')[1];
+check('range returns both days, nothing outside', count($range) === 2 && array_sum(array_column($range, 'amount_paise')) === 10000, json_encode($range));
+$oneDay = $a->get('expenses&from=2020-03-11&to=2020-03-11')[1];
+check('same from and to is a single day', count($oneDay) === 1 && $oneDay[0]['amount_paise'] === 6000, json_encode($oneDay));
+expectStatus('range needs both dates', $a->get('expenses&from=2020-03-10'), 422);
+expectStatus('range from after to refused', $a->get('expenses&from=2020-03-12&to=2020-03-10'), 422);
+expectStatus('range with a bad date refused', $a->get('expenses&from=2020-02-30&to=2020-03-10'), 422);
+$a->post('income', ['income_type' => 'salary', 'amount' => '1000', 'received_on' => '2020-03-10']);
+$a->post('income', ['income_type' => 'salary', 'amount' => '2000', 'received_on' => '2020-03-25']);
+$inc = $a->get('income&from=2020-03-01&to=2020-03-15')[1];
+check('income range', count($inc) === 1 && $inc[0]['amount_paise'] === 100000, json_encode($inc));
+
 echo "Income\n";
 $sal = expectStatus('salary', $a->post('income', ['income_type' => 'salary', 'stability' => 'variable', 'amount' => '40000', 'received_on' => $today]), 200);
 check('salary is always fixed', ($sal['stability'] ?? '') === 'fixed', $sal);
