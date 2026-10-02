@@ -17,6 +17,12 @@ on:
         type: boolean
         default: false
 
+# One deploy at a time: a second push queues behind the running one instead of
+# racing it on the same remote folder (and is never cancelled mid-upload).
+concurrency:
+  group: deploy-website
+  cancel-in-progress: false
+
 # Why lftp and not FTP-Deploy-Action (what went wrong in run #31):
 # every Next build has a new buildId, so every deploy must delete the previous
 # _next/static/<oldBuildId>/ folder. FTP-Deploy-Action tolerates a missing FILE
@@ -119,9 +125,20 @@ jobs:
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_DIR: ${{ secrets.FTP_SERVER_DIR || '.' }}
           DRY_RUN: ${{ inputs.dry_run }}
+          # Optional repo variable (Settings > Variables): extra space-separated globs to protect
+          # on the server, e.g. "subdomain/ addon.example.com/" (confirm with the dry run).
+          EXTRA_EXCLUDES: ${{ vars.FTP_EXTRA_EXCLUDES }}
         run: |
           set -uo pipefail
-          EXCLUDES="--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftp-deploy-sync-state* --exclude-glob .user.ini --exclude-glob .htpasswd --exclude-glob default.php"
+          # Never delete: hosting-managed files and folders.
+          EXCLUDES="--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftp-deploy-sync-state* --exclude-glob .user.ini --exclude-glob .htpasswd --exclude-glob default.php --exclude-glob error_log"
+          # Files that may live on the server but are not part of this export. If the
+          # export ships one (e.g. a robots.txt), it is uploaded and managed normally.
+          for pat in "google*.html" "robots.txt" "sitemap*.xml"; do
+            compgen -G "web/out/$pat" > /dev/null || EXCLUDES="$EXCLUDES --exclude-glob $pat"
+          done
+          for g in $EXTRA_EXCLUDES; do EXCLUDES="$EXCLUDES --exclude-glob $g"; done
+          echo "Protected from --delete: $EXCLUDES"
           SETTINGS="set ftp:ssl-allow true; set ssl:verify-certificate no; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5; set cmd:fail-exit yes"
           SITE="mirror --reverse --delete --no-perms --parallel=4 --verbose $EXCLUDES web/out/ $FTP_DIR/"
 
@@ -167,6 +184,11 @@ jobs:
 
           # Proves this build's assets are live: one CSS and one JS chunk named in the local index.html.
           css=$(grep -oE '/_next/static/chunks/[^"]+\.css' web/out/index.html | head -1)
+          # ...and that the LIVE homepage points at this build's CSS (a half-finished deploy still serves old HTML).
+          if [ -n "$css" ] && ! grep -qF "$css" /tmp/home.html; then
+            echo "Live homepage does not reference this build's CSS ($css): the deploy is half-finished."
+            fail=1
+          fi
           js=$(grep -oE '/_next/static/chunks/[^"]+\.js' web/out/index.html | head -1)
           for path in "$css" "$js"; do
             [ -n "$path" ] || { echo "no asset path found in web/out/index.html"; fail=1; continue; }
@@ -175,11 +197,11 @@ jobs:
             [ "$c" = "200" ] || fail=1
           done
 
-          # The deploy state file must not be readable (403 or 404 are fine).
+          # The deploy state file must answer 403 or 404 (not 200, not 500).
           s=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 https://printsahaj.com/.ftp-deploy-sync-state-v3.json || echo 000)
           echo "state file -> HTTP $s"
-          if [ "$s" = "200" ]; then
-            echo "The deploy state file is publicly readable."
+          if [ "$s" != "403" ] && [ "$s" != "404" ]; then
+            echo "Expected 403 or 404 for the deploy state file, got $s (200 = publicly readable, 500 = broken rule)."
             fail=1
           fi
 
@@ -188,3 +210,11 @@ jobs:
       - name: Note an FTP error that the live site survived
         if: ${{ !cancelled() && !inputs.dry_run && steps.deploy.outcome == 'failure' && steps.verify.outcome == 'success' }}
         run: echo "::warning::FTP sync reported an error but the live site verifies"
+
+      # continue-on-error keeps a failed dry run's job green, which hides it.
+      # Make it visible: a dry run whose listing failed must not look fine.
+      - name: Fail if the dry run failed
+        if: ${{ inputs.dry_run && steps.deploy.outcome == 'failure' }}
+        run: |
+          echo "::error::The dry run failed. Read the 'Deploy to Hostinger via lftp mirror' step log."
+          exit 1

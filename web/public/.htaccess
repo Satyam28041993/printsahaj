@@ -19,11 +19,16 @@ ErrorDocument 404 /404.html
 # Harmless on LiteSpeed, which normally compresses at server level; mod_brotli /
 # mod_deflate are honoured where present. Uncompressed, the home page is ~1 MB
 # instead of ~420 KB and mobile Lighthouse drops by ~20 points.
+# AddOutputFilterByType needs mod_filter: wrapped so a missing module can never 500 the site.
 <IfModule mod_brotli.c>
-  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+  <IfModule mod_filter.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+  </IfModule>
 </IfModule>
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+  <IfModule mod_filter.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript text/javascript application/json image/svg+xml application/xml application/manifest+json
+  </IfModule>
 </IfModule>
 <IfModule mod_headers.c>
   Header append Vary Accept-Encoding
@@ -32,8 +37,11 @@ ErrorDocument 404 /404.html
 # --- Caching -------------------------------------------------------------
 # Only /_next/static/ is content-hashed: cache it forever.
 <IfModule mod_headers.c>
-  SetEnvIf Request_URI "^/_next/static/" PS_IMMUTABLE
-  Header set Cache-Control "public, max-age=31536000, immutable" env=PS_IMMUTABLE
+  # SetEnvIf needs mod_setenvif: wrapped so a missing module can never 500 the site.
+  <IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "^/_next/static/" PS_IMMUTABLE
+    Header set Cache-Control "public, max-age=31536000, immutable" env=PS_IMMUTABLE
+  </IfModule>
   # Documents and data must revalidate so a deploy shows up at once.
   <FilesMatch "\.(html|json|txt|vcf|xml|webmanifest)$">
     Header set Cache-Control "no-cache, must-revalidate"
