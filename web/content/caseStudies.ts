@@ -85,7 +85,7 @@ export const caseStudies: CaseStudy[] = [
     client: null,
     clientFallback: "a pharma label customer",
     facts: [
-      { label: "Job", value: "Sample job 0001" },
+      { label: "Job", value: "JOB-1182" },
       { label: "Label", value: "100 ml, 114 × 76 mm" },
       { label: "Process", value: "Flexo on chromo" },
       { label: "Colour line", value: "6 COL + VARNISH" },

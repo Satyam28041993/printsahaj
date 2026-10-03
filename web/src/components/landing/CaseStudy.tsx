@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import CtaButton from "./CtaButton";
+import ShowcaseMedia from "./ShowcaseMedia";
 import { caseStudies, caseStudiesIntro } from "@content/caseStudies";
 
 /**
@@ -18,6 +19,9 @@ export default function CaseStudy() {
         <p data-m="reveal" className="story-kicker">
           {caseStudiesIntro.eyebrow}
         </p>
+        <p data-m="reveal" className="eco-badge mt-3">
+          From real production experience
+        </p>
         <h2
           data-m="lines"
           id="case-heading"
@@ -27,6 +31,9 @@ export default function CaseStudy() {
         </h2>
         <p data-m="reveal" className="mt-5 max-w-2xl text-body-lg text-muted">
           {lead.standfirst}
+        </p>
+        <p data-m="reveal" className="mt-2 text-sm text-faint">
+          Representative job, details anonymised.
         </p>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
@@ -62,6 +69,7 @@ export default function CaseStudy() {
                 <span className="mt-2 block font-display text-xl font-semibold text-accent sm:text-2xl">Varnish missing</span>
               </p>
             </div>
+            <ShowcaseMedia slug="printverify" title="PrintVerify check of the varnish-plate job" className="mt-8" />
           </div>
 
           <div className="evidence-sheet p-6 sm:p-8" data-m="parallax" data-m-speed="-3">

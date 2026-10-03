@@ -1,7 +1,11 @@
 import React from "react";
+import Link from "next/link";
 import CtaButton from "./CtaButton";
+import Pill from "./Pill";
+import EnquiryForm from "./EnquiryForm";
+import { help } from "@content/help";
+import { EMAIL, PHONE_DISPLAY, PHONE_TEL, WHATSAPP_URL } from "@/data/contact";
 import { home } from "@content/home";
-import { printSahajSite } from "@content/site";
 
 export default function HomeFinalCta() {
   const copy = home.finalCta;
@@ -26,26 +30,26 @@ export default function HomeFinalCta() {
             {copy.supporting}
           </p>
           <div data-m="reveal" className="mt-12 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-            <CtaButton href={copy.primaryCta.href} size="lg">
-              {copy.primaryCta.label}
+            <CtaButton href={WHATSAPP_URL} size="lg">
+              {help.consult.primaryCta.label}
             </CtaButton>
+            <Pill href={PHONE_TEL} variant="ghost" call ariaLabel={`${help.consult.callCta.label}: ${PHONE_DISPLAY}`}>
+              {help.consult.callCta.label}
+            </Pill>
           </div>
           <div data-m="reveal" className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            {printSahajSite.contact.emailPublic && printSahajSite.contact.email ? (
-              <a href={`mailto:${printSahajSite.contact.email}`} className="founder-linkedin">
-                {printSahajSite.contact.email}
-              </a>
-            ) : null}
-            {printSahajSite.contact.whatsappPublic && printSahajSite.contact.whatsappNumber ? (
-              <a
-                href={`https://wa.me/${printSahajSite.contact.whatsappNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="founder-linkedin"
-              >
-                WhatsApp
-              </a>
-            ) : null}
+            <a href={`mailto:${EMAIL}`} className="founder-linkedin">
+              {EMAIL}
+            </a>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="founder-linkedin">
+              WhatsApp
+            </a>
+            <Link href={copy.primaryCta.href} className="founder-linkedin">
+              {copy.primaryCta.label}
+            </Link>
+          </div>
+          <div data-m="reveal" className="mt-10">
+            <EnquiryForm />
           </div>
         </div>
       </div>

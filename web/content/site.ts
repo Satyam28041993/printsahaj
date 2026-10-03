@@ -160,12 +160,6 @@ export interface SiteContent {
     links: NavLink[];
     cta: { label: string; href: string };
   };
-  contact: {
-    email: string;
-    whatsappNumber: string;
-    whatsappLabel: string;
-    whatsappMessage: string;
-  };
   footer: {
     legal: NavLink[];
     copyright: string;
@@ -195,12 +189,6 @@ export const site: SiteContent = {
       { label: "FAQ", href: "/#faq" },
     ],
     cta: { label: "Get early access", href: "#early-access" },
-  },
-  contact: {
-    email: "hello@printsahaj.com",
-    whatsappNumber: "919876543210",
-    whatsappLabel: "Message us on WhatsApp",
-    whatsappMessage: "Hello — I would like early access to PrintSahaj.",
   },
   footer: {
     legal: [

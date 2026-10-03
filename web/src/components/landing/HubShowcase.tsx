@@ -36,8 +36,8 @@ export default function HubShowcase() {
                 return (
                   <li key={node.key}>
                     <Link href={toolsHref} data-m-card className="eco-tree__node">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">Live</span>
-                      <span className="mt-2 block font-display text-lg font-semibold text-primary">Live Tools</span>
+                      <span className="eco-badge">Live</span>
+                      <span className="mt-2 block font-display text-lg font-semibold text-primary">Industry Tools</span>
                     </Link>
                   </li>
                 );
@@ -47,7 +47,7 @@ export default function HubShowcase() {
               return (
                 <li key={node.key}>
                   <Link href={product.href} data-m-card className="eco-tree__node">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{product.tag}</span>
+                    <span className="eco-badge">{product.tag}</span>
                     <span className="mt-2 block font-display text-lg font-semibold text-primary">{product.name}</span>
                   </Link>
                 </li>

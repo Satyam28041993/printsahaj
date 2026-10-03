@@ -5,6 +5,8 @@ import { flushSync } from "react-dom";
 import { Bot, Calculator, Factory, Globe, Pause, Play, ShieldCheck, Users } from "lucide-react";
 import Pill from "../Pill";
 import MiniUi, { CALC_INITIAL, type CalcState } from "./MiniUis";
+import ShowcaseMedia from "../ShowcaseMedia";
+import type { ShowcaseSlug } from "@/data/showcase";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import { useInViewState, usePrefersReducedMotion, useSpotlight } from "@/lib/useHomeMotion";
 import { getMotion } from "@/lib/motion/loader";
@@ -17,6 +19,15 @@ const ICONS: Record<ShowcaseVisualId, React.ComponentType<{ size?: number; "aria
   printverify: ShieldCheck,
   aivy: Bot,
   calculator: Calculator,
+};
+
+/** Which media slot (src/data/showcase.ts) belongs to which tab. The calculator is real, so it has none. */
+const MEDIA_SLUG: Partial<Record<ShowcaseVisualId, ShowcaseSlug>> = {
+  flexora: "flexora",
+  crm: "crm",
+  websites: "website",
+  printverify: "printverify",
+  aivy: "aivy",
 };
 
 /** Seconds each tab stays open. Also the length of the progress line. */
@@ -260,7 +271,7 @@ export default function HomeShowcase() {
             <div className="sc-info">
               <span className="sc-status" data-status={tab.status}>
                 <span className="sr-only">{homeShowcase.statusLabel}: </span>
-                {tab.status}
+                {tab.statusText ?? tab.status}
               </span>
               <h3 className="h-title text-[clamp(1.75rem,1.2rem+1.6vw,2.6rem)]">{tab.label}</h3>
               <p className="h-lead">{tab.promise}</p>
@@ -283,7 +294,15 @@ export default function HomeShowcase() {
               onPointerCancel={() => (swipe.current = null)}
             >
               <div className="sc-pane" key={tab.id} data-fallback={!hasTransitions && !reduced}>
-                <MiniUi id={tab.id} calc={calc} onCalcChange={setCalc} />
+                {MEDIA_SLUG[tab.id] ? (
+                  <ShowcaseMedia
+                    slug={MEDIA_SLUG[tab.id] as ShowcaseSlug}
+                    title={tab.label}
+                    fallback={<MiniUi id={tab.id} calc={calc} onCalcChange={setCalc} />}
+                  />
+                ) : (
+                  <MiniUi id={tab.id} calc={calc} onCalcChange={setCalc} />
+                )}
               </div>
             </div>
           </div>

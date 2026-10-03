@@ -74,6 +74,8 @@ export interface HomePillar {
 export interface HomeProduct {
   name: string;
   status: ProjectStatus;
+  /** Shown instead of `status` when set. */
+  statusText?: string;
   positioning: string;
   /** Planned URL. Route is not created in this step. */
   href: string;
@@ -453,6 +455,7 @@ export const home: HomeContent = {
       {
         name: "PrintVerify",
         status: "Building",
+        statusText: "Pilot · Demo on request",
         positioning:
           "A pre-production verification product for checking important artwork and separation information before production.",
         href: "/products/printverify",
@@ -553,7 +556,7 @@ export const home: HomeContent = {
       {
         name: "PrintVerify",
         kind: "product",
-        tag: "Building",
+        tag: "Pilot · Demo on request",
         description:
           "A pre-production verification product for checking important artwork and separation information before production.",
         href: "/products/printverify",
@@ -566,9 +569,9 @@ export const home: HomeContent = {
         href: "/products/flexora",
       },
       {
-        name: "CRM",
+        name: "Lead management CRM",
         kind: "product",
-        tag: "Lead management",
+        tag: "Live",
         description: "Enquiries, quotes and follow-ups for a customer, kept in one place.",
         href: "/crm/",
       },
@@ -737,7 +740,7 @@ export const home: HomeContent = {
       },
       {
         label: "Past experience",
-        value: "Sales & Marketing Manager, Prakruti Graphic Pvt Ltd (until 20 Sep 2026)",
+        value: "Former Sales & Marketing Manager, Prakruti Graphic Pvt Ltd (ex-company, until Sep 2026)",
         detail: "Where the printing & packaging experience was gained",
         past: true,
       },

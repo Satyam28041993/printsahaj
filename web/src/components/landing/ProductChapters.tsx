@@ -20,7 +20,7 @@ export default function ProductChapters() {
             </div>
             <div>
               <div data-m="reveal">
-                <p data-m-child className="story-kicker">Product · {printVerify.status}</p>
+                <p data-m-child className="story-kicker">Product · {printVerify.statusText ?? printVerify.status}</p>
               </div>
               <h2 id="printverify-heading" data-m="lines" className="mt-5 font-display text-display-lg font-bold text-primary">
                 {printVerify.name}
