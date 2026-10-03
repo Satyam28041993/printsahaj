@@ -1,7 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import CtaButton from "./CtaButton";
-import ProductVisual from "./visuals/ProductVisual";
+import Carousel from "./Carousel";
+import { FLEXORA_SLIDES, PRINTVERIFY_SLIDES, SLIDE_SCREEN_RATIO, SLIDE_SIZE } from "@content/productSlides";
 import { home } from "@content/home";
 
 export default function ProductChapters() {
@@ -13,10 +14,8 @@ export default function ProductChapters() {
       {printVerify ? (
         <section aria-labelledby="printverify-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,128px)] sm:px-8">
           <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
-            <div data-m="reveal" data-m-card className="min-h-[280px]">
-              <div data-m="parallax" data-m-speed="6" className="h-full min-h-[280px]">
-                <ProductVisual name="PrintVerify" size="lg" />
-              </div>
+            <div data-m="reveal">
+              <Carousel slides={PRINTVERIFY_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} ratio={SLIDE_SCREEN_RATIO} label="PrintVerify screens" />
             </div>
             <div>
               <div data-m="reveal">
@@ -56,10 +55,8 @@ export default function ProductChapters() {
                 </Link>
               </div>
             </div>
-            <div data-m="reveal" data-m-card className="m-glow min-h-[220px]">
-              <div data-m="parallax" data-m-speed="6" className="h-full min-h-[220px]">
-                <ProductVisual name="Flexora" size="lg" />
-              </div>
+            <div data-m="reveal">
+              <Carousel slides={FLEXORA_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} ratio={SLIDE_SCREEN_RATIO} variant="laptop" label="Flexora screens" />
             </div>
           </div>
         </section>

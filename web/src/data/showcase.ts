@@ -43,9 +43,9 @@ export const SHOWCASE_SIZE = { width: 1024, height: 525 } as const;
 /** One muted line under each frame. */
 export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora ERP · Plant Operations Command Center (live)",
-  crm: "LeadTrack CRM · live lead dashboard",
-  erp: "CRM + ERP for a machinery manufacturer · live (names blurred)",
-  website: "Client website · packaging manufacturer",
+  crm: "LeadTrack CRM · lead pipeline & dashboard",
+  erp: "Flexora ERP · plant operations dashboard",
+  website: "Client websites · packaging & manufacturing",
   marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
   printverify: "PrintVerify · vendor plate check (artwork blurred)",
   aivy: "Aivy · AI assistant that books meetings and reminders",

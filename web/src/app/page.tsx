@@ -7,7 +7,6 @@ import MobileCtaBar from "@/components/landing/MobileCtaBar";
 import ProductChapters from "@/components/landing/ProductChapters";
 import LiveTool from "@/components/landing/LiveTool";
 import Pillars from "@/components/landing/Pillars";
-import HubShowcase from "@/components/landing/HubShowcase";
 import CaseStudy from "@/components/landing/CaseStudy";
 import Founder from "@/components/landing/Founder";
 import FaqSection from "@/components/landing/FaqSection";
@@ -30,7 +29,6 @@ export default function HomePage() {
         <HelpScroll />
         <ProductChapters />
         <LiveTool />
-        <HubShowcase />
         <Pillars />
         <CaseStudy />
         <Founder />

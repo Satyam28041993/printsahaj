@@ -74,11 +74,72 @@ export const caseStudiesIntro = {
   cta: { label: "Read the case studies", href: "/case-studies" },
 };
 
+/**
+ * Homepage case-study section (P-008b). Every claim maps to the sources above:
+ * the real job is samples/kalonji (6 COL + VARNISH declared, 6 plate pages), and
+ * the three points are the engine checks those cases exercise. PrintVerify is in
+ * pilot — the status line says so. No metrics. Wording is the P-008b spec's.
+ *
+ * `cards` are the homepage wording of cases 2 and 3; the /case-studies page keeps
+ * the titles and teasers in `caseStudies` below.
+ */
+export const caseStudyHome = {
+  eyebrow: "FOR PRINTERS & LABEL MANUFACTURERS",
+  headline: "If you run a printing press, don't skip this.",
+  sub: "One small pre-press mistake can cost you a full job, a missed delivery and a client's trust. This can save your time, your money and your client relationships.",
+  question: {
+    text: "Do your jobs ever break because of a mistake by your pre-press, plate or cylinder vendor? Does your client's delivery get delayed because of it?",
+    answer: "If yes — this is for you.",
+  },
+  points: [
+    {
+      icon: "layers",
+      title: "Checks every vendor plate",
+      text: "Checks every vendor plate against the approved artwork, before it reaches the press.",
+    },
+    {
+      icon: "hash",
+      title: "Flags anything missing",
+      text: "Counts colours, varnish and special units, and flags anything missing or extra.",
+    },
+    {
+      icon: "scan",
+      title: "Catches wrong text",
+      text: "Catches wrong text, batch numbers and barcodes that the eye misses.",
+    },
+  ],
+  status: "Pilot · Demo on request",
+  cta: { label: "See PrintVerify", href: "/products/printverify" },
+  job: {
+    heading: "Real job: the varnish plate that went missing",
+    body: [
+      "A 7-colour label (6 colours + varnish) went to the plate maker. Only 6 plates came back, and the files looked fine.",
+      "On press, that means a stopped machine, wasted material and a late delivery. PrintVerify caught it before printing: 'Declared 7 units, found 6 plates — 1 missing.'",
+    ],
+    note: "Representative job, details anonymised.",
+    result: "Declared 7 units, found 6 plates — 1 missing.",
+    imagesNote: "PrintVerify screens · artwork blurred",
+  },
+  moreHeading: "Two more ways a file can be wrong",
+  cards: [
+    {
+      slug: "batch-mismatch",
+      title: "Batch number right on the proof, wrong on the plate",
+      teaser: "The approval file said the batch matched. The black plate didn't. Caught before print.",
+    },
+    {
+      slug: "vendor-cover",
+      title: "Vendor's extra cover page counted as a plate",
+      teaser: "One vendor adds a report page before the plates. PrintVerify ignores it, so the plate count stays right.",
+    },
+  ],
+} as const;
+
 export const caseStudies: CaseStudy[] = [
   {
     slug: "varnish-plate",
     errorClass: "A declared unit with no plate",
-    title: "The varnish plate that wasn't there.",
+    title: "The varnish plate that went missing.",
     teaser: "Seven units declared on the job sheet. Six plates in the separation file.",
     standfirst:
       "A seven-unit label went to plate-making as six. Nothing in the files looked wrong. The count was wrong.",
