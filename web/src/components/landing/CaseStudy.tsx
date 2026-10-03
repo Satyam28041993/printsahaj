@@ -69,7 +69,7 @@ export default function CaseStudy() {
                 <span className="mt-2 block font-display text-xl font-semibold text-accent sm:text-2xl">Varnish missing</span>
               </p>
             </div>
-            <ShowcaseMedia slug="printverify" title="PrintVerify check of the varnish-plate job" className="mt-6" />
+            <ShowcaseMedia slug="printverify" title="PrintVerify check of the varnish-plate job" className="mt-8" />
           </div>
 
           <div className="evidence-sheet p-6 sm:p-8" data-m="parallax" data-m-speed="-3">

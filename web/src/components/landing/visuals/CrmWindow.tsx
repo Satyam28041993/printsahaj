@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { prefersReducedMotion } from "@/lib/motion";
 
-/** Confirmed CRM concepts only. Sample labels are generic — not a client record. */
+/** Confirmed CRM concepts only. The enquiry shown is a generic demo — not a client record. */
 export const CRM_STAGES = ["Enquiry", "Quote", "Follow-up"] as const;
 
 const COMPLETED_INDEX = CRM_STAGES.length - 1;
@@ -46,7 +46,7 @@ export default function CrmWindow({
       aria-label={
         labelledBy
           ? undefined
-          : "PrintSahaj CRM sample. A sample customer and sample job, with enquiry, quote and follow-up."
+          : "PrintSahaj CRM demo. A demo enquiry with its job, with enquiry, quote and follow-up."
       }
     >
       <div className="crm-window__chrome">
@@ -56,7 +56,7 @@ export default function CrmWindow({
           <i />
         </span>
         <p className="crm-window__title">PrintSahaj CRM</p>
-        <p className="crm-window__context">Sample</p>
+        <p className="crm-window__context">Demo data</p>
       </div>
 
       <div className="crm-window__body">
@@ -78,22 +78,22 @@ export default function CrmWindow({
         <div className="crm-window__detail" aria-live="polite">
           <div className="crm-window__record">
             <span className="crm-window__avatar" aria-hidden="true">
-              S
+              E
             </span>
             <div>
-              <p className="crm-window__record-name">Sample customer</p>
-              <p className="crm-window__record-meta">Sample job</p>
+              <p className="crm-window__record-name">ENQ-2038 · Roll labels</p>
+              <p className="crm-window__record-meta">JOB-1182 · 5,000 labels</p>
             </div>
             <span className="crm-window__badge">{stage}</span>
           </div>
           <dl>
             <div>
               <dt>Customer</dt>
-              <dd>Sample customer</dd>
+              <dd>ENQ-2038 · Roll labels</dd>
             </div>
             <div>
               <dt>Job</dt>
-              <dd>Sample job</dd>
+              <dd>JOB-1182 · 5,000 labels</dd>
             </div>
             <div>
               <dt>Stage</dt>

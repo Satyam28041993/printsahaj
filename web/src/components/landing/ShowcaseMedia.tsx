@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { SHOWCASE_MEDIA, type ShowcaseSlug } from "@/data/showcase";
+import { SHOWCASE_CAPTIONS, SHOWCASE_MEDIA, SHOWCASE_SIZE, type ShowcaseSlug } from "@/data/showcase";
 import { useInViewState, usePrefersReducedMotion } from "@/lib/useHomeMotion";
 
 /**
@@ -26,7 +26,7 @@ export default function ShowcaseMedia({
   const image = flags.webp ? `/showcase/${slug}.webp` : flags.png ? `/showcase/${slug}.png` : null;
   const video = flags.mp4 ? `/showcase/${slug}.mp4` : null;
   const reduced = usePrefersReducedMotion();
-  const { ref, inView } = useInViewState<HTMLDivElement>("200px");
+  const { ref, inView } = useInViewState<HTMLElement>("200px");
   const [near, setNear] = React.useState(false);
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -36,7 +36,8 @@ export default function ShowcaseMedia({
   if (!image && !video) return <>{fallback}</>;
 
   return (
-    <div ref={ref} className={`dev media-frame ${className}`}>
+    <figure ref={ref} className={`media-figure ${className}`}>
+    <div className="dev media-frame">
       <div className="dev__bar" aria-hidden="true">
         <i />
         <i />
@@ -58,9 +59,11 @@ export default function ShowcaseMedia({
         ) : image ? (
           // Static export ships images unoptimized; next/image is not used on this site.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={title} width={1600} height={1000} loading="lazy" decoding="async" />
+          <img src={image} alt={title} width={SHOWCASE_SIZE.width} height={SHOWCASE_SIZE.height} loading="lazy" decoding="async" />
         ) : null}
       </div>
     </div>
+    <figcaption className="media-caption">{SHOWCASE_CAPTIONS[slug]}</figcaption>
+    </figure>
   );
 }

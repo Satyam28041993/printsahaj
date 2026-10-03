@@ -18,7 +18,7 @@ site keeps showing its animated mock-up.
 
 ## Files per slug
 
-- `<slug>.webp` (or `<slug>.png`): **1600 × 1000 px**, a screenshot of the real screen. Poster for the video too.
+- `<slug>.webp` (or `<slug>.png`): **1024 × 525 px** (current screenshots; same ratio for new ones), a screenshot of the real screen. Poster for the video too.
 - `<slug>.mp4`: optional screen recording, **10–15 s, under 3 MB**, no sound needed (it plays muted, looping).
 
 Use demo or anonymised data only. No client names, phone numbers, rates or job numbers.

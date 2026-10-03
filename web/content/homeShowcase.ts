@@ -145,9 +145,9 @@ export const homeShowcase: ShowcaseContent = {
       title: "Demo data · ERP",
       badges: ["ERP", "HRMS"],
       columns: [
-        { name: "Order", cards: [["SO-2417 · 5,000 roll labels · 100×50 mm", "40%"], ["SO-2421 · 12,000 labels · 60×40 mm", "15%"]] },
-        { name: "Job", cards: [["JOB-1182 · 6 COL + Varnish · Flexo", "70%"], ["JOB-1179 · 4 COL · Flexo", "55%"]] },
-        { name: "Dispatch", cards: [["DSP-0931 · Dispatched · 12 cartons", "100%"], ["DSP-0928 · Packing · 8 cartons", "95%"]] },
+        { name: "Order", cards: [["SO-2417 · 5,000 labels", "40%"], ["SO-2421 · 12,000 labels", "15%"]] },
+        { name: "Job", cards: [["JOB-1182 · 6C + Varnish", "70%"], ["JOB-1179 · 4 COL", "55%"]] },
+        { name: "Dispatch", cards: [["DSP-0931 · 12 cartons", "100%"], ["DSP-0928 · 8 cartons", "95%"]] },
       ],
       hrmsLabel: "HRMS · Attendance 42/45 · Shift A",
     },
@@ -155,11 +155,11 @@ export const homeShowcase: ShowcaseContent = {
       title: "Demo data · CRM",
       listLabel: "Enquiries",
       rows: [
-        ["ENQ-2041 · Mono-carton labels", "Enquiry", "info"],
-        ["ENQ-2038 · Pharma roll labels", "Quote sent", "warn"],
-        ["ENQ-2029 · Shrink sleeve", "Follow-up", "ok"],
+        ["ENQ-2041 · Carton labels", "Enquiry", "info"],
+        ["ENQ-2038 · Roll labels", "Quote sent", "warn"],
+        ["ENQ-2029 · Sleeves", "Follow-up", "ok"],
       ],
-      detailName: "ENQ-2038 · Pharma roll labels",
+      detailName: "ENQ-2038 · Roll labels",
       steps: ["Enquiry received", "Quote prepared", "Follow-up scheduled"],
     },
     websites: {
