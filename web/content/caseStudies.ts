@@ -74,11 +74,61 @@ export const caseStudiesIntro = {
   cta: { label: "Read the case studies", href: "/case-studies" },
 };
 
+/**
+ * Homepage case-study section (P-008b). Every claim maps to the sources above:
+ * the real job is samples/kalonji (6 COL + VARNISH declared, 6 plate pages), and
+ * the three points are the engine checks those cases exercise. PrintVerify is in
+ * pilot — the status line says so. No metrics.
+ *
+ * TO REVIEW (Satyam): the P-008b prompt file was not available when this copy was
+ * written, so the eyebrow, headline, sub and question are drafted from the facts
+ * above, not pasted from the spec. Swap in the spec's exact wording if it differs.
+ */
+export const caseStudyHome = {
+  eyebrow: "Case study · PrintVerify",
+  headline: "A plate can go missing before anyone notices.",
+  sub: "The job sheet and the plate file can disagree, and both still look right on their own. PrintVerify reads them side by side before the job goes to press.",
+  question: {
+    text: "Have you ever had a colour, a varnish or a plate turn up missing only after the job was printed?",
+    answer: "If yes — this is for you.",
+  },
+  points: [
+    {
+      icon: "layers",
+      title: "Plates counted against the job sheet",
+      text: "Declared units and plates in the separation file are counted, not eyeballed.",
+    },
+    {
+      icon: "hash",
+      title: "Batch number and date, value by value",
+      text: "Read from the artwork, the composite and every plate, then compared as values.",
+    },
+    {
+      icon: "scan",
+      title: "Every plate checked on its own",
+      text: "Each plate is mapped to its colour name and reviewed one by one.",
+    },
+  ],
+  status: "Pilot · Demo on request",
+  cta: { label: "See PrintVerify", href: "/products/printverify" },
+  job: {
+    heading: "Real job: the varnish plate that went missing",
+    body: [
+      "The job sheet said 6 COL + VARNISH — seven units. The separation file had six pages.",
+      "The varnish had no plate. Run through PrintVerify, the plate-count check flags it from the files alone.",
+    ],
+    note: "Representative job, details anonymised.",
+    result: "Declared 7 units, found 6 plates — 1 missing.",
+    imagesNote: "PrintVerify screens · artwork blurred",
+  },
+  moreHeading: "Two more ways a file can be wrong",
+} as const;
+
 export const caseStudies: CaseStudy[] = [
   {
     slug: "varnish-plate",
     errorClass: "A declared unit with no plate",
-    title: "The varnish plate that wasn't there.",
+    title: "The varnish plate that went missing.",
     teaser: "Seven units declared on the job sheet. Six plates in the separation file.",
     standfirst:
       "A seven-unit label went to plate-making as six. Nothing in the files looked wrong. The count was wrong.",
@@ -122,8 +172,8 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "batch-mismatch",
     errorClass: "A value that disagrees with itself",
-    title: "Two checks, two opinions, one batch number.",
-    teaser: "The composite said the batch details matched. The Black plate said they did not.",
+    title: "One batch number, two different answers.",
+    teaser: "The composite said the batch details matched; the Black plate disagreed. Now the values themselves are compared.",
     standfirst:
       "The same field was read in two places and answered differently. Nothing in the report said which reading to believe — so the report itself was the problem.",
     client: null,
@@ -160,8 +210,8 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "vendor-cover",
     errorClass: "A vendor file that lies about its own shape",
-    title: "The cover page that counted as a plate.",
-    teaser: "One vendor ships a report page in front of the plates. Counted plainly, every job reads one plate long.",
+    title: "A cover page that counted as a plate.",
+    teaser: "One vendor puts a report page in front of the plates. The cover is now skipped, so the count stays honest.",
     standfirst:
       "Not every separation PDF starts at plate one. One vendor puts a job specification report in front, and every plate-facing check downstream inherits that off-by-one.",
     client: null,

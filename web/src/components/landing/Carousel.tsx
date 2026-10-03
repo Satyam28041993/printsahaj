@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useInViewState, usePrefersReducedMotion } from "@/lib/useHomeMotion";
 import type { ProductSlide } from "@content/productSlides";
+import DeviceFrame, { CroppedImage, type DeviceVariant } from "./DeviceFrame";
 
 const INTERVAL_MS = 3500;
 const SWIPE_PX = 40;
@@ -13,20 +14,26 @@ const SWIPE_PX = 40;
  *  - Autoplays every 3.5 s while on screen; pauses on hover, focus, a hidden tab and
  *    with the pause button; never autoplays with prefers-reduced-motion (manual only).
  *  - Dots and prev/next buttons (labelled), swipe on touch (vertical scroll stays native).
- *  - The frame has a fixed aspect ratio from the image size, so nothing shifts;
- *    slides after the first are lazy-loaded.
+ *  - The slides sit in a DeviceFrame whose screen has a fixed aspect ratio, so
+ *    nothing shifts; each image is cropped to its app card; slides after the
+ *    first are lazy-loaded.
  */
 export default function Carousel({
   slides,
   width,
   height,
+  ratio,
   label,
+  variant = "browser",
   className = "",
 }: {
   slides: ProductSlide[];
   width: number;
   height: number;
+  /** Screen aspect (width / height) of the device frame. */
+  ratio: number;
   label: string;
+  variant?: DeviceVariant;
   className?: string;
 }) {
   const [index, setIndex] = useState(0);
@@ -85,42 +92,51 @@ export default function Carousel({
       }}
       onKeyDown={onKeyDown}
     >
-      <div
-        className="cr__viewport"
-        style={{ aspectRatio: `${width} / ${height}` }}
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={() => (touch.current = null)}
-      >
-        <div className="cr__track" style={{ transform: `translateX(-${index * 100}%)` }}>
-          {slides.map((slide, i) => (
-            <div
-              key={slide.src}
-              className="cr__slide"
-              role="group"
-              aria-roledescription="slide"
-              aria-label={`${i + 1} of ${count}`}
-              aria-hidden={i !== index}
-            >
-              {/* Static export ships images unoptimized; next/image is not used on this site. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={slide.src}
-                alt={slide.title}
-                width={width}
-                height={height}
-                loading={i === 0 ? undefined : "lazy"}
-                decoding="async"
-                draggable={false}
-              />
-            </div>
-          ))}
+      <DeviceFrame variant={variant} ratio={ratio}>
+        <div
+          className="cr__viewport"
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerCancel={() => (touch.current = null)}
+        >
+          <div className="cr__track" style={{ transform: `translateX(-${index * 100}%)` }}>
+            {slides.map((slide, i) => (
+              <div
+                key={slide.src}
+                className="cr__slide"
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${i + 1} of ${count}`}
+                aria-hidden={i !== index}
+              >
+                <CroppedImage
+                  src={slide.src}
+                  alt={slide.title}
+                  width={width}
+                  height={height}
+                  crop={slide.crop}
+                  fit={slide.fit}
+                  radius={slide.radius}
+                  ratio={ratio}
+                  loading={i === 0 ? undefined : "lazy"}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </DeviceFrame>
 
-      <div className="cr__caption" aria-live={playing ? "off" : "polite"}>
-        <p className="cr__title">{slides[index].title}</p>
-        <p className="cr__text">{slides[index].text}</p>
+      <div className="cr__caption">
+        <div className="cr__cap" aria-live={playing ? "off" : "polite"}>
+          <p className="cr__title">{slides[index].title}</p>
+          <p className="cr__text">{slides[index].text}</p>
+        </div>
+        {slides.map((slide) => (
+          <div key={slide.src} className="cr__cap cr__cap--ghost" aria-hidden="true">
+            <p className="cr__title">{slide.title}</p>
+            <p className="cr__text">{slide.text}</p>
+          </div>
+        ))}
       </div>
 
       <div className="cr__controls">

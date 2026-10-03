@@ -1,114 +1,139 @@
 import React from "react";
 import Link from "next/link";
+import { Hash, Layers, ScanSearch } from "lucide-react";
 import CtaButton from "./CtaButton";
-import ShowcaseMedia from "./ShowcaseMedia";
-import { caseStudies, caseStudiesIntro } from "@content/caseStudies";
+import DeviceFrame, { CroppedImage } from "./DeviceFrame";
+import { caseStudies, caseStudiesIntro, caseStudyHome } from "@content/caseStudies";
+import { PRINTVERIFY_SLIDES, SLIDE_SCREEN_RATIO, SLIDE_SIZE } from "@content/productSlides";
+
+const ICONS = { layers: Layers, hash: Hash, scan: ScanSearch } as const;
+
+/** The job's screens: printverify-1 and printverify-4 (both already blurred). */
+const JOB_SLIDES = ["/showcase/printverify-1.webp", "/showcase/printverify-4.webp"]
+  .map((src) => PRINTVERIFY_SLIDES.find((slide) => slide.src === src))
+  .filter((slide) => slide !== undefined);
 
 /**
- * PrintVerify proof as an investigation, not a card grid.
- * The varnish job is the only case with a captured engine output — it leads.
+ * PrintVerify case study: a hook, a question the visitor answers for themselves,
+ * what PrintVerify checks, then the real varnish-plate job with its screens and
+ * the engine's result. Two smaller cases follow.
  */
 export default function CaseStudy() {
-  const lead = caseStudies[0];
+  const copy = caseStudyHome;
   const rest = caseStudies.slice(1);
-  if (!lead) return null;
 
   return (
     <section aria-labelledby="case-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
       <div className="mx-auto max-w-7xl">
-        <p data-m="reveal" className="story-kicker">
-          {caseStudiesIntro.eyebrow}
-        </p>
-        <p data-m="reveal" className="eco-badge mt-3">
-          From real production experience
-        </p>
-        <h2
-          data-m="lines"
-          id="case-heading"
-          className="mt-5 max-w-3xl font-display text-display-lg font-bold text-primary text-balance"
-        >
-          {lead.title}
-        </h2>
-        <p data-m="reveal" className="mt-5 max-w-2xl text-body-lg text-muted">
-          {lead.standfirst}
-        </p>
-        <p data-m="reveal" className="mt-2 text-sm text-faint">
-          Representative job, details anonymised.
-        </p>
-
-        <div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-          <div className="evidence-sheet p-6 sm:p-8" data-m="parallax" data-m-speed="3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">Declared units</p>
-            {lead.declared.units ? (
-              <ul className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4" data-m="plates">
-                {lead.declared.units.map((unit) => (
-                  <li
-                    key={unit.name}
-                    className={`plate-chip ${unit.present ? "" : "is-missing"}`}
-                  >
-                    <span
-                      className="plate-chip__swatch"
-                      style={{ background: unit.swatch ?? "transparent" }}
-                    />
-                    <span>{unit.name}</span>
-                    {unit.present ? null : <span className="plate-chip__miss">Missing</span>}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div className="mt-8 grid grid-cols-3 gap-4 border-t border-hairline pt-6">
-              <p>
-                <span className="evidence-figure m-num text-primary" data-m="counter">7</span>
-                <span className="mt-2 block text-sm text-muted">units declared</span>
-              </p>
-              <p>
-                <span className="evidence-figure m-num text-primary" data-m="counter">6</span>
-                <span className="mt-2 block text-sm text-muted">plates found</span>
-              </p>
-              <p>
-                <span className="mt-2 block font-display text-xl font-semibold text-accent sm:text-2xl">Varnish missing</span>
-              </p>
-            </div>
-            <ShowcaseMedia slug="printverify" title="PrintVerify check of the varnish-plate job" className="mt-8" />
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-end lg:gap-16">
+          <div>
+            <p data-m="reveal" className="story-kicker">
+              {copy.eyebrow}
+            </p>
+            <h2
+              data-m="lines"
+              id="case-heading"
+              className="mt-5 max-w-3xl font-display text-display-lg font-bold text-primary text-balance"
+            >
+              {copy.headline}
+            </h2>
+            <p data-m="reveal" className="mt-5 max-w-2xl text-body-lg text-muted">
+              {copy.sub}
+            </p>
           </div>
 
-          <div className="evidence-sheet p-6 sm:p-8" data-m="parallax" data-m-speed="-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-faint">{lead.errorClass}</p>
-            {lead.output ? (
-              <blockquote className="mt-6 border-l border-accent-line pl-4 font-mono text-sm leading-relaxed text-primary">
-                {lead.output.summary}
-              </blockquote>
-            ) : null}
-            <dl className="mt-8 space-y-3">
-              {lead.facts.map((fact) => (
-                <div key={fact.label} className="flex justify-between gap-4 border-b border-hairline pb-3 text-sm">
-                  <dt className="text-faint">{fact.label}</dt>
-                  <dd className="text-right text-primary">{fact.value}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-6 text-sm text-muted">{lead.consequence}</p>
+          <div data-m="reveal" className="cs-question">
+            <p className="font-display text-title font-semibold text-primary text-balance">{copy.question.text}</p>
+            <p className="cs-question__answer">{copy.question.answer}</p>
           </div>
         </div>
 
-        {rest.length > 0 ? (
-          <ol data-m="reveal" className="mt-16 grid gap-8 lg:grid-cols-2">
-            {rest.map((study) => (
-              <li key={study.slug} data-m-child data-m-card className="border-t border-hairline pt-6">
-                <Link href={`${caseStudiesIntro.cta.href}#${study.slug}`} className="group block">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{study.errorClass}</p>
-                  <h3 className="mt-3 font-display text-title font-semibold text-primary">{study.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-muted">{study.teaser}</p>
-                  <p className="mt-4 text-sm text-faint">
-                    Read it
-                    <span aria-hidden="true" className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                      {" →"}
-                    </span>
-                  </p>
-                </Link>
+        <ul data-m="reveal" className="mt-14 grid gap-4 md:grid-cols-3">
+          {copy.points.map((point) => {
+            const Icon = ICONS[point.icon];
+            return (
+              <li key={point.title} data-m-child className="cs-point">
+                <span className="cs-point__icon" aria-hidden="true">
+                  <Icon size={20} />
+                </span>
+                <h3 className="mt-4 font-display text-lg font-semibold text-primary">{point.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{point.text}</p>
               </li>
+            );
+          })}
+        </ul>
+
+        <div data-m="reveal" className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <CtaButton href={copy.cta.href}>{copy.cta.label}</CtaButton>
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-faint">{copy.status}</span>
+        </div>
+
+        <div className="evidence-sheet mt-16 grid gap-8 p-5 sm:p-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12">
+          <div data-m="reveal">
+            <h3 data-m-child className="font-display text-display-md font-semibold text-primary text-balance">
+              {copy.job.heading}
+            </h3>
+            {copy.job.body.map((line) => (
+              <p key={line} data-m-child className="mt-4 text-body-lg text-muted">
+                {line}
+              </p>
             ))}
-          </ol>
+            <p data-m-child className="cs-result" role="note" aria-label="PrintVerify result">
+              <span aria-hidden="true" className="cs-result__prompt">
+                {"›"}
+              </span>
+              {copy.job.result}
+            </p>
+            <p data-m-child className="mt-4 text-sm text-faint">
+              {copy.job.note}
+            </p>
+          </div>
+
+          <figure className="m-0">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {JOB_SLIDES.map((slide) => (
+                <DeviceFrame key={slide.src} variant="browser" ratio={SLIDE_SCREEN_RATIO} tilt={false} className="dvf--compact">
+                  <CroppedImage
+                    src={slide.src}
+                    alt={slide.title}
+                    width={SLIDE_SIZE.width}
+                    height={SLIDE_SIZE.height}
+                    crop={slide.crop}
+                    fit={slide.fit}
+                    radius={slide.radius}
+                    ratio={SLIDE_SCREEN_RATIO}
+                    loading="lazy"
+                  />
+                </DeviceFrame>
+              ))}
+            </div>
+            <figcaption className="media-caption">{copy.job.imagesNote}</figcaption>
+          </figure>
+        </div>
+
+        {rest.length > 0 ? (
+          <>
+            <h3 data-m="reveal" className="mt-16 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
+              {copy.moreHeading}
+            </h3>
+            <ol data-m="reveal" className="mt-6 grid gap-8 lg:grid-cols-2">
+              {rest.map((study) => (
+                <li key={study.slug} data-m-child data-m-card className="border-t border-hairline pt-6">
+                  <Link href={`${caseStudiesIntro.cta.href}#${study.slug}`} className="group block">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{study.errorClass}</p>
+                    <h4 className="mt-3 font-display text-title font-semibold text-primary">{study.title}</h4>
+                    <p className="mt-3 text-sm leading-relaxed text-muted">{study.teaser}</p>
+                    <p className="mt-4 text-sm text-faint">
+                      Read it
+                      <span aria-hidden="true" className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                        {" →"}
+                      </span>
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </>
         ) : null}
 
         <div data-m="reveal" className="mt-10">

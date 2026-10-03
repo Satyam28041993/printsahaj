@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import CtaButton from "./CtaButton";
 import Carousel from "./Carousel";
-import { FLEXORA_SLIDES, PRINTVERIFY_SLIDES, SLIDE_SIZE } from "@content/productSlides";
+import { FLEXORA_SLIDES, PRINTVERIFY_SLIDES, SLIDE_SCREEN_RATIO, SLIDE_SIZE } from "@content/productSlides";
 import { home } from "@content/home";
 
 export default function ProductChapters() {
@@ -15,7 +15,7 @@ export default function ProductChapters() {
         <section aria-labelledby="printverify-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,128px)] sm:px-8">
           <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-16">
             <div data-m="reveal">
-              <Carousel slides={PRINTVERIFY_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} label="PrintVerify screens" />
+              <Carousel slides={PRINTVERIFY_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} ratio={SLIDE_SCREEN_RATIO} label="PrintVerify screens" />
             </div>
             <div>
               <div data-m="reveal">
@@ -56,7 +56,7 @@ export default function ProductChapters() {
               </div>
             </div>
             <div data-m="reveal">
-              <Carousel slides={FLEXORA_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} label="Flexora screens" />
+              <Carousel slides={FLEXORA_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} ratio={SLIDE_SCREEN_RATIO} variant="laptop" label="Flexora screens" />
             </div>
           </div>
         </section>
