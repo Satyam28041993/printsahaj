@@ -21,6 +21,8 @@
  * the live header, footer, and metadata do not change in this step.
  */
 
+import { EMAIL } from "../src/data/contact";
+
 export type PageIntent =
   | "Product"
   | "Business Solution"
@@ -141,7 +143,7 @@ export const printSahajSite: PrintSahajSite = {
       "Software, AI, automation and digital growth systems built around real business problems, with deep expertise in printing & packaging.",
   },
   contact: {
-    email: "singhsatyam28@gmail.com",
+    email: EMAIL,
     whatsappNumber: "919650744197",
     emailPublic: true,
     whatsappPublic: true,

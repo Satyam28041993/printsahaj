@@ -4,6 +4,7 @@ import Logo from "@/components/Logo";
 import FooterMotionGate from "./FooterMotionGate";
 import { printSahajSite } from "@content/site";
 import { tools } from "@content/tools";
+import { EMAIL, PHONE_DISPLAY, PHONE_TEL } from "@/data/contact";
 
 function Arrow() {
   return (
@@ -163,7 +164,14 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-hairline pt-6 sm:flex-row sm:items-center">
-          <p className="text-sm text-faint">{footer.copyright}</p>
+          <div className="flex flex-col gap-1 text-sm text-faint">
+            <p>{footer.copyright}</p>
+            <p className="flex flex-wrap gap-x-2">
+              <a href={PHONE_TEL} className="footer-link">{PHONE_DISPLAY}</a>
+              <span aria-hidden="true">·</span>
+              <a href={`mailto:${EMAIL}`} className="footer-link">{EMAIL}</a>
+            </p>
+          </div>
           <a href="#main" className="back-to-top">
             Back to top
             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
