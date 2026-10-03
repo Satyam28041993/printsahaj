@@ -18,8 +18,8 @@ export type CollageLayer = {
   ratio: number;
   /** Only the main (back) layer gets a meaningful alt; the others are decorative (""). */
   alt: string;
-  /** Front layer only: "center" sits bottom-centre, "wide" keeps the layout's spot; both are wider (thin strips). */
-  place?: "center" | "wide";
+  /** Front layer only: "callout" is a wide zoom of a thin strip, bottom-right (bottom-centre on phones). */
+  place?: "callout";
 };
 
 export type CollageLayout = "stack-right" | "stack-left" | "fan";

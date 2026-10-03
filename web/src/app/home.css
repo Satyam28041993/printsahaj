@@ -1103,6 +1103,28 @@
   }
 }
 
+/* The collages need more room than the flow demo: a wider media column (for
+   every service, so autoplay onto the flow demo never re-flows the text) and
+   less padding around a collage, so its back screen is >= 440px wide at 1440.
+   Only from 1200px: narrower, the text column would wrap into a taller,
+   more variable accordion (more shift below the card as it autoplays). */
+@media (min-width: 1200px) {
+  .hp-card {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+}
+
+/* Top-aligned, not centred: the row grows as the accordion opens, and a centred
+   collage would slide down with it (layout shift during autoplay). */
+.hp-demo:has(.dvc) {
+  align-items: start;
+  padding: clamp(16px, 1.8vw, 28px);
+}
+
+.hp-demo .dvc {
+  --dvc-pad: clamp(10px, 1.4vw, 20px);
+}
+
 .hp-info {
   padding: clamp(22px, 3vw, 44px);
 }
@@ -2056,9 +2078,9 @@
 .dvc--fan .dvc__layer--front { top: 18%; bottom: auto; --hmax: calc(var(--H) * 0.82); }
 .dvc--fan .dvc__layer--accent { left: 0; bottom: 0; }
 
-/* thin strips (Aivy's meeting card) run wider */
-.dvc .dvc__layer--center { left: 0; right: 0; bottom: 6%; margin-inline: auto; --w: 70cqw; }
-.dvc .dvc__layer--wide { --w: 64cqw; }
+/* callout: a thin strip (Aivy's meeting card) zoomed past its size in the back,
+   overlapping the back's empty lower edge */
+.dvc .dvc__layer--callout { right: 0; bottom: 6%; --w: 82cqw; }
 
 @media (max-width: 1023px) {
   .dvc__layer--back { --w: 84cqw; }
@@ -2066,13 +2088,13 @@
   .dvc__layer--accent { bottom: 2%; left: 4%; --w: 36cqw; }
   .dvc--stack-left .dvc__layer--accent { left: auto; right: 4%; }
   .dvc--fan .dvc__layer--accent { left: 0; bottom: 0; }
-  .dvc .dvc__layer--center { --w: 76cqw; }
-  .dvc .dvc__layer--wide { --w: 68cqw; }
+  .dvc .dvc__layer--callout { --w: 84cqw; }
 }
 
 @media (max-width: 639px) {
-  /* Readability first: the back screen spans the full width (>= 330px at a
-     390px viewport), the front >= 60%. The showcase panel and stage give up
+  /* Readability first: the back screen spans nearly the full width (320px at
+     a 390px viewport, inside an 8px inset), the front is smaller and sits low
+     so most of the back stays visible. The showcase panel and stage give up
      some side padding for it (the Help panel already uses 12px here). */
   .sc {
     padding-inline: 12px;
@@ -2083,7 +2105,7 @@
   }
 
   .dvc {
-    --dvc-pad: 0px;
+    --dvc-pad: 8px;
     border-radius: 16px;
   }
 
@@ -2094,11 +2116,10 @@
   }
 
   .dvc__layer--back { --w: 100cqw; }
-  .dvc__layer--front { --w: 62cqw; }
+  .dvc__layer--front { --w: 52cqw; }
   .dvc__layer--accent { display: none; }
   .dvc--fan .dvc__layer--front { top: auto; bottom: 0; --hmax: calc(var(--H) * 0.8); }
-  .dvc .dvc__layer--center,
-  .dvc .dvc__layer--wide { bottom: 0; --w: 88cqw; }
+  .dvc .dvc__layer--callout { left: 0; right: 0; bottom: 0; margin-inline: auto; --w: 88cqw; }
 }
 
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {

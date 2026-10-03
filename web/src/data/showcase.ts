@@ -52,7 +52,6 @@ export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora ERP · Plant Operations Command Center (live)",
   crm: "LeadTrack CRM · lead pipeline & dashboard",
   erp: "Flexora ERP · dashboard, pipeline and roll stock",
-  automation: "Aivy · meetings and reminders set up automatically",
   website: "Client websites · packaging & manufacturing",
   marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
   printverify: "PrintVerify · vendor plate check (artwork blurred)",
@@ -103,9 +102,8 @@ const crop = (
 const WEB_A: CropBox = [36, 36, 585, 440]; // packaging client site, large hero (logo + name blurred)
 const WEB_B: CropBox = [656, 36, 333, 208]; // industrial client site hero
 const WEB_C: CropBox = [656, 281, 333, 209]; // packaging client site hero
-const CRM_A: CropBox = [36, 36, 585, 454]; // LeadTrack sidebar + pipeline (leads blurred)
-const CRM_B: CropBox = [656, 36, 333, 208]; // Lead Overview KPI tiles
-const CRM_C: CropBox = [656, 281, 333, 209]; // Analytics filters
+const CRM_B: CropBox = [650, 31, 339, 213]; // Lead Overview KPI tiles
+const CRM_C: CropBox = [650, 276, 339, 214]; // Analytics filters
 // App cards of the product slides (boxes from content/productSlides.ts).
 const FX1: CropBox = [68, 106, 1064, 539];
 const FX2: CropBox = [181, 57, 838, 637];
@@ -157,29 +155,31 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
   },
   aivy: {
     layout: "stack-right",
-    layers: [full("aivy", "browser", "Aivy assistant drafting a meeting"), crop("aivy", WIDE, AIVY_CARD, "card", { place: "center" })],
+    // The meeting card again, zoomed: wider than it is in the back, over the chat's empty lower area.
+    layers: [full("aivy", "browser", "Aivy assistant drafting a meeting"), crop("aivy", WIDE, AIVY_CARD, "card", { place: "callout" })],
   },
   erp: undefined,
   automation: undefined,
   marketing: undefined,
 };
 
-/** "Where we can help you" (HelpScroll), per service slug. Layouts differ from the showcase on purpose. */
+/** "Where we can help you" (HelpScroll), per service slug. Layouts differ from the showcase on purpose.
+ *  A back layer must come from a source region at least as wide as it renders at 1x (~480px), so it is
+ *  never upscaled: the small 333px panels (WEB_B/C, CRM_B/C) only ever sit in front. */
 export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
   website: {
     layout: "stack-left",
     layers: [
-      crop("website", WIDE, WEB_B, "browser", { alt: "Industrial client website" }),
-      crop("website", WIDE, WEB_A, "browser"),
+      crop("website", WIDE, WEB_A, "browser", { alt: "Client website for a packaging manufacturer" }),
+      crop("website", WIDE, WEB_B, "browser"),
       crop("website", WIDE, WEB_C, "browser"),
     ],
   },
   crm: {
     layout: "stack-right",
     layers: [
-      crop("crm", WIDE, CRM_A, "browser", { alt: "Custom CRM pipeline with blurred leads" }),
-      crop("crm", WIDE, CRM_B, "tablet"),
-      crop("crm", WIDE, CRM_C, "card"),
+      full("marketing", "browser", "Custom CRM pipeline with blurred leads"),
+      crop("crm", WIDE, CRM_C, "tablet"),
     ],
   },
   erp: {
@@ -190,14 +190,8 @@ export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
       crop("flexora-4", SLIDE, FX4, "tablet"),
     ],
   },
-  automation: {
-    layout: "stack-right",
-    layers: [
-      full("aivy", "browser", "Aivy books meetings and reminders automatically"),
-      crop("aivy", WIDE, AIVY_CARD, "card", { place: "wide" }),
-      crop("crm", WIDE, CRM_C, "tablet"),
-    ],
-  },
+  // Off on purpose: the animated flow demo stays (the Aivy collage lives in the showcase's Aivy tab).
+  automation: undefined,
   marketing: {
     layout: "stack-left",
     layers: [
