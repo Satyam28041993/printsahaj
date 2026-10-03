@@ -45,7 +45,7 @@ export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora ERP · Plant Operations Command Center (live)",
   crm: "LeadTrack CRM · live lead dashboard",
   erp: "CRM + ERP for a machinery manufacturer · live (names blurred)",
-  website: "Client website · Tricil Packaging",
+  website: "Client website · packaging manufacturer",
   marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
   printverify: "PrintVerify · vendor plate check (artwork blurred)",
   aivy: "Aivy · AI assistant that books meetings and reminders",
