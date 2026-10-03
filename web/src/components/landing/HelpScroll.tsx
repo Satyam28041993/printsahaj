@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Pill from "./Pill";
 import ShowcaseMedia from "./ShowcaseMedia";
-import type { ShowcaseSlug } from "@/data/showcase";
+import { HELP_COLLAGES, type ShowcaseSlug } from "@/data/showcase";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import { useInViewState, usePrefersReducedMotion, useSpotlight } from "@/lib/useHomeMotion";
 import { help } from "@content/help";
@@ -234,10 +234,17 @@ export default function HelpScroll() {
               </ol>
             </div>
 
-            <div className="hp-demo m-swap" key={`demo-${service}`} aria-hidden="true">
+            {/* Only the active service's collage is mounted, so the others fetch nothing. The flow demo
+                (fallback) is decorative; a collage keeps its figure label and main alt for screen readers. */}
+            <div
+              className="hp-demo m-swap"
+              key={`demo-${service}`}
+              aria-hidden={HELP_COLLAGES[SERVICE_SLUG[service]] ? undefined : true}
+            >
               <ShowcaseMedia
                 slug={SERVICE_SLUG[service]}
                 title={current.title}
+                collage="help"
                 fallback={
               <div className="flow" key={current.title}>
                   {current.flow.map((label, i) => {

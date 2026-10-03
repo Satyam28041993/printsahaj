@@ -1103,6 +1103,28 @@
   }
 }
 
+/* The collages need more room than the flow demo: a wider media column (for
+   every service, so autoplay onto the flow demo never re-flows the text) and
+   less padding around a collage, so its back screen is >= 440px wide at 1440.
+   Only from 1200px: narrower, the text column would wrap into a taller,
+   more variable accordion (more shift below the card as it autoplays). */
+@media (min-width: 1200px) {
+  .hp-card {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+}
+
+/* Top-aligned, not centred: the row grows as the accordion opens, and a centred
+   collage would slide down with it (layout shift during autoplay). */
+.hp-demo:has(.dvc) {
+  align-items: start;
+  padding: clamp(16px, 1.8vw, 28px);
+}
+
+.hp-demo .dvc {
+  --dvc-pad: clamp(10px, 1.4vw, 20px);
+}
+
 .hp-info {
   padding: clamp(22px, 3vw, 44px);
 }
@@ -1917,6 +1939,207 @@
 /* Smaller stage padding when two frames sit side by side. */
 .dvf--compact {
   --dvf-pad: clamp(10px, 2vw, 16px);
+}
+
+/* tablet: a thin bezel, no browser bar */
+.dvf--tablet .dvf__device {
+  padding: 10px;
+  border-radius: 18px;
+  background: var(--dvf-bezel);
+}
+
+.dvf--tablet .dvf__window {
+  border-radius: 8px;
+  border-color: transparent;
+}
+
+/* card: no chrome, a floating UI fragment */
+.dvf--card .dvf__device,
+.dvf--card .dvf__window {
+  border-radius: 14px;
+}
+
+@media (max-width: 639px) {
+  .dvf--tablet .dvf__device {
+    padding: 6px;
+  }
+
+  .dvf--tablet .dvf__window {
+    border-radius: 12px;
+  }
+}
+
+/* ---- DeviceCollage: 2-3 layered screens on one backdrop -------------------
+   The stage has a fixed aspect-ratio; layers are absolute, in % of it. Each
+   layer's height is width * --a + --b (screen aspect --r plus its chrome), so
+   its width is capped at what fits under --hmax: nothing pokes out of the stage.
+   Flat below 1024px and for reduced motion; tilt uses transforms only. */
+.dvc {
+  --dvc-glow-a: color-mix(in srgb, var(--brand-a) 14%, transparent);
+  --dvc-glow-b: color-mix(in srgb, var(--violet) 10%, transparent);
+  --dvc-base: var(--bg-sunken);
+  --dvc-lift: 0 30px 60px -20px rgba(10, 11, 13, 0.35);
+  --dvc-pad: clamp(14px, 2.6vw, 30px);
+  position: relative;
+  padding: var(--dvc-pad);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(75% 65% at 88% 12%, var(--dvc-glow-a), transparent 70%),
+    radial-gradient(70% 65% at 8% 96%, var(--dvc-glow-b), transparent 70%),
+    linear-gradient(160deg, var(--dvc-base), color-mix(in srgb, var(--brand-a) 4%, var(--dvc-base)));
+}
+
+.dark .dvc {
+  --dvc-glow-a: color-mix(in srgb, var(--brand-a) 18%, transparent);
+  --dvc-glow-b: color-mix(in srgb, #6366f1 14%, transparent);
+  --dvc-base: #0b0d12;
+  --dvc-lift: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+}
+
+.dvc__stage {
+  /* Stage height in container units (stage width = 100cqw). */
+  --H: 62.5cqw;
+  --tablet-b: 22px;
+  position: relative;
+  aspect-ratio: 16 / 10;
+  container-type: inline-size;
+  perspective: 1800px;
+}
+
+.dvc .dvf {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+/* Laptop base is wider than the screen: keep it inside the layer box. */
+.dvc .dvf--laptop .dvf__rig {
+  padding-inline: 3.5%;
+}
+
+.dvc .dvf--laptop .dvf__base {
+  margin-inline: -3.7%;
+}
+
+.dvc__layer {
+  --a: calc(1 / var(--r));
+  --b: 0px;
+  --hmax: var(--H);
+  position: absolute;
+  width: min(var(--w), calc((var(--hmax) - var(--b)) / var(--a)));
+}
+
+.dvc__layer--browser { --b: 32px; }
+.dvc__layer--laptop { --a: calc(0.93 * (0.956 / var(--r) + 0.048)); --b: 44px; }
+.dvc__layer--tablet { --b: var(--tablet-b); }
+.dvc__layer--card { --b: 2px; }
+.dvc__layer--phone { --b: 22px; }
+
+/* Small browsers (front / accent): a slimmer bar, no URL pill to cut off. */
+.dvc__layer--browser:not(.dvc__layer--back) { --b: 22px; }
+
+.dvc__layer:not(.dvc__layer--back) .dvf__bar {
+  height: 20px;
+  padding-inline: 8px;
+}
+
+.dvc__layer:not(.dvc__layer--back) .dvf__dots {
+  gap: 4px;
+}
+
+.dvc__layer:not(.dvc__layer--back) .dvf__dots i {
+  width: 7px;
+  height: 7px;
+}
+
+.dvc__layer:not(.dvc__layer--back) .dvf__url,
+.dvc__layer:not(.dvc__layer--back) .dvf__bar::after {
+  display: none;
+}
+
+.dvc__layer--front .dvf__device,
+.dvc__layer--accent .dvf__device {
+  box-shadow: var(--dvf-shadow), var(--dvc-lift);
+}
+
+/* stack-right (default) */
+.dvc__layer--back { top: 0; left: 0; z-index: 1; --w: 80cqw; }
+.dvc__layer--accent { bottom: 4%; left: 6%; z-index: 2; --w: 34cqw; --hmax: calc(var(--H) * 0.5); }
+.dvc__layer--front { right: 0; bottom: 0; z-index: 3; --w: 44cqw; --hmax: calc(var(--H) * 0.8); }
+
+/* stack-left mirrors it */
+.dvc--stack-left .dvc__layer--back { left: auto; right: 0; }
+.dvc--stack-left .dvc__layer--front { right: auto; left: 0; }
+.dvc--stack-left .dvc__layer--accent { left: auto; right: 6%; }
+
+/* fan: front up on the right, accent in the bottom-left corner */
+.dvc--fan .dvc__layer--front { top: 18%; bottom: auto; --hmax: calc(var(--H) * 0.82); }
+.dvc--fan .dvc__layer--accent { left: 0; bottom: 0; }
+
+/* callout: a thin strip (Aivy's meeting card) zoomed past its size in the back,
+   overlapping the back's empty lower edge */
+.dvc .dvc__layer--callout { right: 0; bottom: 6%; --w: 82cqw; }
+
+@media (max-width: 1023px) {
+  .dvc__layer--back { --w: 84cqw; }
+  .dvc__layer--front { --w: 48cqw; }
+  .dvc__layer--accent { bottom: 2%; left: 4%; --w: 36cqw; }
+  .dvc--stack-left .dvc__layer--accent { left: auto; right: 4%; }
+  .dvc--fan .dvc__layer--accent { left: 0; bottom: 0; }
+  .dvc .dvc__layer--callout { --w: 84cqw; }
+}
+
+@media (max-width: 639px) {
+  /* Readability first: the back screen spans nearly the full width (320px at
+     a 390px viewport, inside an 8px inset), the front is smaller and sits low
+     so most of the back stays visible. The showcase panel and stage give up
+     some side padding for it (the Help panel already uses 12px here). */
+  .sc {
+    padding-inline: 12px;
+  }
+
+  .sc-stage:has(.dvc) {
+    padding-inline: 0;
+  }
+
+  .dvc {
+    --dvc-pad: 8px;
+    border-radius: 16px;
+  }
+
+  .dvc__stage {
+    --H: 85cqw;
+    --tablet-b: 14px;
+    aspect-ratio: 4 / 3.4;
+  }
+
+  .dvc__layer--back { --w: 100cqw; }
+  .dvc__layer--front { --w: 52cqw; }
+  .dvc__layer--accent { display: none; }
+  .dvc--fan .dvc__layer--front { top: auto; bottom: 0; --hmax: calc(var(--H) * 0.8); }
+  .dvc .dvc__layer--callout { left: 0; right: 0; bottom: 0; margin-inline: auto; --w: 88cqw; }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .dvc__layer {
+    transition: transform 0.5s var(--h-ease);
+  }
+
+  .dvc__layer--back { transform: rotateY(-4deg) rotateX(2deg); }
+  .dvc__layer--front { transform: rotateY(-8deg) rotateX(3deg) translateZ(40px); }
+  .dvc__layer--accent { transform: rotate(-2deg); }
+  .dvc--stack-left .dvc__layer--back { transform: rotateY(4deg) rotateX(2deg); }
+  .dvc--stack-left .dvc__layer--front { transform: rotateY(8deg) rotateX(3deg) translateZ(40px); }
+  .dvc--stack-left .dvc__layer--accent { transform: rotate(2deg); }
+
+  .dvc:is(:hover, :focus-within) .dvc__layer--back { transform: rotateY(-2deg) rotateX(1deg); }
+  .dvc:is(:hover, :focus-within) .dvc__layer--front { transform: rotateY(-4deg) rotateX(1.5deg) translateZ(20px); }
+  .dvc:is(:hover, :focus-within) .dvc__layer--accent { transform: rotate(-1deg); }
+  .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--back { transform: rotateY(2deg) rotateX(1deg); }
+  .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--front { transform: rotateY(4deg) rotateX(1.5deg) translateZ(20px); }
+  .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--accent { transform: rotate(1deg); }
 }
 
 /* ---- case study (PrintVerify) -------------------------------------------- */

@@ -1,8 +1,16 @@
 "use client";
 
 import React from "react";
-import { SHOWCASE_CAPTIONS, SHOWCASE_MEDIA, SHOWCASE_SIZE, type ShowcaseSlug } from "@/data/showcase";
+import {
+  HELP_COLLAGES,
+  SHOWCASE_CAPTIONS,
+  SHOWCASE_COLLAGES,
+  SHOWCASE_MEDIA,
+  SHOWCASE_SIZE,
+  type ShowcaseSlug,
+} from "@/data/showcase";
 import { useInViewState, usePrefersReducedMotion } from "@/lib/useHomeMotion";
+import DeviceCollage from "./DeviceCollage";
 import DeviceFrame from "./DeviceFrame";
 
 /**
@@ -11,18 +19,27 @@ import DeviceFrame from "./DeviceFrame";
  * src/data/showcase.ts, else `fallback` (the animated mock-up), else nothing.
  * The video is muted, looping, inline, only loaded once near the screen, and
  * stays on its poster image for visitors who prefer reduced motion.
+ * When `collage` names a set that has a collage for this slug, that layered
+ * mock-up (DeviceCollage) is shown instead.
  */
 export default function ShowcaseMedia({
   slug,
   title,
   fallback = null,
   className = "",
+  collage,
+  priority = false,
 }: {
   slug: ShowcaseSlug;
   title: string;
   fallback?: React.ReactNode;
   className?: string;
+  /** Which collage set to use: "Systems that work" or "Where we can help you". */
+  collage?: "showcase" | "help";
+  /** Eager-load the collage's main image (first visible tab only). */
+  priority?: boolean;
 }) {
+  const spec = collage === "showcase" ? SHOWCASE_COLLAGES[slug] : collage === "help" ? HELP_COLLAGES[slug] : undefined;
   const flags = SHOWCASE_MEDIA[slug];
   const image = flags.webp ? `/showcase/${slug}.webp` : flags.png ? `/showcase/${slug}.png` : null;
   const video = flags.mp4 ? `/showcase/${slug}.mp4` : null;
@@ -34,6 +51,7 @@ export default function ShowcaseMedia({
     if (inView) setNear(true);
   }, [inView]);
 
+  if (spec) return <DeviceCollage {...spec} label={title} caption={SHOWCASE_CAPTIONS[slug]} priority={priority} />;
   if (!image && !video) return <>{fallback}</>;
 
   return (

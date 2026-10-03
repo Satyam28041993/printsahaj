@@ -5,11 +5,13 @@ import React from "react";
  *  - browser: window chrome (three dots + a generic URL pill)
  *  - laptop:  the same window inside a bezel, on a base
  *  - phone:   rounded bezel with a notch (portrait screens)
+ *  - tablet:  a thin bezel, no browser bar
+ *  - card:    no chrome at all, a rounded screen with a shadow (floating UI fragments)
  * The screen has a fixed aspect-ratio, so its height is known before any image
  * loads (no layout shift). A theme-aware gradient sits behind the device; the
  * slight tilt is applied in CSS only at >= 1024px without reduced motion.
  */
-export type DeviceVariant = "browser" | "laptop" | "phone";
+export type DeviceVariant = "browser" | "laptop" | "phone" | "tablet" | "card";
 
 export default function DeviceFrame({
   variant = "browser",
@@ -29,7 +31,7 @@ export default function DeviceFrame({
   children: React.ReactNode;
 }) {
   const chrome =
-    variant === "phone" ? null : (
+    variant === "phone" || variant === "tablet" || variant === "card" ? null : (
       <div className="dvf__bar" aria-hidden="true">
         <span className="dvf__dots">
           <i />
@@ -83,6 +85,7 @@ export function CroppedImage({
   fit = "fill",
   radius = 0,
   loading,
+  sizes,
 }: {
   src: string;
   alt: string;
@@ -94,6 +97,8 @@ export function CroppedImage({
   /** Corner radius of the cropped card, in source pixels (card fit only). */
   radius?: number;
   loading?: "lazy" | "eager";
+  /** Layout width hint for the browser (there is no srcset: one size per file). */
+  sizes?: string;
 }) {
   const [cx, cy, cw, ch] = crop ?? [0, 0, width, height];
   const c = cw / ch;
@@ -122,6 +127,7 @@ export function CroppedImage({
         width={width}
         height={height}
         loading={loading}
+        sizes={sizes}
         decoding="async"
         draggable={false}
         style={{
