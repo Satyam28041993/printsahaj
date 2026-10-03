@@ -298,6 +298,8 @@ export default function HomeShowcase() {
                   <ShowcaseMedia
                     slug={MEDIA_SLUG[tab.id] as ShowcaseSlug}
                     title={tab.label}
+                    collage="showcase"
+                    priority={active === 0}
                     fallback={<MiniUi id={tab.id} calc={calc} onCalcChange={setCalc} />}
                   />
                 ) : (
