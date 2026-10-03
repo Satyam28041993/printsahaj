@@ -2,6 +2,7 @@
 
 import React from "react";
 import { SHOWCASE_CAPTIONS, SHOWCASE_MEDIA, SHOWCASE_SIZE, type ShowcaseSlug } from "@/data/showcase";
+import DeviceFrame from "./DeviceFrame";
 import { useInViewState, usePrefersReducedMotion } from "@/lib/useHomeMotion";
 
 /**
@@ -37,14 +38,7 @@ export default function ShowcaseMedia({
 
   return (
     <figure ref={ref} className={`media-figure ${className}`}>
-    <div className="dev media-frame">
-      <div className="dev__bar" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <span className="dev__title">{title}</span>
-      </div>
-      <div className="media-frame__screen">
+    <DeviceFrame aspect={SHOWCASE_SIZE.width / SHOWCASE_SIZE.height} url="app.printsahaj" className="media-frame">
         {video && near && !reduced ? (
           <video
             src={video}
@@ -61,8 +55,7 @@ export default function ShowcaseMedia({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={title} width={SHOWCASE_SIZE.width} height={SHOWCASE_SIZE.height} loading="lazy" decoding="async" />
         ) : null}
-      </div>
-    </div>
+    </DeviceFrame>
     {SHOWCASE_CAPTIONS[slug] ? <figcaption className="media-caption">{SHOWCASE_CAPTIONS[slug]}</figcaption> : null}
     </figure>
   );

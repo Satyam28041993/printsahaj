@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useInViewState, usePrefersReducedMotion } from "@/lib/useHomeMotion";
+import DeviceFrame from "./DeviceFrame";
 import type { ProductSlide } from "@content/productSlides";
 
 const INTERVAL_MS = 3500;
@@ -85,9 +86,9 @@ export default function Carousel({
       }}
       onKeyDown={onKeyDown}
     >
+      <DeviceFrame aspect={width / height} crop>
       <div
         className="cr__viewport"
-        style={{ aspectRatio: `${width} / ${height}` }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => (touch.current = null)}
@@ -117,6 +118,7 @@ export default function Carousel({
           ))}
         </div>
       </div>
+      </DeviceFrame>
 
       <div className="cr__caption" aria-live={playing ? "off" : "polite"}>
         <p className="cr__title">{slides[index].title}</p>

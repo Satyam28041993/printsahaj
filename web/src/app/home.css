@@ -1706,7 +1706,7 @@
 .media-figure { width: 100%; max-width: 640px; margin: 0; }
 .media-frame { max-width: none; }
 /* The screenshots are 1024 x 525: the frame keeps that ratio, so nothing is cropped. */
-.media-frame__screen { aspect-ratio: 1024 / 525; background: var(--bg-sunken); }
+.media-frame__screen { background: var(--bg-sunken); }
 .media-caption { margin-top: 0.6rem; font-size: 0.75rem; line-height: 1.4; color: var(--text-muted); text-align: center; }
 .media-frame__screen img,
 .media-frame__screen video { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top; }
@@ -1840,10 +1840,7 @@
 .cr__viewport {
   position: relative;
   overflow: hidden;
-  border-radius: var(--h-radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-sunken);
-  box-shadow: var(--shadow-card);
+  height: 100%;
   /* Horizontal swipes change slide; vertical pans stay native. */
   touch-action: pan-y;
 }
@@ -1870,7 +1867,12 @@
 
 .cr__caption {
   margin-top: 0.9rem;
-  min-height: 3.6rem;
+  /* title + 2 lines on a phone: constant height, so slide changes never shift the page */
+  min-height: 4.75rem;
+}
+
+@media (min-width: 640px) {
+  .cr__caption { min-height: 3.9rem; }
 }
 
 .cr__title {
@@ -2033,3 +2035,53 @@
   color: var(--accent);
   transform: translate(2px, -2px);
 }
+
+/* ---- DeviceFrame: pure CSS browser / laptop / phone chrome ---------------- */
+.df {
+  position: relative;
+  width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, var(--bg-sunken), color-mix(in srgb, #14b8a6 10%, var(--bg-sunken)));
+  box-shadow: 0 24px 50px -28px rgba(10, 11, 13, 0.35);
+}
+.df__tilt {
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-lift);
+}
+.df__chrome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sunken);
+}
+.df__chrome i { width: 9px; height: 9px; border-radius: 50%; background: var(--border-hover); }
+.df__url {
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.8rem;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 0.6875rem;
+  color: var(--text-faint);
+}
+.df__screen { position: relative; overflow: hidden; background: #f5f7fb; }
+.df__screen img,
+.df__screen video { display: block; width: 100%; height: 100%; object-fit: cover; }
+.df__screen--crop img { transform: scale(1.06); }
+.df__base { display: block; height: 10px; background: var(--border-hover); }
+.df--laptop .df__tilt { border-width: 6px; border-color: var(--text-primary); }
+.df--phone { max-width: 280px; margin-inline: auto; border-radius: 34px; }
+.df--phone .df__tilt { border-radius: 26px; border-width: 5px; border-color: var(--text-primary); }
+.df__notch { display: block; width: 36%; height: 6px; margin: 6px auto; border-radius: 999px; background: var(--border-hover); }
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .df { perspective: 1400px; }
+  .df__tilt { transform: rotateY(-3deg) rotateX(2deg); transition: transform 0.5s var(--h-ease, ease); }
+  .df:hover .df__tilt { transform: none; }
+}
+@media (max-width: 480px) { .df { padding: 8px; border-radius: 16px; } }
