@@ -63,7 +63,7 @@ export default function ShowcaseMedia({
         ) : null}
       </div>
     </div>
-    <figcaption className="media-caption">{SHOWCASE_CAPTIONS[slug]}</figcaption>
+    {SHOWCASE_CAPTIONS[slug] ? <figcaption className="media-caption">{SHOWCASE_CAPTIONS[slug]}</figcaption> : null}
     </figure>
   );
 }

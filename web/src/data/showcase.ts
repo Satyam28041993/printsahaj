@@ -30,7 +30,8 @@ export const SHOWCASE_MEDIA: Record<ShowcaseSlug, ShowcaseMediaFlags> = {
   website: { webp: true },
   crm: { webp: true },
   erp: { webp: true },
-  automation: { webp: true },
+  // Off on purpose: no screenshot for this slug, so the animated mock-up stays.
+  automation: {},
   marketing: { webp: true },
   aivy: { webp: true },
   printverify: { webp: true },
@@ -40,12 +41,11 @@ export const SHOWCASE_MEDIA: Record<ShowcaseSlug, ShowcaseMediaFlags> = {
 export const SHOWCASE_SIZE = { width: 1024, height: 525 } as const;
 
 /** One muted line under each frame. */
-export const SHOWCASE_CAPTIONS: Record<ShowcaseSlug, string> = {
+export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora ERP · Plant Operations Command Center (live)",
   crm: "LeadTrack CRM · live lead dashboard",
   erp: "CRM + ERP for a machinery manufacturer · live (names blurred)",
   website: "Client website · Tricil Packaging",
-  automation: "Automated label rate calculator · client employee portal",
   marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
   printverify: "PrintVerify · vendor plate check (artwork blurred)",
   aivy: "Aivy · AI assistant that books meetings and reminders",
