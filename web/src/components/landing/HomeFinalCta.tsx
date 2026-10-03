@@ -4,7 +4,7 @@ import CtaButton from "./CtaButton";
 import Pill from "./Pill";
 import EnquiryForm from "./EnquiryForm";
 import { help } from "@content/help";
-import { EMAIL, PHONE_DISPLAY, PHONE_TEL, WHATSAPP_URL } from "@/data/contact";
+import { EMAIL, EMAIL_CONSULT_URL, PHONE_DISPLAY, PHONE_TEL, WHATSAPP_URL } from "@/data/contact";
 import { home } from "@content/home";
 
 export default function HomeFinalCta() {
@@ -38,7 +38,7 @@ export default function HomeFinalCta() {
             </Pill>
           </div>
           <div data-m="reveal" className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <a href={`mailto:${EMAIL}`} className="founder-linkedin">
+            <a href={EMAIL_CONSULT_URL} className="founder-linkedin">
               {EMAIL}
             </a>
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="founder-linkedin">

@@ -1,12 +1,12 @@
 /**
- * The one place the public contact details live. Swap EMAIL here (for a business
- * address later) and every button, link and form on the site follows.
+ * The one place the public contact details live. Change EMAIL here and every button, link and form on the site follows.
  */
 
 export const PHONE_DISPLAY = "+91 96507 44197";
 export const PHONE_TEL = "tel:+919650744197";
 export const WHATSAPP_NUMBER = "919650744197";
-export const EMAIL = "singhsatyam28@gmail.com";
+export const EMAIL = "info@printsahaj.com";
+export const EMAIL_CONSULT_URL = `mailto:${EMAIL}?subject=Free%20consultation%20enquiry`;
 
 export const CONSULT_MESSAGE = "Hi Satyam, I'd like a free consultation for my business";
 

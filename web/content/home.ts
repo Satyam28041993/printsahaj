@@ -21,6 +21,7 @@
 
 import { printSahajSite, type CtaLink, type PageIntent, type ProjectStatus } from "./site";
 import { tools } from "./tools";
+import { EMAIL } from "../src/data/contact";
 
 export interface FounderTimelineItem {
   period: string;
@@ -758,7 +759,7 @@ export const home: HomeContent = {
     linkedinLabel: "Connect on LinkedIn",
     profileCta: { label: "Full profile & resume →", href: "/about" },
     linkedin: "https://www.linkedin.com/in/satyam-singh-3b178883/",
-    contact: { phone: "+91 9650744197", email: "singhsatyam28@gmail.com" },
+    contact: { phone: "+91 9650744197", email: EMAIL },
     focus: [
       "Marketing & Growth",
       "Printing & Packaging",

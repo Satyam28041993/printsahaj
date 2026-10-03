@@ -5,6 +5,23 @@ import "./home.css";
 import "./motion.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { printSahajSite } from "@content/site";
+import { EMAIL } from "@/data/contact";
+
+const orgJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "PrintSahaj",
+  url: "https://printsahaj.com",
+  email: EMAIL,
+  telephone: "+91-96507-44197",
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer support",
+    email: EMAIL,
+    telephone: "+91-96507-44197",
+    areaServed: "IN",
+  },
+});
 
 /**
  * Google Sans Flex, a free (OFL) variable sans: one file serves every weight the
@@ -64,6 +81,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLd }} />
       </head>
       <body className="min-h-full font-sans bg-base text-primary">
         <ThemeProvider>{children}</ThemeProvider>
