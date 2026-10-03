@@ -270,7 +270,7 @@ html[data-hidden] *::after {
   background: linear-gradient(
     105deg,
     transparent 15%,
-    color-mix(in srgb, var(--pill-fg) 34%, transparent) 50%,
+    color-mix(in srgb, var(--pill-shine) var(--pill-shine-strength), transparent) 50%,
     transparent 85%
   );
   transform: translateX(-130%) skewX(-12deg);
@@ -492,6 +492,14 @@ html:not(.m-press) .m-press:active {
   background: var(--bg-elevated);
   box-shadow: var(--shadow-card);
   padding: clamp(22px, 4.5vw, 64px);
+}
+
+/* Safari < 16 has no `overflow: clip`. A fallback declaration written before it
+   gets dropped by the CSS minifier, so the fallback lives in @supports. */
+@supports not (overflow: clip) {
+  .fd {
+    overflow: hidden;
+  }
 }
 
 .fd::before {
