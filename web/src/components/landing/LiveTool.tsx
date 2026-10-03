@@ -35,7 +35,7 @@ export default function LiveTool() {
         <div>
           <p data-m="reveal" className="story-kicker">Live tool</p>
           <h2 id="live-tool-heading" data-m="lines" className="mt-5 font-display text-display-lg font-bold text-primary text-balance">
-            Label Rate & Matrix Costing
+            Roll Form Flexo Printing Label Rate Calculator
           </h2>
           <div data-m="reveal">
           <p data-m-child className="mt-5 max-w-md text-body-lg text-muted">

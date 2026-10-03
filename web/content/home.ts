@@ -69,6 +69,8 @@ export interface HomePillar {
    * enough to read at a glance, never a new claim.
    */
   highlights: string[];
+  /** Card on the homepage: one plain benefit line, three chips, and where it links. */
+  card?: { benefit: string; chips: [string, string, string]; href: string };
 }
 
 export interface HomeProduct {
@@ -415,6 +417,7 @@ export const home: HomeContent = {
           "ERP and internal systems",
           "Dashboards and custom applications",
         ],
+        card: { benefit: "CRM, ERP and custom software that fits how you work.", chips: ["CRM", "ERP", "Websites"], href: "/crm/" },
       },
       {
         name: "AI & Automation",
@@ -425,6 +428,7 @@ export const home: HomeContent = {
           "Automated workflows",
           "Reduce repetitive work",
         ],
+        card: { benefit: "AI assistants and automations that save hours every week.", chips: ["Aivy", "WhatsApp", "Workflows"], href: "/solutions/" },
       },
       {
         name: "Digital Growth & Marketing",
@@ -435,6 +439,7 @@ export const home: HomeContent = {
           "High-conversion websites",
           "CRM integration and marketing automation",
         ],
+        card: { benefit: "Websites, SEO and lead pipelines that bring enquiries.", chips: ["SEO", "Social", "Leads"], href: "/solutions/" },
       },
       {
         name: "Products & Industry Tools",
@@ -445,6 +450,7 @@ export const home: HomeContent = {
           "Calculators and industry tools",
           "Practical ideas as usable software",
         ],
+        card: { benefit: "Ready products and free calculators for print & packaging.", chips: ["Flexora", "PrintVerify", "Calculators"], href: "/products/" },
       },
     ],
   },

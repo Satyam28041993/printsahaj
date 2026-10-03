@@ -1709,7 +1709,7 @@
 .media-frame__screen { aspect-ratio: 1024 / 525; background: var(--bg-sunken); }
 .media-caption { margin-top: 0.6rem; font-size: 0.75rem; line-height: 1.4; color: var(--text-muted); text-align: center; }
 .media-frame__screen img,
-.media-frame__screen video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.media-frame__screen video { display: block; width: 100%; height: 100%; object-fit: contain; object-position: top; }
 
 /* ecosystem status badge */
 .eco-badge {
@@ -1828,4 +1828,208 @@
 
 .cta-flip .enq__hint {
   color: var(--text-muted);
+}
+
+/* ---- carousel (PrintVerify / Flexora product sections) -------------------- */
+.cr {
+  width: 100%;
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.cr__viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--h-radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-sunken);
+  box-shadow: var(--shadow-card);
+  /* Horizontal swipes change slide; vertical pans stay native. */
+  touch-action: pan-y;
+}
+
+.cr__track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.5s var(--h-ease);
+}
+
+.cr__slide {
+  flex: none;
+  width: 100%;
+  height: 100%;
+}
+
+.cr__slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.cr__caption {
+  margin-top: 0.9rem;
+  min-height: 3.6rem;
+}
+
+.cr__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.cr__text {
+  margin-top: 0.15rem;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.cr__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.cr__btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.cr__btn:focus-visible,
+.cr__dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cr__dots {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+/* 24px hit area around a small dot. */
+.cr__dot {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.cr__dot::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--border-hover);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.cr__dot[aria-current="true"]::after {
+  background: var(--accent);
+  transform: scale(1.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr__track {
+    transition: none;
+  }
+}
+
+/* ---- "What we build" cards -------------------------------------------------- */
+.pcard__link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.25rem 1.25rem 1.1rem;
+  border-radius: var(--h-radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+  transition:
+    translate 0.25s var(--h-ease),
+    box-shadow 0.25s var(--h-ease),
+    border-color 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pcard__link:hover {
+    translate: 0 -4px;
+    box-shadow: var(--shadow-lift);
+    border-color: var(--accent-line);
+  }
+}
+
+.pcard__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.pcard__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent-weak);
+  color: var(--accent);
+}
+
+.pcard__title {
+  margin-top: 1rem;
+  padding-right: 1.75rem;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.pcard__benefit {
+  margin-top: 0.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.pcard__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.pcard__chips li {
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-hover);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pcard__go {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  color: var(--text-faint);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.pcard__link:hover .pcard__go {
+  color: var(--accent);
+  transform: translate(2px, -2px);
 }
