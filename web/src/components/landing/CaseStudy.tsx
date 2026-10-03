@@ -20,7 +20,10 @@ const JOB_SLIDES = ["/showcase/printverify-1.webp", "/showcase/printverify-4.web
  */
 export default function CaseStudy() {
   const copy = caseStudyHome;
-  const rest = caseStudies.slice(1);
+  const cards = copy.cards.map((card) => ({
+    ...card,
+    errorClass: caseStudies.find((study) => study.slug === card.slug)?.errorClass,
+  }));
 
   return (
     <section aria-labelledby="case-heading" className="band-sunken relative px-5 py-[clamp(72px,9vw,140px)] sm:px-8">
@@ -111,16 +114,18 @@ export default function CaseStudy() {
           </figure>
         </div>
 
-        {rest.length > 0 ? (
+        {cards.length > 0 ? (
           <>
             <h3 data-m="reveal" className="mt-16 font-mono text-[11px] uppercase tracking-[0.14em] text-faint">
               {copy.moreHeading}
             </h3>
             <ol data-m="reveal" className="mt-6 grid gap-8 lg:grid-cols-2">
-              {rest.map((study) => (
+              {cards.map((study) => (
                 <li key={study.slug} data-m-child data-m-card className="border-t border-hairline pt-6">
                   <Link href={`${caseStudiesIntro.cta.href}#${study.slug}`} className="group block">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{study.errorClass}</p>
+                    {study.errorClass ? (
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-accent">{study.errorClass}</p>
+                    ) : null}
                     <h4 className="mt-3 font-display text-title font-semibold text-primary">{study.title}</h4>
                     <p className="mt-3 text-sm leading-relaxed text-muted">{study.teaser}</p>
                     <p className="mt-4 text-sm text-faint">

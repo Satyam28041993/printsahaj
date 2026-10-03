@@ -78,35 +78,34 @@ export const caseStudiesIntro = {
  * Homepage case-study section (P-008b). Every claim maps to the sources above:
  * the real job is samples/kalonji (6 COL + VARNISH declared, 6 plate pages), and
  * the three points are the engine checks those cases exercise. PrintVerify is in
- * pilot — the status line says so. No metrics.
+ * pilot — the status line says so. No metrics. Wording is the P-008b spec's.
  *
- * TO REVIEW (Satyam): the P-008b prompt file was not available when this copy was
- * written, so the eyebrow, headline, sub and question are drafted from the facts
- * above, not pasted from the spec. Swap in the spec's exact wording if it differs.
+ * `cards` are the homepage wording of cases 2 and 3; the /case-studies page keeps
+ * the titles and teasers in `caseStudies` below.
  */
 export const caseStudyHome = {
-  eyebrow: "Case study · PrintVerify",
-  headline: "A plate can go missing before anyone notices.",
-  sub: "The job sheet and the plate file can disagree, and both still look right on their own. PrintVerify reads them side by side before the job goes to press.",
+  eyebrow: "FOR PRINTERS & LABEL MANUFACTURERS",
+  headline: "If you run a printing press, don't skip this.",
+  sub: "One small pre-press mistake can cost you a full job, a missed delivery and a client's trust. This can save your time, your money and your client relationships.",
   question: {
-    text: "Have you ever had a colour, a varnish or a plate turn up missing only after the job was printed?",
+    text: "Do your jobs ever break because of a mistake by your pre-press, plate or cylinder vendor? Does your client's delivery get delayed because of it?",
     answer: "If yes — this is for you.",
   },
   points: [
     {
       icon: "layers",
-      title: "Plates counted against the job sheet",
-      text: "Declared units and plates in the separation file are counted, not eyeballed.",
+      title: "Checks every vendor plate",
+      text: "Checks every vendor plate against the approved artwork, before it reaches the press.",
     },
     {
       icon: "hash",
-      title: "Batch number and date, value by value",
-      text: "Read from the artwork, the composite and every plate, then compared as values.",
+      title: "Flags anything missing",
+      text: "Counts colours, varnish and special units, and flags anything missing or extra.",
     },
     {
       icon: "scan",
-      title: "Every plate checked on its own",
-      text: "Each plate is mapped to its colour name and reviewed one by one.",
+      title: "Catches wrong text",
+      text: "Catches wrong text, batch numbers and barcodes that the eye misses.",
     },
   ],
   status: "Pilot · Demo on request",
@@ -114,14 +113,26 @@ export const caseStudyHome = {
   job: {
     heading: "Real job: the varnish plate that went missing",
     body: [
-      "The job sheet said 6 COL + VARNISH — seven units. The separation file had six pages.",
-      "The varnish had no plate. Run through PrintVerify, the plate-count check flags it from the files alone.",
+      "A 7-colour label (6 colours + varnish) went to the plate maker. Only 6 plates came back, and the files looked fine.",
+      "On press, that means a stopped machine, wasted material and a late delivery. PrintVerify caught it before printing: 'Declared 7 units, found 6 plates — 1 missing.'",
     ],
     note: "Representative job, details anonymised.",
     result: "Declared 7 units, found 6 plates — 1 missing.",
     imagesNote: "PrintVerify screens · artwork blurred",
   },
   moreHeading: "Two more ways a file can be wrong",
+  cards: [
+    {
+      slug: "batch-mismatch",
+      title: "Batch number right on the proof, wrong on the plate",
+      teaser: "The approval file said the batch matched. The black plate didn't. Caught before print.",
+    },
+    {
+      slug: "vendor-cover",
+      title: "Vendor's extra cover page counted as a plate",
+      teaser: "One vendor adds a report page before the plates. PrintVerify ignores it, so the plate count stays right.",
+    },
+  ],
 } as const;
 
 export const caseStudies: CaseStudy[] = [
@@ -172,8 +183,8 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "batch-mismatch",
     errorClass: "A value that disagrees with itself",
-    title: "One batch number, two different answers.",
-    teaser: "The composite said the batch details matched; the Black plate disagreed. Now the values themselves are compared.",
+    title: "Two checks, two opinions, one batch number.",
+    teaser: "The composite said the batch details matched. The Black plate said they did not.",
     standfirst:
       "The same field was read in two places and answered differently. Nothing in the report said which reading to believe — so the report itself was the problem.",
     client: null,
@@ -210,8 +221,8 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "vendor-cover",
     errorClass: "A vendor file that lies about its own shape",
-    title: "A cover page that counted as a plate.",
-    teaser: "One vendor puts a report page in front of the plates. The cover is now skipped, so the count stays honest.",
+    title: "The cover page that counted as a plate.",
+    teaser: "One vendor ships a report page in front of the plates. Counted plainly, every job reads one plate long.",
     standfirst:
       "Not every separation PDF starts at plate one. One vendor puts a job specification report in front, and every plate-facing check downstream inherits that off-by-one.",
     client: null,
