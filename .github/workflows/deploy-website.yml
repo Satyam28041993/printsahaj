@@ -23,6 +23,17 @@ concurrency:
   group: deploy-website
   cancel-in-progress: false
 
+# Settings used by EVERY lftp call (diagnose, deploy, dry run, cleanup). Without
+# them lftp 4.9.2 waits 5 minutes per attempt and retries ~1000 times, so a
+# listing that stalls (run #33) looks like an endless hang. Plain FTP is the
+# default: it is what the old working FTP-Deploy-Action used from GitHub runners.
+# Set the repo variable FTP_TLS to exactly `true` to switch to explicit FTPS.
+env:
+  LFTP_BASE: >-
+    set net:timeout 20; set net:max-retries 2; set net:reconnect-interval-base 5;
+    set net:reconnect-interval-multiplier 1; set ftp:passive-mode on; set ftp:prefer-epsv no;
+    set dns:order "inet inet6"; set ftp:ssl-allow no
+
 # Why lftp and not FTP-Deploy-Action (what went wrong in run #31):
 # every Next build has a new buildId, so every deploy must delete the previous
 # _next/static/<oldBuildId>/ folder. FTP-Deploy-Action tolerates a missing FILE
@@ -39,9 +50,13 @@ concurrency:
 
 jobs:
   # Read-only. Run from the Actions tab: "Run workflow" -> diagnose = true.
+  # Nothing here writes to the server: no put/mirror/rm/mkdir/mv/chmod/site, and
+  # `quote` only sends PWD and SYST. (lftp's own `pwd` never contacts the server
+  # and prints the connection URL including the password, so it is not used.)
   diagnose:
     if: ${{ inputs.diagnose }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Install lftp
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
@@ -51,15 +66,55 @@ jobs:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_TLS: ${{ vars.FTP_TLS }}
         run: |
-          set +e
-          echo "--- login directory, relative listing of _next/static/, absolute listing of /_next/static/ ---"
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "set ftp:ssl-allow true; set ssl:verify-certificate no; pwd; echo --- relative _next/static/; cls -1 _next/static/ | head -20; echo --- absolute /_next/static/; cls -1 /_next/static/ | head -5; bye"
-          echo "If the relative listing shows folders and the absolute one is empty or errors, the FTP root is not the web root: that is the 550."
+          set -uo pipefail
+          PRE="$LFTP_BASE"
+          if [ "${FTP_TLS:-}" = "true" ]; then
+            PRE="${PRE//set ftp:ssl-allow no/set ftp:ssl-allow yes; set ftp:ssl-force yes; set ftp:ssl-protect-data yes; set ssl:verify-certificate no}"
+          fi
+          out="${RUNNER_TEMP:-/tmp}"
+          rm -f "$out/rel.txt" "$out/abs.txt" "$out/top.txt"
+
+          # $1 = extra settings, $2 = commands. Non-interactive (stdin from /dev/null), password via env, hard 240s cap.
+          ftp() {
+            LFTP_PASSWORD="$FTP_PASSWORD" timeout 240 lftp -c "$PRE; $1; open -u \"$FTP_USERNAME\" --env-password \"$FTP_SERVER\"; $2; bye" < /dev/null
+            local rc=$?
+            if [ "$rc" = "124" ]; then
+              echo "::error::lftp timed out after 240s (see the debug lines above for the last server reply)"
+            fi
+            return "$rc"
+          }
+
+          echo "== connect (debug 3 shows server replies, never the password), server login directory, system =="
+          ftp "debug 3; set cmd:fail-exit yes" "quote PWD; quote SYST; cls -1 _next/static/ > $out/rel.txt"
+          rc_rel=$?
+          if [ "$rc_rel" != "0" ]; then
+            echo "::error::Could not log in and list the server (exit $rc_rel). The other listings would fail the same way, so the run stops here. Check FTP_SERVER / credentials, or set the repo variable FTP_TLS to true if the host requires FTPS."
+            exit "$rc_rel"
+          fi
+          echo "== absolute listing (a 550 here is the expected diagnosis, not a failure) =="
+          ftp "set cmd:fail-exit no" "cls -1 /_next/static/ > $out/abs.txt"
+          echo "== top level of the login directory (look for subdomain/addon folders and Hostinger files) =="
+          ftp "set cmd:fail-exit no" "cls -1a > $out/top.txt"
+
+          echo
+          echo "--- relative _next/static/ (first 20) ---"; head -20 "$out/rel.txt" 2>/dev/null
+          echo "--- absolute /_next/static/ (first 5) ---"; head -5 "$out/abs.txt" 2>/dev/null
+          echo "--- relative top level (first 60) ---"; head -60 "$out/top.txt" 2>/dev/null
+          echo
+          # lftp prints the absolute listing with a leading "/": compare without it.
+          if cmp -s <(sed 's#^/##' "$out/rel.txt" 2>/dev/null) <(sed 's#^/##' "$out/abs.txt" 2>/dev/null); then
+            echo "RESULT: relative and absolute listings are the SAME: the FTP root is the web root."
+          else
+            echo "RESULT: relative and absolute listings DIFFER: the FTP root is not the web root (absolute paths such as /_next/... do not exist). That is the 550."
+          fi
+          exit "$rc_rel"
 
   deploy:
     if: ${{ !inputs.diagnose }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -128,8 +183,18 @@ jobs:
           # Optional repo variable (Settings > Variables): extra space-separated globs to protect
           # on the server, e.g. "subdomain/ addon.example.com/" (confirm with the dry run).
           EXTRA_EXCLUDES: ${{ vars.FTP_EXTRA_EXCLUDES }}
+          FTP_TLS: ${{ vars.FTP_TLS }}
         run: |
           set -uo pipefail
+          PRE="$LFTP_BASE"
+          if [ "${FTP_TLS:-}" = "true" ]; then
+            PRE="${PRE//set ftp:ssl-allow no/set ftp:ssl-allow yes; set ftp:ssl-force yes; set ftp:ssl-protect-data yes; set ssl:verify-certificate no}"
+          fi
+          # $1 = extra settings, $2 = commands, $3 = seconds cap. Non-interactive (stdin from /dev/null), password via env, always ends with bye.
+          ftp() {
+            LFTP_PASSWORD="$FTP_PASSWORD" timeout "$3" lftp -c "$PRE; $1; open -u \"$FTP_USERNAME\" --env-password \"$FTP_SERVER\"; $2; bye" < /dev/null
+          }
+
           # Never delete: hosting-managed files and folders.
           EXCLUDES="--exclude-glob .well-known/ --exclude-glob cgi-bin/ --exclude-glob .ftp-deploy-sync-state* --exclude-glob .user.ini --exclude-glob .htpasswd --exclude-glob default.php --exclude-glob error_log"
           # Files that may live on the server but are not part of this export. If the
@@ -137,22 +202,28 @@ jobs:
           for pat in "google*.html" "robots.txt" "sitemap*.xml"; do
             compgen -G "web/out/$pat" > /dev/null || EXCLUDES="$EXCLUDES --exclude-glob $pat"
           done
+          # Extra protected globs (repo variable FTP_EXTRA_EXCLUDES): space OR comma separated.
+          # set -f: no pathname expansion, so "*/" or ".*" stay literal globs for lftp
+          # (unquoted, they expanded to web/ and .github on the runner).
+          set -f
+          EXTRA_EXCLUDES=${EXTRA_EXCLUDES//,/ }
           for g in $EXTRA_EXCLUDES; do EXCLUDES="$EXCLUDES --exclude-glob $g"; done
+          set +f
           echo "Protected from --delete: $EXCLUDES"
-          SETTINGS="set ftp:ssl-allow true; set ssl:verify-certificate no; set net:max-retries 3; set net:timeout 30; set net:reconnect-interval-base 5; set cmd:fail-exit yes"
+          SETTINGS="set cmd:fail-exit yes"
           SITE="mirror --reverse --delete --no-perms --parallel=4 --verbose $EXCLUDES web/out/ $FTP_DIR/"
 
           if [ "$DRY_RUN" = "true" ]; then
             echo "DRY RUN: planned changes for the whole site (nothing is uploaded or deleted)."
             echo "Review every 'rm' / 'rmdir' line: only old site files may appear."
-            lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "$SETTINGS; ${SITE/mirror /mirror --dry-run }; bye"
+            ftp "$SETTINGS" "${SITE/mirror /mirror --dry-run }" 600
             exit $?
           fi
 
           ok=0
           for i in 1 2; do
             echo "== attempt $i =="
-            if lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "$SETTINGS; mirror --reverse --no-perms --parallel=4 --verbose web/out/_next/ $FTP_DIR/_next/; $SITE; bye"; then
+            if ftp "$SETTINGS" "mirror --reverse --no-perms --parallel=4 --verbose web/out/_next/ $FTP_DIR/_next/; $SITE" 600; then
               ok=1
               break
             fi
@@ -162,7 +233,7 @@ jobs:
           [ "$ok" = "1" ] || exit 1
 
           # Retire the old FTP-Deploy-Action state files (they list the whole site). rm -f must never fail the step.
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "set ftp:ssl-allow true; set ssl:verify-certificate no; set cmd:fail-exit no; rm -f $FTP_DIR/.ftp-deploy-sync-state.json $FTP_DIR/.ftp-deploy-sync-state-v2.json $FTP_DIR/.ftp-deploy-sync-state-v3.json; bye" || true
+          ftp "set cmd:fail-exit no" "rm -f $FTP_DIR/.ftp-deploy-sync-state.json $FTP_DIR/.ftp-deploy-sync-state-v2.json $FTP_DIR/.ftp-deploy-sync-state-v3.json" 60 || true
 
       # The only thing that decides whether the job is green. Not for dry runs.
       - name: Verify the live site
