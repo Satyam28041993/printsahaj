@@ -1701,3 +1701,128 @@
     --stack-top: 16px;
   }
 }
+
+/* ---- media slot: a real screenshot / recording in an app frame ------------ */
+.media-frame { max-width: 640px; }
+.media-frame__screen { aspect-ratio: 16 / 10; background: var(--bg-sunken); }
+.media-frame__screen img,
+.media-frame__screen video { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ecosystem status badge */
+.eco-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--accent-weak);
+  color: var(--accent);
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Hero: three CTAs without growing the phone hero (two share one row). */
+@media (max-width: 767px) {
+  .home-hero .pill-compact {
+    padding-inline: 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .home-hero .pill-compact .pill__arrow {
+    display: none;
+  }
+}
+
+/* ---- enquiry form (final section) ----------------------------------------- */
+.enq {
+  padding: clamp(18px, 3vw, 28px);
+  border-radius: var(--h-radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  color: var(--text-primary);
+}
+
+.enq__grid {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .enq__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .enq__field--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.enq__field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.enq__field > span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.enq input,
+.enq select,
+.enq textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border-hover);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  /* 16px: iOS Safari zooms into smaller fields */
+  font-size: 16px;
+}
+
+.enq textarea {
+  resize: vertical;
+}
+
+.enq input:focus-visible,
+.enq select:focus-visible,
+.enq textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.enq [aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.enq em {
+  font-style: normal;
+  font-size: 0.8125rem;
+  color: var(--danger);
+}
+
+.enq__submit {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.enq__hint {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* The final section flips to a dark panel; the ghost "Call now" follows it. */
+.cta-flip .pill--ghost {
+  color: color-mix(in srgb, var(--cta-flip-fg) calc(var(--flip) * 100%), var(--text-primary));
+  border-color: color-mix(in srgb, var(--cta-flip-muted) calc(var(--flip) * 100%), var(--border-hover));
+}
+
+.cta-flip .enq__hint {
+  color: var(--text-muted);
+}

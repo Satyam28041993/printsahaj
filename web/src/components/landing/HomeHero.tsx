@@ -3,6 +3,8 @@ import Pill from "./Pill";
 import SpotPanel from "./SpotPanel";
 import Marquee from "./Marquee";
 import { home } from "@content/home";
+import { help } from "@content/help";
+import { PHONE_DISPLAY, PHONE_TEL, WHATSAPP_URL } from "@/data/contact";
 import { printSahajSite } from "@content/site";
 
 const rise = (i: number) => ({ "--i": i }) as React.CSSProperties;
@@ -60,10 +62,15 @@ export default function HomeHero() {
             {hero.supporting}
           </p>
           <div className="h-rise h-rise--solid mt-5 flex w-full flex-col items-stretch gap-2.5 sm:mt-9 sm:w-auto sm:flex-row sm:items-center" style={rise(3)}>
-            <Pill href={hero.primaryCta.href}>{hero.primaryCta.label}</Pill>
-            <Pill href={callCta.href} variant="ghost" call ariaLabel={`${callCta.label}: ${callCta.number}`}>
-              {callCta.label}
-            </Pill>
+            <Pill href={WHATSAPP_URL}>{help.consult.primaryCta.label}</Pill>
+            <div className="grid grid-cols-2 gap-2.5 sm:contents">
+              <Pill href={hero.primaryCta.href} variant="ghost" className="pill-compact">
+                {hero.primaryCta.label}
+              </Pill>
+              <Pill href={PHONE_TEL} variant="ghost" call className="pill-compact" ariaLabel={`${callCta.label}: ${PHONE_DISPLAY}`}>
+                {callCta.label}
+              </Pill>
+            </div>
           </div>
           <p className="mt-3 max-w-[62ch] text-[13px] leading-snug text-faint sm:mt-7 sm:text-sm" style={rise(4)}>
             {hero.trustLine}

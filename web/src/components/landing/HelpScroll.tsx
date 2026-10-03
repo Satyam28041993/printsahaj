@@ -20,6 +20,8 @@ import {
   Users,
 } from "lucide-react";
 import Pill from "./Pill";
+import ShowcaseMedia from "./ShowcaseMedia";
+import type { ShowcaseSlug } from "@/data/showcase";
 import { useSlidingIndicator } from "@/lib/useSlidingIndicator";
 import { useInViewState, usePrefersReducedMotion, useSpotlight } from "@/lib/useHomeMotion";
 import { help } from "@content/help";
@@ -34,6 +36,9 @@ const FLOW_ICONS: [Icon, Icon, Icon][] = [
   [Repeat, Cog, CheckCircle2],
   [Megaphone, Filter, UserCheck],
 ];
+
+/** Media slot per service, in the order of `help.services`. */
+const SERVICE_SLUG: ShowcaseSlug[] = ["website", "crm", "erp", "automation", "marketing"];
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -230,22 +235,28 @@ export default function HelpScroll() {
             </div>
 
             <div className="hp-demo m-swap" key={`demo-${service}`} aria-hidden="true">
+              <ShowcaseMedia
+                slug={SERVICE_SLUG[service]}
+                title={current.title}
+                fallback={
               <div className="flow" key={current.title}>
-                {current.flow.map((label, i) => {
-                  const Node = Icons[i];
-                  return (
-                    <React.Fragment key={label}>
-                      <div className="flow__node" data-on={step === i}>
-                        <span className="flow__icon">
-                          <Node size={24} aria-hidden />
-                        </span>
-                        {label}
-                      </div>
-                      {i < 2 ? <span className="flow__wire" style={{ "--d": `${i * 0.5}s` } as React.CSSProperties} /> : null}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                  {current.flow.map((label, i) => {
+                    const Node = Icons[i];
+                    return (
+                      <React.Fragment key={label}>
+                        <div className="flow__node" data-on={step === i}>
+                          <span className="flow__icon">
+                            <Node size={24} aria-hidden />
+                          </span>
+                          {label}
+                        </div>
+                        {i < 2 ? <span className="flow__wire" style={{ "--d": `${i * 0.5}s` } as React.CSSProperties} /> : null}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+                }
+              />
             </div>
           </div>
 

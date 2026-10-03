@@ -1,8 +1,9 @@
 /**
  * Homepage showcase: the auto-cycling tabs under the hero.
  *
- * Every visual behind these tabs is sample data written for the page. No client
- * name, logo, customer, phone number, email, rate, PO or job number is shown.
+ * Every visual behind these tabs is demo data written for the page. No client
+ * name, logo, customer, phone number, email or rate is shown; the order, job and
+ * dispatch numbers are generic demo values.
  * Promises are lifted from copy that already exists in content/ — do not add a
  * claim, metric or module here that the product pages do not carry.
  */
@@ -15,6 +16,8 @@ export interface ShowcaseTab {
   id: ShowcaseVisualId;
   label: string;
   status: ProjectStatus;
+  /** Shown instead of `status` when set (the chip keeps the status colour). */
+  statusText?: string;
   promise: string;
   chips: string[];
   cta: { label: string; href: string };
@@ -81,7 +84,7 @@ export const homeShowcase: ShowcaseContent = {
   eyebrow: "What we've built",
   heading: "Systems that work. Try one right here.",
   supporting: "Products and tools from one team. The last tab is a real calculator, not a picture.",
-  sampleNote: "Sample data on screen. Client data is never shown.",
+  sampleNote: "Demo data shown. Client data is never displayed.",
   tablistLabel: "PrintSahaj products and tools",
   pauseLabel: "Pause auto-play",
   playLabel: "Play auto-play",
@@ -115,6 +118,7 @@ export const homeShowcase: ShowcaseContent = {
       id: "printverify",
       label: "PrintVerify",
       status: "Building",
+      statusText: "Pilot · Demo on request",
       promise: "Checks the artwork, approval sheet and plate files against each other before a plate is made.",
       chips: ["Artwork", "Approval sheet", "Plate files"],
       cta: { label: "See PrintVerify", href: "/products/printverify/" },
@@ -138,40 +142,40 @@ export const homeShowcase: ShowcaseContent = {
   ],
   miniUi: {
     flexora: {
-      title: "Sample data · ERP",
+      title: "Demo data · ERP",
       badges: ["ERP", "HRMS"],
       columns: [
-        { name: "Order", cards: [["Sample order A", "40%"], ["Sample order B", "15%"]] },
-        { name: "Job", cards: [["Sample job A", "70%"], ["Sample job B", "55%"]] },
-        { name: "Dispatch", cards: [["Sample job C", "95%"], ["Sample job D", "100%"]] },
+        { name: "Order", cards: [["SO-2417 · 5,000 roll labels · 100×50 mm", "40%"], ["SO-2421 · 12,000 labels · 60×40 mm", "15%"]] },
+        { name: "Job", cards: [["JOB-1182 · 6 COL + Varnish · Flexo", "70%"], ["JOB-1179 · 4 COL · Flexo", "55%"]] },
+        { name: "Dispatch", cards: [["DSP-0931 · Dispatched · 12 cartons", "100%"], ["DSP-0928 · Packing · 8 cartons", "95%"]] },
       ],
-      hrmsLabel: "HRMS · sample",
+      hrmsLabel: "HRMS · Attendance 42/45 · Shift A",
     },
     crm: {
-      title: "Sample data · CRM",
+      title: "Demo data · CRM",
       listLabel: "Enquiries",
       rows: [
-        ["Sample customer A", "Enquiry", "info"],
-        ["Sample customer B", "Quote sent", "warn"],
-        ["Sample customer C", "Follow-up", "ok"],
+        ["ENQ-2041 · Mono-carton labels", "Enquiry", "info"],
+        ["ENQ-2038 · Pharma roll labels", "Quote sent", "warn"],
+        ["ENQ-2029 · Shrink sleeve", "Follow-up", "ok"],
       ],
-      detailName: "Sample customer B",
+      detailName: "ENQ-2038 · Pharma roll labels",
       steps: ["Enquiry received", "Quote prepared", "Follow-up scheduled"],
     },
     websites: {
-      title: "Sample website",
+      title: "Demo website",
       cta: "Get a quote",
       formLabel: "Enquiry",
       formCta: "Send enquiry",
     },
     printverify: {
-      title: "Sample check",
+      title: "Demo check",
       files: ["Artwork", "Approval sheet", "Plate files"],
       findingsLabel: "Findings",
       tones: { ok: "Clear", warn: "Look", bad: "Differs" },
     },
     aivy: {
-      label: "Aivy · sample",
+      label: "Aivy · demo",
       me1: "Remind me to call the supplier tomorrow at 10.",
       bot1: "Done. Reminder set for tomorrow, 10:00.",
       me2: "What's on today?",

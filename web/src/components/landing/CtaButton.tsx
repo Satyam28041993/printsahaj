@@ -23,8 +23,12 @@ export default function CtaButton({
   const sizing = size === "lg" ? "px-7 py-3.5 text-base" : "px-5 py-2.5 text-sm";
   const skin = variant === "solid" ? "cta-shine cta-solid" : "cta-ghost";
 
+  const cls = `${base} ${sizing} ${skin} ${className}`;
+  const external = href.startsWith("https://") || href.startsWith("http://");
+  const Tag = external ? "a" : Link;
+  const extra = external ? { target: "_blank", rel: "noopener noreferrer" } : {};
   return (
-    <Link href={href} onClick={onClick} className={`${base} ${sizing} ${skin} ${className}`}>
+    <Tag href={href} onClick={onClick} className={cls} {...extra}>
       {children}
       <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-black/10">
         <svg
@@ -44,6 +48,6 @@ export default function CtaButton({
           />
         </svg>
       </span>
-    </Link>
+    </Tag>
   );
 }

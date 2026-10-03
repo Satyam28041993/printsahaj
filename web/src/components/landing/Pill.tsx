@@ -60,6 +60,14 @@ export default function Pill({
       {call ? null : <Arrow />}
     </>
   );
+  if (href.startsWith("https://") || href.startsWith("http://")) {
+    // External (e.g. WhatsApp): a plain link in a new tab.
+    return (
+      <a href={href} className={cls} aria-label={ariaLabel} onClick={onClick} target="_blank" rel="noopener noreferrer">
+        {inner}
+      </a>
+    );
+  }
   if (href.startsWith("tel:") || href.startsWith("mailto:")) {
     return (
       <a href={href} className={cls} aria-label={ariaLabel} onClick={onClick}>

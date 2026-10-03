@@ -1,3 +1,5 @@
+import { PHONE_TEL, WHATSAPP_URL } from "../src/data/contact";
+
 /** Home — "Where we can help": the scroll-driven services sequence after the hero. */
 
 export interface HelpService {
@@ -108,7 +110,7 @@ export const help: HelpContent = {
     promise: "Understand what your business needs — before you spend on anything.",
     body: "Marketing, CRM, ERP or automation: tell us how your business runs today and we will suggest what makes sense for you, and what doesn't. The consultation is free and it is not a sales pitch. You are under no obligation to buy — the decision is always yours.",
     points: ["Free, no charge", "Honest suggestions", "No obligation to buy", "Your decision, always"],
-    primaryCta: { label: "Book a free consultation", href: "/contact" },
-    callCta: { label: "Call Now", href: "tel:+919650744197" },
+    primaryCta: { label: "Book a free consultation", href: WHATSAPP_URL },
+    callCta: { label: "Call Now", href: PHONE_TEL },
   },
 };
