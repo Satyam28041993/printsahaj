@@ -74,8 +74,7 @@ type Extra = Partial<Pick<CollageLayer, "alt" | "fit" | "radius" | "place" | "ra
 
 /** 1024 x 525 screenshots (Aivy). */
 const WIDE = { width: 1024, height: 525 } as const;
-/** Sharp demo screens, 2000 × 1250. The Flexora flow is letterboxed onto this
- *  frame in its own background so the whole trail stays visible. */
+/** Sharp demo screens, 2000 × 1250. */
 const HD = { width: 2000, height: 1250 } as const;
 
 /* Front-layer crops, measured on the 2000 × 1250 files. Narrow enough that the
@@ -86,8 +85,8 @@ const FX_QC: CropBox = [1432, 108, 556, 610];
 const CRM_COL: CropBox = [896, 272, 516, 520];
 /** Vendor composite pane with the two mismatch callouts. */
 const PV_VENDOR: CropBox = [1120, 480, 700, 620];
-/** Flow stages 06–09 (Production, QC, Stock, Dispatch) with their detail cards. */
-const FLOW_LATE: CropBox = [1095, 318, 860, 792];
+/** Circle track frozen on Production: stages 04–07 and the 68% detail. */
+const FLOW_LATE: CropBox = [710, 170, 760, 760];
 
 /** A whole 1024 x 525 screenshot. */
 const full = (file: string, variant: Variant, alt = ""): CollageLayer => ({
