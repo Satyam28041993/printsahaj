@@ -76,9 +76,9 @@ export default function SiteNav({
             <Logo size="md" instance="nav" />
           </Link>
 
-          <span className="ps-nav__rule hidden xl:block" aria-hidden="true" />
+          <span className="ps-nav__rule hidden lg:block" aria-hidden="true" />
 
-          <ul className="ps-nav__links hidden xl:flex">
+          <ul className="ps-nav__links hidden lg:flex">
             {links.map((link) => {
               const active = pathMatches(pathname, link.href);
               return (
@@ -111,7 +111,7 @@ export default function SiteNav({
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
               aria-label={menuOpen ? "Close menu" : "Open menu"}
-              className="ps-nav__burger inline-flex xl:hidden"
+              className="ps-nav__burger inline-flex lg:hidden"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
                 {menuOpen ? (
@@ -129,7 +129,7 @@ export default function SiteNav({
         <button
           type="button"
           aria-label="Close menu overlay"
-          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--bg-base)_72%,transparent)] xl:hidden"
+          className="fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--bg-base)_72%,transparent)] lg:hidden"
           onClick={closeMenu}
         />
       ) : null}
@@ -137,7 +137,7 @@ export default function SiteNav({
       {/* Above the z-40 scrim: it is there to dim the page, not the menu. */}
       <div
         id="mobile-nav"
-        className={`relative z-50 grid px-3 sm:px-5 xl:hidden ${menuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} transition-[grid-template-rows] duration-300 ease-out`}
+        className={`relative z-50 grid px-3 sm:px-5 lg:hidden ${menuOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"} transition-[grid-template-rows] duration-300 ease-out`}
       >
         <div className="overflow-hidden" inert={!menuOpen ? true : undefined} aria-hidden={!menuOpen}>
           <div className="ps-nav-sheet">

@@ -3687,6 +3687,7 @@ details[open] .faq-chevron {
 /* ---- links ---- */
 .ps-nav__links {
   flex: 1;
+  min-width: 0;
   justify-content: center;
   align-items: center;
   gap: clamp(16px, 1.7vw, 34px);
@@ -3873,6 +3874,101 @@ details[open] .faq-chevron {
   border-radius: 24px;
   background: var(--ps-nav-bg);
   box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.85);
+}
+
+/* Links show from 1024px. Below 1366 the capsule tightens — smaller mark,
+   closer links, Call Now without the arrow — so seven items fit on a
+   125%-scaled laptop without wrapping or falling back to the burger. */
+@media (max-width: 1439px) {
+  .ps-nav {
+    gap: 10px;
+  }
+
+  .ps-nav__links {
+    gap: 12px;
+  }
+
+  .ps-nav__link {
+    font-size: 15px;
+  }
+
+  .ps-nav__brand svg,
+  .ps-header[data-condensed="true"] .ps-nav__brand svg {
+    width: 54px;
+    height: 54px;
+  }
+
+  .ps-nav__brand svg + span,
+  .ps-header[data-condensed="true"] .ps-nav__brand svg + span {
+    font-size: 1.45rem;
+  }
+}
+
+@media (max-width: 1279px) {
+  .ps-nav,
+  .ps-header[data-condensed="true"] .ps-nav {
+    height: 60px;
+    gap: 8px;
+    padding: 0 6px 0 10px;
+  }
+
+  .ps-nav__rule {
+    height: 28px;
+  }
+
+  .ps-nav__links {
+    gap: 8px;
+  }
+
+  .ps-nav__link {
+    font-size: 13.5px;
+    letter-spacing: 0;
+  }
+
+  .ps-nav__brand svg,
+  .ps-header[data-condensed="true"] .ps-nav__brand svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ps-nav__brand svg + span,
+  .ps-header[data-condensed="true"] .ps-nav__brand svg + span {
+    font-size: 1.2rem;
+  }
+
+  .ps-nav__actions {
+    gap: 6px;
+  }
+
+  .ps-nav .ps-call {
+    height: 42px;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: 13.5px;
+  }
+
+  .ps-nav .ps-call svg:last-child:not(:first-child) {
+    display: none;
+  }
+}
+
+@media (max-width: 1139px) {
+  .ps-nav__rule {
+    display: none;
+  }
+
+  .ps-nav__links {
+    gap: 6px;
+  }
+
+  .ps-nav__link {
+    font-size: 13px;
+  }
+
+  .ps-nav__brand svg + span,
+  .ps-header[data-condensed="true"] .ps-nav__brand svg + span {
+    font-size: 1.08rem;
+  }
 }
 
 @media (max-width: 639px) {
