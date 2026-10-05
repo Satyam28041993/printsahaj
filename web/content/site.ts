@@ -98,6 +98,7 @@ export const printSahajSite: PrintSahajSite = {
   },
   nav: {
     links: [
+      { label: "Home", href: "/" },
       { label: "Solutions", href: "/solutions" },
       { label: "Products", href: "/products" },
       { label: "CRM", href: "/crm" },

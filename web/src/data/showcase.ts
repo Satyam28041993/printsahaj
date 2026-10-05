@@ -6,8 +6,9 @@
  * See web/docs/showcase.md.
  *
  * PrintVerify, Flexora and CRM panels use sharp demo screens in
- * public/showcase/hd/ (PrintSahaj sample data only). Website and Aivy still use
- * the older privacy-checked crops under public/showcase/.
+ * public/showcase/hd/ (PrintSahaj sample data only). The website collage is the
+ * three-site version (pgpl / ashokraj / tricil). Aivy still uses the older
+ * privacy-checked crop under public/showcase/.
  *
  * SHOWCASE_COLLAGES / HELP_COLLAGES layer those screens into one mock-up per
  * panel; a slot with a collage shows it instead of the single frame.
@@ -55,7 +56,7 @@ export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora · plant command centre (demo data)",
   crm: "CRM · enquiry pipeline (demo data)",
   erp: "Flexora · dashboard and order-to-dispatch flow (demo data)",
-  website: "Client websites · packaging & manufacturing",
+  website: "Client websites · pgpltechprint · ashokraj · tricil",
   marketing: "CRM · enquiries, quotes and follow-ups (demo data)",
   printverify: "PrintVerify · vendor plate check (demo artwork)",
   aivy: "Aivy · AI assistant that books meetings and reminders",
@@ -64,12 +65,13 @@ export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
 /* ---- collages ------------------------------------------------------------
    HD product screens (public/showcase/hd/) are full dummy UIs. Their frame
    ratio matches the file, so the whole screen shows — no backdrop crop.
-   Website and Aivy crops stay inside the older privacy-checked files. */
+   The website collage is three whole first screens. Aivy stays a crop of the
+   older privacy-checked file. */
 
 type Variant = CollageLayer["variant"];
 type Extra = Partial<Pick<CollageLayer, "alt" | "fit" | "radius" | "place" | "ratio">>;
 
-/** 1024 x 525 screenshots (website, Aivy). */
+/** 1024 x 525 screenshots (Aivy). */
 const WIDE = { width: 1024, height: 525 } as const;
 /** Sharp demo screens, 3200 × 2000. The Flexora flow is letterboxed onto this
  *  frame in its own background so the whole trail stays visible. */
@@ -101,10 +103,6 @@ const crop = (
   ...extra,
 });
 
-// Panels of the website collage (logo + name stay inside the privacy-checked blur).
-const WEB_A: CropBox = [36, 36, 585, 440];
-const WEB_B: CropBox = [656, 36, 333, 208];
-const WEB_C: CropBox = [656, 281, 333, 209];
 /** Aivy's "Meeting" confirmation card, border fully inside (client name checked). */
 const AIVY_CARD: CropBox = [8, 166, 928, 176];
 
@@ -116,6 +114,28 @@ const hd = (file: string, size: { width: number; height: number }, variant: Vari
   variant,
   alt,
 });
+
+/* Client websites: three different sites, each a whole first screen (never a crop).
+   Captured with Playwright (desktop 1440x900, mobile 390x844, DPR 2); client logos,
+   phones, emails, and personal data blurred. */
+const WEBSITES: CollageSpec = {
+  layout: "site",
+  layers: [
+    {
+      src: "/showcase/web-pgpl-full.webp",
+      width: 1200,
+      height: 676,
+      // Cropped above the white band under the hero (banner is 810px of a 900px viewport).
+      ratio: 1200 / 676,
+      variant: "browser",
+      url: "pgpltechprint.com",
+      alt: "PGPL Group website (pgpltechprint.com), home page built by PrintSahaj",
+    },
+    // front = the tilted phone (on top), accent = the second browser (behind it)
+    { src: "/showcase/web-tricil-mobile.webp", width: 520, height: 1125, ratio: 390 / 844, variant: "phone", alt: "" },
+    { src: "/showcase/web-ashokraj.webp", width: 1200, height: 750, ratio: 1440 / 900, variant: "browser", alt: "" },
+  ],
+};
 
 /** "Systems that work" (HomeShowcase), per tab slug. */
 export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
@@ -133,14 +153,7 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
       hd("crm-lead", HD, "tablet"),
     ],
   },
-  website: {
-    layout: "fan",
-    layers: [
-      crop("website", WIDE, WEB_A, "browser", { alt: "Client website for a packaging manufacturer" }),
-      crop("website", WIDE, WEB_B, "browser"),
-      crop("website", WIDE, WEB_C, "browser"),
-    ],
-  },
+  website: WEBSITES,
   printverify: {
     layout: "stack-left",
     layers: [
@@ -160,16 +173,9 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
 
 /** "Where we can help you" (HelpScroll), per service slug. Layouts differ from the showcase on purpose.
  *  A back layer must come from a source region at least as wide as it renders at 1x (~480px), so it is
- *  never upscaled: the small website panels (WEB_B/C) only ever sit in front. */
+ *  never upscaled. */
 export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
-  website: {
-    layout: "stack-left",
-    layers: [
-      crop("website", WIDE, WEB_A, "browser", { alt: "Client website for a packaging manufacturer" }),
-      crop("website", WIDE, WEB_B, "browser"),
-      crop("website", WIDE, WEB_C, "browser"),
-    ],
-  },
+  website: WEBSITES,
   crm: {
     layout: "stack-right",
     layers: [

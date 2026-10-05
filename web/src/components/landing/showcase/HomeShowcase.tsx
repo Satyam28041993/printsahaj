@@ -31,7 +31,7 @@ const MEDIA_SLUG: Partial<Record<ShowcaseVisualId, ShowcaseSlug>> = {
 };
 
 /** Seconds each tab stays open. Also the length of the progress line. */
-const CYCLE_SECONDS = 7;
+const CYCLE_SECONDS = 6;
 /** After a touch, auto-play stays paused this long unless the visitor resumes it. */
 const TOUCH_HOLD_MS = 12000;
 
@@ -50,7 +50,6 @@ export default function HomeShowcase() {
   const { tabs } = homeShowcase;
   const [active, setActive] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
-  const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
   const [touchHold, setTouchHold] = useState(false);
   const [calc, setCalc] = useState<CalcState>(CALC_INITIAL);
@@ -66,7 +65,7 @@ export default function HomeShowcase() {
   useSlidingIndicator(tabsRowRef, tabRefs, active);
 
   const auto = !reduced;
-  const running = auto && inView && !userPaused && !hover && !focused && !touchHold;
+  const running = auto && inView && !userPaused && !focused && !touchHold;
 
   useEffect(() => {
     // Feature-detect after mount so the server and first client render agree.
@@ -194,8 +193,6 @@ export default function HomeShowcase() {
         style={{ "--cycle": `${CYCLE_SECONDS}s` } as React.CSSProperties}
         data-play={running ? "running" : "paused"}
         data-auto={auto ? "on" : "off"}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
         onFocus={(event) => setFocused(event.target.matches(":focus-visible"))}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
