@@ -121,8 +121,9 @@ const WEBSITES: CollageSpec = {
     {
       src: "/showcase/web-pgpl-full.webp",
       width: 1200,
-      height: 750,
-      ratio: 1440 / 900,
+      height: 676,
+      // Cropped above the white band under the hero (banner is 810px of a 900px viewport).
+      ratio: 1200 / 676,
       variant: "browser",
       url: "pgpltechprint.com",
       alt: "PGPL Group website (pgpltechprint.com), home page built by PrintSahaj",
