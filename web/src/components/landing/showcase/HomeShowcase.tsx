@@ -31,7 +31,7 @@ const MEDIA_SLUG: Partial<Record<ShowcaseVisualId, ShowcaseSlug>> = {
 };
 
 /** Seconds each tab stays open. Also the length of the progress line. */
-const CYCLE_SECONDS = 7;
+const CYCLE_SECONDS = 6;
 /** After a touch, auto-play stays paused this long unless the visitor resumes it. */
 const TOUCH_HOLD_MS = 12000;
 
