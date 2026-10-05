@@ -52,7 +52,7 @@ export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
   flexora: "Flexora ERP · Plant Operations Command Center (live)",
   crm: "LeadTrack CRM · lead pipeline & dashboard",
   erp: "Flexora ERP · dashboard, pipeline and roll stock",
-  website: "Client websites · packaging & manufacturing",
+  website: "Client websites · pgpltechprint · ashokraj · tricil",
   marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
   printverify: "PrintVerify · vendor plate check (artwork blurred)",
   aivy: "Aivy · AI assistant that books meetings and reminders",
@@ -98,10 +98,7 @@ const crop = (
   ...extra,
 });
 
-// Panels of the old pre-baked collages (website.webp / crm.webp).
-const WEB_A: CropBox = [36, 36, 585, 440]; // packaging client site, large hero (logo + name blurred)
-const WEB_B: CropBox = [656, 36, 333, 208]; // industrial client site hero
-const WEB_C: CropBox = [656, 281, 333, 209]; // packaging client site hero
+// Panels of the old pre-baked collage crm.webp.
 const CRM_B: CropBox = [650, 31, 339, 213]; // Lead Overview KPI tiles
 const CRM_C: CropBox = [650, 276, 339, 214]; // Analytics filters
 // App cards of the product slides (boxes from content/productSlides.ts).
@@ -114,6 +111,28 @@ const PV2: CropBox = [288, 104, 623, 543];
 const PV3: CropBox = [301, 84, 598, 583];
 /** Aivy's "Meeting" confirmation card, border fully inside (client name blurred). */
 const AIVY_CARD: CropBox = [8, 166, 928, 176];
+
+/* Client websites: three different sites, each a whole first screen (never a crop).
+   Captured with Playwright (desktop 1440x900, mobile 390x844, DPR 2); client logos,
+   phones, emails, and personal data blurred. */
+const WEBSITES: CollageSpec = {
+  layout: "site",
+  layers: [
+    {
+      src: "/showcase/web-pgpl-full.webp",
+      width: 1200,
+      height: 676,
+      // Cropped above the white band under the hero (banner is 810px of a 900px viewport).
+      ratio: 1200 / 676,
+      variant: "browser",
+      url: "pgpltechprint.com",
+      alt: "PGPL Group website (pgpltechprint.com), home page built by PrintSahaj",
+    },
+    // front = the tilted phone (on top), accent = the second browser (behind it)
+    { src: "/showcase/web-tricil-mobile.webp", width: 520, height: 1125, ratio: 390 / 844, variant: "phone", alt: "" },
+    { src: "/showcase/web-ashokraj.webp", width: 1200, height: 750, ratio: 1440 / 900, variant: "browser", alt: "" },
+  ],
+};
 
 /* The small frames (tablet / card) round their own corners, so the slide cards
    use "fill" there: the whole card shows edge to edge, bigger and easier to read
@@ -137,14 +156,7 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
       crop("crm", WIDE, CRM_C, "card"),
     ],
   },
-  website: {
-    layout: "fan",
-    layers: [
-      crop("website", WIDE, WEB_A, "browser", { alt: "Client website for a packaging manufacturer" }),
-      crop("website", WIDE, WEB_B, "browser"),
-      crop("website", WIDE, WEB_C, "browser"),
-    ],
-  },
+  website: WEBSITES,
   printverify: {
     layout: "stack-left",
     layers: [
@@ -167,14 +179,7 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
  *  A back layer must come from a source region at least as wide as it renders at 1x (~480px), so it is
  *  never upscaled: the small 333px panels (WEB_B/C, CRM_B/C) only ever sit in front. */
 export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
-  website: {
-    layout: "stack-left",
-    layers: [
-      crop("website", WIDE, WEB_A, "browser", { alt: "Client website for a packaging manufacturer" }),
-      crop("website", WIDE, WEB_B, "browser"),
-      crop("website", WIDE, WEB_C, "browser"),
-    ],
-  },
+  website: WEBSITES,
   crm: {
     layout: "stack-right",
     layers: [

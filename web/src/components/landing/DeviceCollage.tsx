@@ -20,9 +20,11 @@ export type CollageLayer = {
   alt: string;
   /** Front layer only: "callout" is a wide zoom of a thin strip, bottom-right (bottom-centre on phones). */
   place?: "callout";
+  /** Text in the browser bar's URL pill (back browser only). Defaults to the generic "app.printsahaj". */
+  url?: string;
 };
 
-export type CollageLayout = "stack-right" | "stack-left" | "fan";
+export type CollageLayout = "stack-right" | "stack-left" | "fan" | "site";
 
 export type CollageSpec = {
   /** 0 = back (main), 1 = front, 2 = accent. */
@@ -68,7 +70,7 @@ export default function DeviceCollage({
                 style={{ "--r": layer.ratio } as React.CSSProperties}
                 aria-hidden={main ? undefined : true}
               >
-                <DeviceFrame variant={layer.variant} ratio={layer.ratio} tilt={false}>
+                <DeviceFrame variant={layer.variant} ratio={layer.ratio} tilt={false} url={layer.url}>
                   <CroppedImage
                     src={layer.src}
                     alt={main ? layer.alt : ""}

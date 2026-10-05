@@ -1022,7 +1022,7 @@
    --------------------------------------------------------------------------- */
 
 .hp {
-  --step: 4.5s;
+  --step: 6s;
   --play: running;
   padding: clamp(20px, 3.5vw, 56px);
   /* clip, not hidden: hidden would make the panel the scroll container and
@@ -2119,7 +2119,7 @@
   .dvc__layer--front { --w: 52cqw; }
   .dvc__layer--accent { display: none; }
   .dvc--fan .dvc__layer--front { top: auto; bottom: 0; --hmax: calc(var(--H) * 0.8); }
-  .dvc .dvc__layer--callout { left: 0; right: 0; bottom: 0; margin-inline: auto; --w: 88cqw; }
+  .dvc .dvc__layer--callout { left: 0; right: 0; bottom: 0; margin-inline: auto; --w: 100cqw; }
 }
 
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
@@ -2140,6 +2140,46 @@
   .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--back { transform: rotateY(2deg) rotateX(1deg); }
   .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--front { transform: rotateY(4deg) rotateX(1.5deg) translateZ(20px); }
   .dvc--stack-left:is(:hover, :focus-within) .dvc__layer--accent { transform: rotate(1deg); }
+}
+
+/* ---- site: client websites ------------------------------------------------
+   A big browser at the back (site A, full first screen), a smaller browser low
+   in the middle (site B, full first screen) and a tilted phone in front (site C,
+   mobile). Every screen is a whole first screen at its own aspect: nothing is cropped. */
+.dvc--site .dvc__layer--back { top: 0; left: 0; right: auto; --w: 72cqw; }
+.dvc--site .dvc__layer--accent { top: auto; right: auto; left: 37cqw; bottom: 0; --w: 44cqw; --hmax: calc(var(--H) * 0.62); }
+.dvc--site .dvc__layer--front { top: auto; left: auto; right: 3cqw; bottom: 1.5cqw; --w: 18.5cqw; --hmax: calc(var(--H) * 0.92); }
+
+.dvc__layer--phone { --b: 0px; }
+.dvc .dvf--phone { max-width: none; }
+.dvc .dvf--phone .dvf__device { padding: clamp(3px, 0.9cqw, 8px); border-radius: clamp(14px, 3.4cqw, 30px); }
+.dvc .dvf--phone .dvf__window { border-radius: clamp(11px, 2.6cqw, 23px); }
+.dvc .dvf__notch { top: clamp(6px, 1.5cqw, 13px); width: 30%; height: clamp(4px, 1.1cqw, 10px); }
+
+/* The phone is tilted at every width (a static pose, not an animation). */
+.dvc--site .dvc__layer--front { transform: rotate(5deg); transform-origin: 50% 60%; }
+.dvc--site .dvc__layer--front .dvf__device {
+  box-shadow: var(--dvf-shadow), 0 34px 60px -18px rgba(10, 11, 13, 0.45);
+}
+
+.dark .dvc--site .dvc__layer--front .dvf__device {
+  box-shadow: var(--dvf-shadow), 0 34px 60px -18px rgba(0, 0, 0, 0.85);
+}
+
+@media (max-width: 639px) {
+  /* Square stage: the back browser spans the full width, the second browser sits
+     low on the left (below the back's hero and CTA), the phone low on the right. */
+  .dvc--site .dvc__stage { --H: 100cqw; aspect-ratio: 1 / 1; }
+  .dvc--site .dvc__layer--back { --w: 100cqw; }
+  .dvc--site .dvc__layer--accent { display: block; left: 0; bottom: 0; --w: 60cqw; --hmax: calc(var(--H) * 0.5); }
+  .dvc--site .dvc__layer--front { right: 2.5cqw; bottom: 1cqw; --w: 30cqw; --hmax: calc(var(--H) * 0.8); }
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .dvc--site .dvc__layer--front { transform: rotate(5deg) translateZ(40px); }
+  .dvc--site .dvc__layer--accent { transform: rotateY(-6deg) rotateX(2deg); }
+  .dvc--site:is(:hover, :focus-within) .dvc__layer--front { transform: rotate(3deg) translateZ(20px); }
+  .dvc--site:is(:hover, :focus-within) .dvc__layer--accent { transform: rotateY(-3deg) rotateX(1deg); }
 }
 
 /* ---- case study (PrintVerify) -------------------------------------------- */
