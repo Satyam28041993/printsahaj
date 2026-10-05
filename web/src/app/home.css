@@ -2143,10 +2143,9 @@
 }
 
 /* ---- site: client websites ------------------------------------------------
-   A big browser at the back (site A, full first screen; its full-page capture
-   scrolls slowly when motion is allowed), a smaller browser low in the middle
-   (site B, full first screen) and a tilted phone in front (site C, mobile).
-   Every screen is a whole first screen at its own aspect: nothing is cropped. */
+   A big browser at the back (site A, full first screen), a smaller browser low
+   in the middle (site B, full first screen) and a tilted phone in front (site C,
+   mobile). Every screen is a whole first screen at its own aspect: nothing is cropped. */
 .dvc--site .dvc__layer--back { top: 0; left: 0; right: auto; --w: 72cqw; }
 .dvc--site .dvc__layer--accent { top: auto; right: auto; left: 37cqw; bottom: 0; --w: 44cqw; --hmax: calc(var(--H) * 0.62); }
 .dvc--site .dvc__layer--front { top: auto; left: auto; right: 3cqw; bottom: 1.5cqw; --w: 18.5cqw; --hmax: calc(var(--H) * 0.92); }
