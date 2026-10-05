@@ -8,8 +8,8 @@ import { PRINTVERIFY_SLIDES, SLIDE_SCREEN_RATIO, SLIDE_SIZE } from "@content/pro
 
 const ICONS = { layers: Layers, hash: Hash, scan: ScanSearch } as const;
 
-/** The job's screens: printverify-1 and printverify-4 (both already blurred). */
-const JOB_SLIDES = ["/showcase/printverify-1.webp", "/showcase/printverify-4.webp"]
+/** The job's screens: the vendor-plate job and the missing-plate separations. */
+const JOB_SLIDES = ["/showcase/hd/printverify-1-job.webp", "/showcase/hd/printverify-4-separations.webp"]
   .map((src) => PRINTVERIFY_SLIDES.find((slide) => slide.src === src))
   .filter((slide) => slide !== undefined);
 

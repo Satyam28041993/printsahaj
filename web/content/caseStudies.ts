@@ -118,7 +118,7 @@ export const caseStudyHome = {
     ],
     note: "Representative job, details anonymised.",
     result: "Declared 7 units, found 6 plates — 1 missing.",
-    imagesNote: "PrintVerify screens · artwork blurred",
+    imagesNote: "PrintVerify screens · demo artwork",
   },
   moreHeading: "Two more ways a file can be wrong",
   cards: [
