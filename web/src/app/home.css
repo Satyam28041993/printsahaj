@@ -2392,6 +2392,252 @@
   height: 100%;
 }
 
+.cr__live {
+  position: absolute;
+  inset: 0;
+}
+
+/* Flexora flow: a circle track with one readable stage, not nine tall cards. */
+.fxf {
+  --i: 0;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(10px, 3.2cqw, 22px) clamp(12px, 3.6cqw, 26px) clamp(12px, 3cqw, 20px);
+  color: #e8edf7;
+  background:
+    radial-gradient(90% 60% at 12% 0%, rgba(124, 58, 237, 0.45), transparent 55%),
+    radial-gradient(70% 50% at 100% 100%, rgba(34, 211, 238, 0.16), transparent 50%),
+    linear-gradient(165deg, #12162a 0%, #1a1440 48%, #0c1020 100%);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.fxf__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fxf__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fxf__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: clamp(26px, 7cqw, 36px);
+  height: clamp(26px, 7cqw, 36px);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  font-size: clamp(11px, 2.8cqw, 14px);
+  font-weight: 800;
+}
+
+.fxf__eyebrow,
+.fxf__kicker {
+  display: block;
+  line-height: 1.15;
+}
+
+.fxf__eyebrow {
+  font-size: clamp(8px, 2cqw, 11px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c4b5fd;
+}
+
+.fxf__kicker {
+  margin-top: 1px;
+  font-size: clamp(12px, 3.1cqw, 16px);
+  font-weight: 700;
+}
+
+.fxf__demo {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(196, 181, 253, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: clamp(9px, 2.1cqw, 11px);
+  font-weight: 700;
+  color: #ddd6fe;
+}
+
+.fxf__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  margin-top: clamp(10px, 3cqw, 18px);
+}
+
+.fxf__rail,
+.fxf__rail-fill {
+  position: absolute;
+  top: calc(clamp(22px, 6.2cqw, 34px) / 2 - 1px);
+  left: calc(100% / 18);
+  right: calc(100% / 18);
+  height: 2px;
+  border-radius: 99px;
+}
+
+.fxf__rail {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.fxf__rail-fill {
+  right: auto;
+  width: calc(100% / 9 * var(--i));
+  background: linear-gradient(90deg, #7c3aed, #22d3ee);
+  transition: width 0.45s var(--h-ease);
+}
+
+.fxf__comet {
+  position: absolute;
+  top: calc(clamp(22px, 6.2cqw, 34px) / 2 - 5px);
+  left: calc(100% / 18 + (100% - 100% / 9) * var(--i) / 8 - 5px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.28), 0 0 16px #22d3ee;
+  transition: left 0.45s var(--h-ease);
+}
+
+.fxf__step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.fxf__dot {
+  display: grid;
+  place-items: center;
+  width: clamp(22px, 6.2cqw, 34px);
+  height: clamp(22px, 6.2cqw, 34px);
+  border-radius: 50%;
+  border: 1.5px solid rgba(196, 181, 253, 0.45);
+  background: #16132c;
+  font-size: clamp(8px, 2cqw, 11px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.fxf__step.is-done .fxf__dot {
+  border-color: transparent;
+  background: #4f46e5;
+}
+
+.fxf__step.is-on .fxf__dot {
+  border-color: transparent;
+  background: linear-gradient(135deg, #22d3ee, #7c3aed);
+  color: #0b1020;
+  transform: scale(1.12);
+}
+
+.fxf__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(8px, 2.15cqw, 12px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #a5b4cf;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fxf__step.is-on .fxf__name {
+  color: #fff;
+}
+
+.fxf__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  margin-top: clamp(8px, 2.4cqw, 16px);
+  padding: clamp(10px, 3cqw, 20px) clamp(12px, 3.4cqw, 22px);
+  border-radius: clamp(12px, 3cqw, 18px);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  background: rgba(10, 14, 28, 0.72);
+}
+
+.fxf__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: clamp(12px, 3.2cqw, 18px);
+  font-weight: 700;
+}
+
+.fxf__stage span {
+  color: #67e8f9;
+  font-variant-numeric: tabular-nums;
+}
+
+.fxf__big {
+  margin: 2px 0 0;
+  font-size: clamp(28px, 9cqw, 64px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-align: center;
+}
+
+.fxf__sub {
+  margin: 6px 0 0;
+  font-size: clamp(11px, 2.8cqw, 16px);
+  font-weight: 600;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fxf__step.is-on .fxf__dot {
+    animation: fxf-pulse 1.7s ease-in-out infinite;
+  }
+
+  .fxf__card {
+    animation: fxf-in 0.35s var(--h-ease);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxf__rail-fill,
+  .fxf__comet,
+  .fxf__dot {
+    transition: none;
+  }
+}
+
+@keyframes fxf-pulse {
+  0%,
+  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 211, 238, 0); }
+}
+
+@keyframes fxf-in {
+  from { opacity: 0.45; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* Every caption is stacked in one grid cell (the others invisible), so the box
    is as tall as the longest one and the controls never move between slides. */
 .cr__caption {

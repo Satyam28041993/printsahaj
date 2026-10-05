@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import CtaButton from "./CtaButton";
 import Carousel from "./Carousel";
+import FlexoraFlow from "./FlexoraFlow";
 import { FLEXORA_SLIDES, PRINTVERIFY_SLIDES, SLIDE_SCREEN_RATIO, SLIDE_SIZE } from "@content/productSlides";
 import { home } from "@content/home";
 
@@ -56,7 +57,15 @@ export default function ProductChapters() {
               </div>
             </div>
             <div data-m="reveal">
-              <Carousel slides={FLEXORA_SLIDES} width={SLIDE_SIZE.width} height={SLIDE_SIZE.height} ratio={SLIDE_SCREEN_RATIO} variant="laptop" label="Flexora screens" />
+              <Carousel
+                slides={FLEXORA_SLIDES}
+                visuals={[undefined, <FlexoraFlow key="flexora-flow" />]}
+                width={SLIDE_SIZE.width}
+                height={SLIDE_SIZE.height}
+                ratio={SLIDE_SCREEN_RATIO}
+                variant="laptop"
+                label="Flexora screens"
+              />
             </div>
           </div>
         </section>

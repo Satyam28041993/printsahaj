@@ -70,6 +70,6 @@ export const FLEXORA_SLIDES: ProductSlide[] = [
     crop: FULL,
     fit: "fill",
     title: "Production pipeline, stage by stage",
-    text: "Pre-press to dispatch, every order's status in one view.",
+    text: "Each stage lights up as the job moves from order to dispatch.",
   },
 ];

@@ -26,6 +26,7 @@ export default function Carousel({
   label,
   variant = "browser",
   className = "",
+  visuals,
 }: {
   slides: ProductSlide[];
   width: number;
@@ -35,6 +36,8 @@ export default function Carousel({
   label: string;
   variant?: DeviceVariant;
   className?: string;
+  /** Optional live screen for a slide index. Replaces that slide's image. */
+  visuals?: ReadonlyArray<React.ReactNode | undefined>;
 }) {
   const [index, setIndex] = useState(0);
   const [hover, setHover] = useState(false);
@@ -55,11 +58,13 @@ export default function Carousel({
   }, []);
 
   const playing = !reduced && inView && !hover && !focus && !hidden && !userPaused;
+  // A live slide (the Flexora circle track) stays up long enough for the walk to read.
+  const dwell = visuals?.[index] ? 9000 : INTERVAL_MS;
   useEffect(() => {
     if (!playing) return;
-    const timer = setTimeout(() => setIndex((i) => (i + 1) % count), INTERVAL_MS);
+    const timer = setTimeout(() => setIndex((i) => (i + 1) % count), dwell);
     return () => clearTimeout(timer);
-  }, [playing, index, count]);
+  }, [playing, index, count, dwell]);
 
   const onPointerDown = (e: React.PointerEvent) => {
     touch.current = { x: e.clientX, y: e.clientY };
@@ -109,17 +114,21 @@ export default function Carousel({
                 aria-label={`${i + 1} of ${count}`}
                 aria-hidden={i !== index}
               >
-                <CroppedImage
-                  src={slide.src}
-                  alt={slide.title}
-                  width={width}
-                  height={height}
-                  crop={slide.crop}
-                  fit={slide.fit}
-                  radius={slide.radius}
-                  ratio={ratio}
-                  loading={i === 0 ? undefined : "lazy"}
-                />
+                {visuals?.[i] ? (
+                  <div className="cr__live">{visuals[i]}</div>
+                ) : (
+                  <CroppedImage
+                    src={slide.src}
+                    alt={slide.title}
+                    width={width}
+                    height={height}
+                    crop={slide.crop}
+                    fit={slide.fit}
+                    radius={slide.radius}
+                    ratio={ratio}
+                    loading={i === 0 ? undefined : "lazy"}
+                  />
+                )}
               </div>
             ))}
           </div>
