@@ -85,7 +85,7 @@ const FX_QC: CropBox = [1432, 108, 556, 610];
 /** Quote-sent column: ENQ-2038 · Roll labels and its three steps. */
 const CRM_COL: CropBox = [896, 272, 516, 520];
 /** Vendor composite pane with the two mismatch callouts. */
-const PV_VENDOR: CropBox = [1088, 430, 812, 690];
+const PV_VENDOR: CropBox = [1120, 480, 700, 620];
 /** Flow stages 06–09 (Production, QC, Stock, Dispatch) with their detail cards. */
 const FLOW_LATE: CropBox = [1095, 318, 860, 792];
 
