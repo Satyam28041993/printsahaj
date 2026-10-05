@@ -19,9 +19,9 @@ export interface ProductSlide {
   radius?: number;
 }
 
-export const SLIDE_SIZE = { width: 3200, height: 2000 } as const;
+export const SLIDE_SIZE = { width: 2000, height: 1250 } as const;
 
-/** Screen aspect of the slide frame: the HD screens are 3200 × 2000. */
+/** Screen aspect of the slide frame: the HD screens are 2000 × 1250. */
 export const SLIDE_SCREEN_RATIO = SLIDE_SIZE.width / SLIDE_SIZE.height;
 
 const FULL: CropBox = [0, 0, SLIDE_SIZE.width, SLIDE_SIZE.height];
