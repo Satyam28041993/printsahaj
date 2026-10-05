@@ -104,7 +104,7 @@ export const printSahajSite: PrintSahajSite = {
       { label: "CRM", href: "/crm" },
       { label: "Tools", href: "/tools" },
       { label: "Work", href: "/work" },
-      { label: "Insights", href: "/insights" },
+      // /insights stays on its URL. It returns here when there is a piece to publish.
       { label: "About", href: "/about" },
     ],
     callCta: { label: "Call Now", href: "tel:+919650744197", number: "+91 96507 44197" },

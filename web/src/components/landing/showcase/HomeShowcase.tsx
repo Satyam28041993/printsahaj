@@ -21,13 +21,12 @@ const ICONS: Record<ShowcaseVisualId, React.ComponentType<{ size?: number; "aria
   calculator: Calculator,
 };
 
-/** Which media slot (src/data/showcase.ts) belongs to which tab. The calculator is real, so it has none. */
+/** Which media slot belongs to which tab. The calculator and Aivy use the live mini UI. */
 const MEDIA_SLUG: Partial<Record<ShowcaseVisualId, ShowcaseSlug>> = {
   flexora: "flexora",
   crm: "crm",
   websites: "website",
   printverify: "printverify",
-  aivy: "aivy",
 };
 
 /** Seconds each tab stays open. Also the length of the progress line. */
@@ -306,7 +305,7 @@ export default function HomeShowcase() {
             </div>
           </div>
 
-          <p className="sc-note">{homeShowcase.sampleNote}</p>
+          <p className="sc-note">{tab.note ?? homeShowcase.sampleNote}</p>
         </div>
       </div>
     </section>

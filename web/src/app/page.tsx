@@ -7,6 +7,8 @@ import MobileCtaBar from "@/components/landing/MobileCtaBar";
 import ProductChapters from "@/components/landing/ProductChapters";
 import LiveTool from "@/components/landing/LiveTool";
 import Pillars from "@/components/landing/Pillars";
+import DigitalGrowth from "@/components/landing/DigitalGrowth";
+import Specialization from "@/components/landing/Specialization";
 import CaseStudy from "@/components/landing/CaseStudy";
 import Founder from "@/components/landing/Founder";
 import FaqSection from "@/components/landing/FaqSection";
@@ -27,9 +29,11 @@ export default function HomePage() {
         <HomeHero />
         <HomeShowcase />
         <HelpScroll />
+        <Pillars />
+        <DigitalGrowth />
+        <Specialization />
         <ProductChapters />
         <LiveTool />
-        <Pillars />
         <CaseStudy />
         <Founder />
         <FaqSection gsap />

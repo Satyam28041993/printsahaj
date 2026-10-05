@@ -203,8 +203,6 @@ function AivyUi() {
             <span className="mu-badge">{c.tasks}</span>
             <span className="mu-badge" data-tone="info">{c.reminder}</span>
           </span>
-          <span className="mu-skel w-full" />
-          <span className="mu-skel w-2/3" />
         </div>
       </div>
     </div>
@@ -229,7 +227,7 @@ const num = (value: string) => {
 /** Width, height and paper rate must each be above zero for a rate to mean anything. */
 const isValid = (state: CalcState) => num(state.labelW) > 0 && num(state.labelH) > 0 && num(state.paperRate) > 0;
 
-/** The real calculator: same formula as /calculators and the LiveTool section. */
+/** The real calculator: same formula as /calculators. */
 function CalculatorUi({ state, onChange }: { state: CalcState; onChange: (next: CalcState) => void }) {
   const { calculator } = homeShowcase;
   const rate = labelRatePerThousand({

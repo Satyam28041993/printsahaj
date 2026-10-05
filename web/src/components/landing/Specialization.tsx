@@ -29,7 +29,7 @@ export default function Specialization() {
           {copy.topics.map((topic) => (
             <li
               key={topic}
-              className="rounded-full border border-hairline bg-white/[0.03] px-3.5 py-1.5 text-sm text-primary transition-colors duration-300 hover:border-accent-line hover:bg-[var(--accent-weak)]"
+              className="rounded-full border border-hairline bg-[var(--surface)] px-3.5 py-1.5 text-sm text-primary transition-colors duration-300 hover:border-accent-line hover:bg-[var(--accent-weak)]"
             >
               {topic}
             </li>

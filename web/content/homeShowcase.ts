@@ -21,6 +21,8 @@ export interface ShowcaseTab {
   promise: string;
   chips: string[];
   cta: { label: string; href: string };
+  /** Replaces the shared demo-data line when this tab shows something else. */
+  note?: string;
 }
 
 export interface ShowcaseContent {
@@ -113,6 +115,7 @@ export const homeShowcase: ShowcaseContent = {
       promise: "Not just a website. One that brings you business — every page leads to an enquiry.",
       chips: ["Built around your customer", "Fast", "Easy to update"],
       cta: { label: "Start a Project", href: "/contact/" },
+      note: "Client websites · pgpltechprint · ashokraj · tricil. Logos, phones and emails on those pages are not shown.",
     },
     {
       id: "printverify",
@@ -129,7 +132,7 @@ export const homeShowcase: ShowcaseContent = {
       status: "Live",
       promise: "A personal AI assistant: reminders, a morning brief, and tasks made from one sentence.",
       chips: ["Reminders", "Morning brief", "Tasks from a sentence"],
-      cta: { label: "All products", href: "/products/" },
+      cta: { label: "AI & Automation", href: "/solutions/" },
     },
     {
       id: "calculator",

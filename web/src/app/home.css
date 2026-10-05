@@ -791,6 +791,10 @@
   overflow: hidden;
 }
 
+.sc-pane .phone {
+  width: min(320px, 100%);
+}
+
 .phone {
   width: 236px;
   overflow: hidden;

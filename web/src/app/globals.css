@@ -2623,10 +2623,14 @@ details[open] .faq-chevron {
 }
 
 .tool-directory {
-  display: block;
-  min-height: 88px;
-  padding: 14px 16px;
-  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--bg-elevated);
 }
 
 .eco-tree {

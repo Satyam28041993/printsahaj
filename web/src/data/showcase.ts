@@ -7,8 +7,8 @@
  *
  * PrintVerify, Flexora and CRM panels use sharp demo screens in
  * public/showcase/hd/ (PrintSahaj sample data only). The website collage is the
- * three-site version (pgpl / ashokraj / tricil). Aivy still uses the older
- * privacy-checked crop under public/showcase/.
+ * three-site version (pgpl / ashokraj / tricil). The Aivy tab is the chat
+ * demo in MiniUis, not the older meeting-card crop under public/showcase/.
  *
  * SHOWCASE_COLLAGES / HELP_COLLAGES layer those screens into one mock-up per
  * panel; a slot with a collage shows it instead of the single frame.
@@ -201,7 +201,7 @@ export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
       crop("hd/flexora-flow", HD, FLOW_LATE, "browser"),
     ],
   },
-  // Off on purpose: the animated flow demo stays (the Aivy collage lives in the showcase's Aivy tab).
+  // Off on purpose: the animated flow demo stays. The showcase Aivy tab is the chat demo.
   automation: undefined,
   marketing: {
     layout: "stack-left",
