@@ -2167,43 +2167,6 @@
   box-shadow: var(--dvf-shadow), 0 34px 60px -18px rgba(0, 0, 0, 0.85);
 }
 
-/* Full-page capture in the back screen: shows the first screen, then travels to
-   the bottom of the page and back (transform only: no layout shift). */
-.dvf-scroll {
-  position: absolute;
-  inset: 0;
-  display: block;
-  overflow: hidden;
-}
-
-.dvf-scroll img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: block;
-  width: 100%;
-  height: auto;
-  max-width: none;
-  user-select: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .dvf-scroll img {
-    animation: dvf-autoscroll 42s cubic-bezier(0.45, 0, 0.55, 1) 1.5s infinite;
-    will-change: transform;
-  }
-
-  .dvc:is(:hover, :focus-within) .dvf-scroll img {
-    animation-play-state: paused;
-  }
-}
-
-@keyframes dvf-autoscroll {
-  0%, 8% { transform: translateY(0); }
-  46%, 54% { transform: translateY(var(--travel, 0%)); }
-  92%, 100% { transform: translateY(0); }
-}
-
 @media (max-width: 639px) {
   /* Square stage: the back browser spans the full width, the second browser sits
      low on the left (below the back's hero and CTA), the phone low on the right. */

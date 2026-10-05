@@ -20,12 +20,6 @@ export type CollageLayer = {
   alt: string;
   /** Front layer only: "callout" is a wide zoom of a thin strip, bottom-right (bottom-centre on phones). */
   place?: "callout";
-  /**
-   * Back layer only: src is a full-page capture (width x height, much taller than the
-   * screen). The screen shows its first screen at `ratio`; with motion allowed it slowly
-   * scrolls down the whole page and back. Reduced motion: the first screen, still.
-   */
-  scroll?: boolean;
   /** Text in the browser bar's URL pill (back browser only). Defaults to the generic "app.printsahaj". */
   url?: string;
 };
@@ -39,32 +33,6 @@ export type CollageSpec = {
 };
 
 const ROLES = ["back", "front", "accent"] as const;
-
-/**
- * A full-page capture in a screen of aspect `ratio`: the top (first screen) shows,
- * and the CSS animation in home.css (.dvf-scroll, motion allowed only) travels to
- * the bottom of the page and back. Transform-only, so it never shifts layout.
- */
-function ScrollingPage({ layer, alt, eager }: { layer: CollageLayer; alt: string; eager: boolean }) {
-  // translateY(%) is relative to the image's own height: travel = 1 - screenH / imgH.
-  const travel = Math.max(0, 1 - layer.width / layer.ratio / layer.height) * 100;
-  return (
-    <span className="dvf-scroll" style={{ "--travel": `-${+travel.toFixed(3)}%` } as React.CSSProperties}>
-      {/* Static export ships images unoptimized; next/image is not used on this site. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={layer.src}
-        alt={alt}
-        width={layer.width}
-        height={layer.height}
-        loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        draggable={false}
-        sizes="(min-width:1024px) 600px, 100vw"
-      />
-    </span>
-  );
-}
 
 /**
  * Two or three screens layered into one mock-up: a large frame at the back, an
@@ -103,9 +71,6 @@ export default function DeviceCollage({
                 aria-hidden={main ? undefined : true}
               >
                 <DeviceFrame variant={layer.variant} ratio={layer.ratio} tilt={false} url={layer.url}>
-                  {layer.scroll ? (
-                    <ScrollingPage layer={layer} alt={main ? layer.alt : ""} eager={main && priority} />
-                  ) : (
                   <CroppedImage
                     src={layer.src}
                     alt={main ? layer.alt : ""}
@@ -118,7 +83,6 @@ export default function DeviceCollage({
                     loading={main && priority ? "eager" : "lazy"}
                     sizes={main ? "(min-width:1024px) 560px, 100vw" : undefined}
                   />
-                  )}
                 </DeviceFrame>
               </div>
             );

@@ -113,9 +113,8 @@ const PV3: CropBox = [301, 84, 598, 583];
 const AIVY_CARD: CropBox = [8, 166, 928, 176];
 
 /* Client websites: three different sites, each a whole first screen (never a crop).
-   Captured with Playwright (desktop 1440x900, mobile 390x844, DPR 2); client logos are
-   covered with the PrintSahaj logo and phone numbers / emails / lead data blurred.
-   The back frame is a full-page capture that scrolls (motion allowed only). */
+   Captured with Playwright (desktop 1440x900, mobile 390x844, DPR 2); client logos,
+   phones, emails, and personal data blurred. */
 const WEBSITES: CollageSpec = {
   layout: "site",
   layers: [
@@ -124,7 +123,6 @@ const WEBSITES: CollageSpec = {
       width: 1200,
       height: 750,
       ratio: 1440 / 900,
-      scroll: true,
       variant: "browser",
       url: "pgpltechprint.com",
       alt: "PGPL Group website (pgpltechprint.com), home page built by PrintSahaj",
