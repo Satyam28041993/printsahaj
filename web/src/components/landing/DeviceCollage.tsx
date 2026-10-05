@@ -1,7 +1,7 @@
 import React from "react";
 import DeviceFrame, { CroppedImage, type CropBox } from "./DeviceFrame";
 
-/** One screen in a collage: a crop of an existing (already blurred) screenshot in a device frame. */
+/** One screen in a collage: a demo UI or a crop of a privacy-checked screenshot, in a device frame. */
 export type CollageLayer = {
   /** "/showcase/…webp" */
   src: string;

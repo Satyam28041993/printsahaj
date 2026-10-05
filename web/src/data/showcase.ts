@@ -3,11 +3,15 @@
  * <slug>.webp (or .png) and/or <slug>.mp4 and flip the matching flag here: that
  * is all. (A static export cannot check whether a file exists at runtime, so the
  * flag is the switch; with no flag the animated mock-up stays.)
- * See web/docs/showcase.md. Screenshots are privacy-blurred before they are added.
+ * See web/docs/showcase.md.
  *
- * SHOWCASE_COLLAGES / HELP_COLLAGES (below) layer 2-3 crops of those same files
- * into one mock-up per panel; a slot with a collage shows it instead of the
- * single frame.
+ * PrintVerify, Flexora and CRM panels use sharp demo screens in
+ * public/showcase/hd/ (PrintSahaj sample data only). The website collage is the
+ * three-site version (pgpl / ashokraj / tricil). Aivy still uses the older
+ * privacy-checked crop under public/showcase/.
+ *
+ * SHOWCASE_COLLAGES / HELP_COLLAGES layer those screens into one mock-up per
+ * panel; a slot with a collage shows it instead of the single frame.
  */
 
 import type { CollageLayer, CollageSpec } from "@/components/landing/DeviceCollage";
@@ -49,28 +53,41 @@ export const SHOWCASE_SIZE = { width: 1024, height: 525 } as const;
 
 /** One muted line under each frame. */
 export const SHOWCASE_CAPTIONS: Partial<Record<ShowcaseSlug, string>> = {
-  flexora: "Flexora ERP · Plant Operations Command Center (live)",
-  crm: "LeadTrack CRM · lead pipeline & dashboard",
-  erp: "Flexora ERP · dashboard, pipeline and roll stock",
+  flexora: "Flexora · plant command centre (demo data)",
+  crm: "CRM · enquiry pipeline (demo data)",
+  erp: "Flexora · dashboard and order-to-dispatch flow (demo data)",
   website: "Client websites · pgpltechprint · ashokraj · tricil",
-  marketing: "Lead pipeline from TradeIndia & IndiaMART · live (names blurred)",
-  printverify: "PrintVerify · vendor plate check (artwork blurred)",
+  marketing: "CRM · enquiries, quotes and follow-ups (demo data)",
+  printverify: "PrintVerify · vendor plate check (demo artwork)",
   aivy: "Aivy · AI assistant that books meetings and reminders",
 };
 
 /* ---- collages ------------------------------------------------------------
-   Every layer is a CSS crop of a file already in public/showcase/ (all blurred
-   and privacy-checked). Crop boxes are [x, y, w, h] in source pixels and stay
-   inside the blurred areas: never widen one into an unblurred logo, name,
-   phone, email or job detail. */
+   HD product screens (public/showcase/hd/) are 2000 × 1250 dummy UIs. The back
+   layer is the whole screen. The front layer is a zoomed crop of the same
+   file (or the matching second screen) so its headings stay readable.
+   The website collage is three whole first screens. Aivy stays a crop of the
+   older privacy-checked file. */
 
 type Variant = CollageLayer["variant"];
 type Extra = Partial<Pick<CollageLayer, "alt" | "fit" | "radius" | "place" | "ratio">>;
 
-/** 1024 x 525 screenshots. */
+/** 1024 x 525 screenshots (Aivy). */
 const WIDE = { width: 1024, height: 525 } as const;
-/** 1200 x 750 product slides (an app card on a baked-in backdrop). */
-const SLIDE = { width: 1200, height: 750 } as const;
+/** Sharp demo screens, 2000 × 1250. The Flexora flow is letterboxed onto this
+ *  frame in its own background so the whole trail stays visible. */
+const HD = { width: 2000, height: 1250 } as const;
+
+/* Front-layer crops, measured on the 2000 × 1250 files. Narrow enough that the
+   tablet / browser (~44cqw) shows the type at more than 1.6× the back screen. */
+/** Two KPI tiles plus the "QC rejection by reason" card. */
+const FX_QC: CropBox = [1432, 108, 556, 610];
+/** Quote-sent column: ENQ-2038 · Roll labels and its three steps. */
+const CRM_COL: CropBox = [896, 272, 516, 520];
+/** Vendor composite pane with the two mismatch callouts. */
+const PV_VENDOR: CropBox = [1120, 480, 700, 620];
+/** Flow stages 06–09 (Production, QC, Stock, Dispatch) with their detail cards. */
+const FLOW_LATE: CropBox = [1095, 318, 860, 792];
 
 /** A whole 1024 x 525 screenshot. */
 const full = (file: string, variant: Variant, alt = ""): CollageLayer => ({
@@ -98,19 +115,17 @@ const crop = (
   ...extra,
 });
 
-// Panels of the old pre-baked collage crm.webp.
-const CRM_B: CropBox = [650, 31, 339, 213]; // Lead Overview KPI tiles
-const CRM_C: CropBox = [650, 276, 339, 214]; // Analytics filters
-// App cards of the product slides (boxes from content/productSlides.ts).
-const FX1: CropBox = [68, 106, 1064, 539];
-const FX2: CropBox = [181, 57, 838, 637];
-const FX3: CropBox = [68, 106, 1064, 539];
-const FX4: CropBox = [180, 57, 840, 637];
-// 7px inside the PrintVerify cards' rounded corners, so no light edge rings the frame.
-const PV2: CropBox = [288, 104, 623, 543];
-const PV3: CropBox = [301, 84, 598, 583];
-/** Aivy's "Meeting" confirmation card, border fully inside (client name blurred). */
+/** Aivy's "Meeting" confirmation card, border fully inside (client name checked). */
 const AIVY_CARD: CropBox = [8, 166, 928, 176];
+
+/** A whole HD demo screen. Ratio follows the file so nothing is cropped away. */
+const hd = (file: string, size: { width: number; height: number }, variant: Variant, alt = ""): CollageLayer => ({
+  src: `/showcase/hd/${file}.webp`,
+  ...size,
+  ratio: size.width / size.height,
+  variant,
+  alt,
+});
 
 /* Client websites: three different sites, each a whole first screen (never a crop).
    Captured with Playwright (desktop 1440x900, mobile 390x844, DPR 2); client logos,
@@ -134,35 +149,28 @@ const WEBSITES: CollageSpec = {
   ],
 };
 
-/* The small frames (tablet / card) round their own corners, so the slide cards
-   use "fill" there: the whole card shows edge to edge, bigger and easier to read
-   than a "card" fit inset inside a second frame. */
-
 /** "Systems that work" (HomeShowcase), per tab slug. */
 export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
   flexora: {
     layout: "stack-right",
     layers: [
-      full("flexora", "laptop", "Flexora ERP plant operations command center"),
-      crop("flexora-2", SLIDE, FX2, "tablet"),
-      crop("flexora-3", SLIDE, FX3, "browser", { ratio: 2 }),
+      hd("flexora-dashboard", HD, "laptop", "Flexora plant command centre"),
+      crop("hd/flexora-dashboard", HD, FX_QC, "tablet"),
     ],
   },
   crm: {
     layout: "stack-right",
     layers: [
-      full("marketing", "laptop", "LeadTrack CRM lead pipeline"),
-      crop("crm", WIDE, CRM_B, "tablet"),
-      crop("crm", WIDE, CRM_C, "card"),
+      hd("crm-pipeline", HD, "laptop", "CRM enquiry pipeline"),
+      crop("hd/crm-pipeline", HD, CRM_COL, "tablet"),
     ],
   },
   website: WEBSITES,
   printverify: {
     layout: "stack-left",
     layers: [
-      full("printverify", "laptop", "PrintVerify vendor plate check"),
-      crop("printverify-2", SLIDE, PV2, "tablet"),
-      crop("printverify-3", SLIDE, PV3, "card"),
+      hd("printverify-1-job", HD, "laptop", "PrintVerify vendor plate check"),
+      crop("hd/printverify-3-compare", HD, PV_VENDOR, "tablet"),
     ],
   },
   aivy: {
@@ -177,22 +185,21 @@ export const SHOWCASE_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = 
 
 /** "Where we can help you" (HelpScroll), per service slug. Layouts differ from the showcase on purpose.
  *  A back layer must come from a source region at least as wide as it renders at 1x (~480px), so it is
- *  never upscaled: the small 333px panels (WEB_B/C, CRM_B/C) only ever sit in front. */
+ *  never upscaled. */
 export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
   website: WEBSITES,
   crm: {
     layout: "stack-right",
     layers: [
-      full("marketing", "browser", "Custom CRM pipeline with blurred leads"),
-      crop("crm", WIDE, CRM_C, "tablet"),
+      hd("crm-pipeline", HD, "browser", "CRM enquiry pipeline"),
+      crop("hd/crm-pipeline", HD, CRM_COL, "tablet"),
     ],
   },
   erp: {
     layout: "fan",
     layers: [
-      crop("flexora-1", SLIDE, FX1, "laptop", { alt: "Flexora ERP dashboard", ratio: 2 }),
-      crop("flexora-3", SLIDE, FX3, "browser", { ratio: 2 }),
-      crop("flexora-4", SLIDE, FX4, "tablet"),
+      hd("flexora-dashboard", HD, "laptop", "Flexora plant command centre"),
+      crop("hd/flexora-flow", HD, FLOW_LATE, "browser"),
     ],
   },
   // Off on purpose: the animated flow demo stays (the Aivy collage lives in the showcase's Aivy tab).
@@ -200,9 +207,8 @@ export const HELP_COLLAGES: Record<ShowcaseSlug, CollageSpec | undefined> = {
   marketing: {
     layout: "stack-left",
     layers: [
-      full("marketing", "laptop", "Lead pipeline from TradeIndia and IndiaMART"),
-      crop("crm", WIDE, CRM_B, "tablet"),
-      crop("crm", WIDE, CRM_C, "card"),
+      hd("crm-lead", HD, "laptop", "CRM lead with enquiry, quote and follow-up"),
+      crop("hd/crm-pipeline", HD, CRM_COL, "tablet"),
     ],
   },
   flexora: undefined,

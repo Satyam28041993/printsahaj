@@ -22,3 +22,8 @@ site keeps showing its animated mock-up.
 - `<slug>.mp4`: optional screen recording, **10–15 s, under 3 MB**, no sound needed (it plays muted, looping).
 
 Use demo or anonymised data only. No client names, phone numbers, rates or job numbers.
+
+PrintVerify, Flexora and CRM use sharp demo screens in `public/showcase/hd/`
+(wired from `SHOWCASE_COLLAGES` / `HELP_COLLAGES` and `content/productSlides.ts`).
+Those files are full dummy UIs, not blurred client shots. Website and Aivy stay
+on the 1024 × 525 crops above.
