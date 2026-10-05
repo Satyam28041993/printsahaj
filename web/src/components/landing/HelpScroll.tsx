@@ -57,7 +57,6 @@ export default function HelpScroll() {
   const [service, setService] = useState(0);
   const [step, setStep] = useState(0);
   const [userPaused, setUserPaused] = useState(false);
-  const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
   const [touchHold, setTouchHold] = useState(false);
 
@@ -71,7 +70,7 @@ export default function HelpScroll() {
   useSlidingIndicator(pillsRowRef, pillRefs, service);
 
   const auto = !reduced;
-  const running = auto && inView && !userPaused && !hover && !focused && !touchHold;
+  const running = auto && inView && !userPaused && !focused && !touchHold;
   const current = services[service];
   const Icons = FLOW_ICONS[service];
 
@@ -130,8 +129,6 @@ export default function HelpScroll() {
         data-play={running ? "running" : "paused"}
         data-auto={auto ? "on" : "off"}
         data-inview={inView}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
         onFocus={(event) => setFocused(event.target.matches(":focus-visible"))}
         onBlur={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
