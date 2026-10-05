@@ -65,10 +65,11 @@ jobs:
       # second folder and the live site stays empty (403). "./" is the
       # website root. FTP_SERVER_DIR can still override if an account differs.
       #
-      # state-name v3: the v2 state on the server still lists a stale empty
-      # _next/<buildId> folder. A new name makes the first deploy upload
-      # everything and delete nothing; old orphaned chunks stay behind
-      # harmlessly. Later deploys diff against the v3 file as usual.
+      # state-name v4: the v3 state on the server still lists a stale empty
+      # _next/<buildId> folder, and deleting it returns 550 and fails the job
+      # after the files are already uploaded. A new name makes the first deploy
+      # upload everything and delete nothing; old orphaned chunks stay behind
+      # harmlessly. Later deploys diff against the v4 file as usual.
       # continue-on-error only lets the retry step below run; the job still
       # fails if the retry fails too.
       - name: Deploy to Hostinger via FTP
@@ -81,7 +82,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v3.json
+          state-name: .ftp-deploy-sync-state-v4.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
@@ -100,7 +101,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v3.json
+          state-name: .ftp-deploy-sync-state-v4.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
