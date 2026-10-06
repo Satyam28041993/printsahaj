@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SolutionsApproach from "@/components/solutions/SolutionsApproach";
+import SolutionsAreas from "@/components/solutions/SolutionsAreas";
 import SolutionsHero from "@/components/solutions/SolutionsHero";
 import SolutionsProblem from "@/components/solutions/SolutionsProblem";
 import { solutions } from "@content/solutions";
@@ -16,6 +17,7 @@ export default function SolutionsPage() {
       <SolutionsHero />
       <SolutionsProblem />
       <SolutionsApproach />
+      <SolutionsAreas />
     </>
   );
 }

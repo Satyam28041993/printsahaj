@@ -1,6 +1,7 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
- * Later sections land in this file. The hero, the workday, and the approach are built.
+ * Later sections land in this file. The hero, the workday, the approach,
+ * and the five situations are built.
  */
 
 import { printSahajSite } from "./site";
@@ -93,6 +94,110 @@ export const solutions = {
         body: ["If something needs to be built, we build it around your actual workflow."],
       },
     ],
+  },
+  areas: {
+    id: "what-we-can-help-with",
+    title: "So, what can technology actually do for your business?",
+    supporting: ["More than most businesses realise.", "But less than most technology companies promise."] as const,
+    automation: {
+      id: "automation",
+      number: "01",
+      kicker: "Business automation",
+      lines: ["Less repetitive work.", "More time for actual work."] as const,
+      body: ["If your team keeps doing the same thing every day, there may be a better way."] as const,
+      examples: [
+        "Automatic reports",
+        "Data entry",
+        "Reminders",
+        "Approvals",
+        "Notifications",
+        "Repetitive calculations",
+        "Connecting different tools",
+      ] as const,
+      flow: ["Repeat", "Automate", "Done"] as const,
+    },
+    ai: {
+      id: "ai",
+      number: "02",
+      kicker: "AI for business",
+      lines: ["AI is useful when it saves you real work."] as const,
+      body: ["You don't need AI everywhere.", "You need it where it actually helps."] as const,
+      examples: [
+        "Reading and organising information",
+        "Summarising documents",
+        "Answering common questions",
+        "Finding information faster",
+        "Generating first drafts",
+        "Analysing business data",
+        "Helping teams make better decisions",
+      ] as const,
+      figure: {
+        label: "A person at a laptop, using a plain work tool. The photograph comes later.",
+      },
+    },
+    software: {
+      id: "software",
+      number: "03",
+      kicker: "Custom software",
+      lines: ["Sometimes your business needs its own tool."] as const,
+      body: [
+        "When Excel, WhatsApp and multiple disconnected apps are no longer enough, we can build something around the way your team actually works.",
+      ] as const,
+      examples: [
+        "Internal business apps",
+        "Web applications",
+        "Mobile apps",
+        "Customer portals",
+        "Dashboards",
+        "Custom calculators",
+        "Workflow systems",
+      ] as const,
+      screens: [
+        {
+          slug: "flexora",
+          title: "Flexora plant command centre, demo data",
+          href: "/products/flexora/",
+          link: "See Flexora",
+        },
+        {
+          slug: "crm",
+          title: "CRM enquiry pipeline, demo data",
+          href: "/crm/",
+          link: "See the CRM",
+        },
+        {
+          slug: "printverify",
+          title: "PrintVerify vendor plate check, demo artwork",
+          href: "/products/printverify/",
+          link: "See PrintVerify",
+        },
+      ] as const,
+    },
+    workflows: {
+      id: "workflows",
+      number: "04",
+      kicker: "Digital workflows",
+      lines: ["Make information move with the work."] as const,
+      body: ["When information is scattered across WhatsApp, email, Excel and paper, work gets delayed."] as const,
+      examples: [
+        "Lead management",
+        "Approvals",
+        "Task tracking",
+        "Customer follow-up",
+        "Document workflows",
+        "Internal communication",
+      ] as const,
+      flow: ["People", "Information", "Process", "Action"] as const,
+    },
+    tools: {
+      id: "tools",
+      number: "05",
+      kicker: "Business tools & dashboards",
+      lines: ["Turn everyday business data into something useful."] as const,
+      body: ["Your business already has data.", "The challenge is making it easy to understand and use."] as const,
+      examples: ["Calculators", "Reports", "Dashboards", "Tracking tools", "Cost analysis", "Performance monitoring"] as const,
+      link: { label: "Open the full calculator", href: "/calculators/?tab=label-rate" },
+    },
   },
 } as const;
 
