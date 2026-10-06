@@ -75,6 +75,20 @@
   object-fit: cover;
 }
 
+/* The hero frame is a tall crop of a wide photograph. Keep the person,
+   who sits on the right of the picture. Mobile shows more of the desk. */
+.sol-figure--hero .sol-figure__img {
+  object-position: 62% 46%;
+}
+
+.sol-figure--ai .sol-figure__img {
+  object-position: center 42%;
+}
+
+.sol-figure--start .sol-figure__img {
+  object-position: center 40%;
+}
+
 .sol-figure__hold {
   display: flex;
   flex-direction: column;
@@ -128,6 +142,10 @@
 
   .sol-figure {
     aspect-ratio: 4 / 5;
+  }
+
+  .sol-figure--hero .sol-figure__img {
+    object-position: 78% 38%;
   }
 }
 

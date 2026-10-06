@@ -36,7 +36,14 @@ export default function SolutionsStartSmall() {
           </ol>
         </div>
         <div className="sol-start__figure" data-reveal style={beat(4)}>
-          <SolutionsFigure alt={start.figure.alt} label={start.figure.label} />
+          <SolutionsFigure
+            alt={start.figure.alt}
+            label={start.figure.label}
+            src={start.figure.src}
+            width={start.figure.width}
+            height={start.figure.height}
+            place="start"
+          />
         </div>
       </div>
     </section>

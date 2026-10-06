@@ -68,7 +68,14 @@ export default function SolutionsAreas() {
             examples={areas.ai.examples}
           />
           <div className="sol-area__visual sol-ai" data-reveal style={beat(4)}>
-            <SolutionsFigure alt="" label={areas.ai.figure.label} />
+            <SolutionsFigure
+              alt={areas.ai.figure.alt}
+              label={areas.ai.figure.label}
+              src={areas.ai.figure.src}
+              width={areas.ai.figure.width}
+              height={areas.ai.figure.height}
+              place="ai"
+            />
           </div>
         </article>
 

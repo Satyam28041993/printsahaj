@@ -76,7 +76,15 @@ export default function SolutionsHero() {
             </Pill>
           </div>
         </div>
-        <SolutionsFigure alt={hero.figure.alt} label={hero.figure.label} />
+        <SolutionsFigure
+          alt={hero.figure.alt}
+          label={hero.figure.label}
+          src={hero.figure.src}
+          width={hero.figure.width}
+          height={hero.figure.height}
+          priority
+          place="hero"
+        />
       </div>
     </section>
   );

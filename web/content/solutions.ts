@@ -29,10 +29,11 @@ export const solutions = {
       href: "#what-we-can-help-with",
     },
     figure: {
-      /** Shown until a photograph is placed. Not a description of a picture that is not there. */
       label: "A working desk. The photograph comes later.",
-      /** Used only once a real photograph is in `src`. */
-      alt: "A business owner at a normal desk, laptop open, phone and papers nearby, thinking through the work.",
+      src: "/images/solutions/solutions-hero.webp",
+      width: 1280,
+      height: 720,
+      alt: "Business owner working through everyday business tasks at a desk",
     },
   },
   problem: {
@@ -134,6 +135,10 @@ export const solutions = {
       ] as const,
       figure: {
         label: "A person at a laptop, using a plain work tool. The photograph comes later.",
+        src: "/images/solutions/solutions-ai-business.webp",
+        width: 1152,
+        height: 864,
+        alt: "Business professional using AI to help with everyday business work",
       },
     },
     software: {
@@ -289,7 +294,10 @@ export const solutions = {
     steps: ["One problem", "One improvement", "Real result", "Next step"] as const,
     figure: {
       label: "A calm workspace. The photograph comes later.",
-      alt: "A business owner at a laptop in a real workplace, using a simple tool, the work a little easier.",
+      src: "/images/solutions/solutions-start-small.webp",
+      width: 1280,
+      height: 720,
+      alt: "Business owner reviewing a simple digital business tool",
     },
   },
   principles: {
