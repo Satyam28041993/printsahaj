@@ -1,7 +1,7 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
  * Later sections land in this file. The hero, the workday, the approach,
- * and the five situations are built.
+ * the five situations, and the trust break are built.
  */
 
 import { printSahajSite } from "./site";
@@ -198,6 +198,19 @@ export const solutions = {
       examples: ["Calculators", "Reports", "Dashboards", "Tracking tools", "Cost analysis", "Performance monitoring"] as const,
       link: { label: "Open the full calculator", href: "/calculators/?tab=label-rate" },
     },
+  },
+  trust: {
+    title: "Maybe you don't need us to build anything.",
+    supporting: [
+      "Sometimes the best solution is already available.",
+      "Sometimes a simple change in your process can solve the problem.",
+      "Sometimes a small automation is enough.",
+      "And sometimes you really do need a custom system.",
+      "We'll help you figure out which one makes sense.",
+    ] as const,
+    turn: "Maybe you don't need us...",
+    okay: "...and that's okay.",
+    close: ["No unnecessary software.", "No technology for the sake of technology."] as const,
   },
 } as const;
 

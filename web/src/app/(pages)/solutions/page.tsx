@@ -3,6 +3,7 @@ import SolutionsApproach from "@/components/solutions/SolutionsApproach";
 import SolutionsAreas from "@/components/solutions/SolutionsAreas";
 import SolutionsHero from "@/components/solutions/SolutionsHero";
 import SolutionsProblem from "@/components/solutions/SolutionsProblem";
+import SolutionsTrust from "@/components/solutions/SolutionsTrust";
 import { solutions } from "@content/solutions";
 import "../../solutions.css";
 
@@ -18,6 +19,7 @@ export default function SolutionsPage() {
       <SolutionsProblem />
       <SolutionsApproach />
       <SolutionsAreas />
+      <SolutionsTrust />
     </>
   );
 }
