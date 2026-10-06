@@ -29,6 +29,7 @@ export default function ShowcaseMedia({
   className = "",
   collage,
   priority = false,
+  flat = false,
 }: {
   slug: ShowcaseSlug;
   title: string;
@@ -38,6 +39,11 @@ export default function ShowcaseMedia({
   collage?: "showcase" | "help";
   /** Eager-load the collage's main image (first visible tab only). */
   priority?: boolean;
+  /**
+   * Show the collage's main HD screen flat, with no crop and no tilt.
+   * Used where a layered mock-up makes the interface hard to read.
+   */
+  flat?: boolean;
 }) {
   const spec = collage === "showcase" ? SHOWCASE_COLLAGES[slug] : collage === "help" ? HELP_COLLAGES[slug] : undefined;
   const flags = SHOWCASE_MEDIA[slug];
@@ -50,6 +56,26 @@ export default function ShowcaseMedia({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (inView) setNear(true);
   }, [inView]);
+
+  const main = spec?.layers[0];
+  if (flat && main) {
+    return (
+      <figure className={`media-figure ${className}`} aria-label={title}>
+        <DeviceFrame variant="browser" ratio={main.width / main.height} tilt={false}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={main.src}
+            alt={main.alt || title}
+            width={main.width}
+            height={main.height}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+          />
+        </DeviceFrame>
+        {SHOWCASE_CAPTIONS[slug] ? <figcaption className="media-caption">{SHOWCASE_CAPTIONS[slug]}</figcaption> : null}
+      </figure>
+    );
+  }
 
   if (spec) return <DeviceCollage {...spec} label={title} caption={SHOWCASE_CAPTIONS[slug]} priority={priority} />;
   if (!image && !video) return <>{fallback}</>;
