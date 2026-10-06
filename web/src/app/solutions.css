@@ -1303,7 +1303,7 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.7rem 0.65rem;
-  max-width: 40rem;
+  max-width: 32rem;
   margin: clamp(2.25rem, 5vw, 3.5rem) 0 0;
   padding: 0;
   list-style: none;
@@ -1343,16 +1343,3 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
   color: var(--accent);
 }
 
-@media (min-width: 960px) {
-  .sol-envs li:nth-child(3) {
-    margin-left: 1.75rem;
-  }
-
-  .sol-envs li:nth-child(6) {
-    margin-left: 0.85rem;
-  }
-
-  .sol-envs li:nth-child(8) {
-    margin-left: 2.25rem;
-  }
-}
