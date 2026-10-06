@@ -1247,3 +1247,112 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
     margin-top: clamp(6.5rem, 14vh, 9rem);
   }
 }
+
+/* ---- business environments ---------------------------------------------- */
+
+.sol-industries {
+  background: var(--bg-base);
+  padding: clamp(40px, 6vw, 88px) clamp(20px, 4vw, 48px) clamp(88px, 11vw, 160px);
+}
+
+.sol-industries__inner {
+  width: min(100%, 44rem);
+  margin-inline: auto;
+}
+
+.sol-industries__title {
+  margin: 0;
+  max-width: 14em;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 1.15rem + 2.2vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-industries__support {
+  max-width: 34rem;
+  margin-top: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.sol-industries__support p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-industries__support p + p {
+  margin-top: 0.7rem;
+}
+
+.sol-industries__support p:nth-child(4) {
+  margin-top: 1.2rem;
+}
+
+.sol-industries__support p:last-child {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sol-envs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem 0.65rem;
+  max-width: 40rem;
+  margin: clamp(2.25rem, 5vw, 3.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-env {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  font-size: 0.975rem;
+  line-height: 1.3;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.sol-env--more {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.sol-env--deep {
+  gap: 0.45rem;
+  border-color: var(--accent-line);
+  background: var(--accent-weak);
+}
+
+.sol-env__note {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+@media (min-width: 960px) {
+  .sol-envs li:nth-child(3) {
+    margin-left: 1.75rem;
+  }
+
+  .sol-envs li:nth-child(6) {
+    margin-left: 0.85rem;
+  }
+
+  .sol-envs li:nth-child(8) {
+    margin-left: 2.25rem;
+  }
+}

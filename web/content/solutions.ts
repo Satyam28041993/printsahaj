@@ -1,7 +1,7 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
  * Later sections land in this file. The hero, the workday, the approach,
- * the five situations, and the trust break are built.
+ * the five situations, the trust break, and the business environments are built.
  */
 
 import { printSahajSite } from "./site";
@@ -211,6 +211,26 @@ export const solutions = {
     turn: "Maybe you don't need us...",
     okay: "...and that's okay.",
     close: ["No unnecessary software.", "No technology for the sake of technology."] as const,
+  },
+  industries: {
+    title: "Every business works differently.",
+    supporting: [
+      "A manufacturer doesn't work like a service company.",
+      "A distributor doesn't work like a consultant.",
+      "A school doesn't work like a retailer.",
+      "That's why we don't start with a fixed product.",
+      "We start by understanding how your business works.",
+    ] as const,
+    environments: [
+      { id: "manufacturing", label: "Manufacturing" },
+      { id: "trading", label: "Trading & Distribution" },
+      { id: "services", label: "Professional Services" },
+      { id: "retail", label: "Retail & Consumer" },
+      { id: "education", label: "Education" },
+      { id: "logistics", label: "Logistics" },
+      { id: "printing", label: "Printing & Packaging", note: "Deep expertise" },
+      { id: "more", label: "And more" },
+    ] as const,
   },
 } as const;
 
