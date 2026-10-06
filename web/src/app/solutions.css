@@ -1,0 +1,138 @@
+/* /solutions — same panel, type and pill language as the homepage.
+   Entrance is the existing .h-rise / .h-word CSS. This file only places the
+   hero and the photograph slot. */
+
+.sol-hero {
+  padding: clamp(28px, 4vw, 64px) clamp(20px, 3vw, 40px) clamp(56px, 8vw, 104px);
+}
+
+.sol-hero__grid {
+  display: grid;
+  align-items: center;
+  gap: clamp(28px, 4vw, 72px);
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-hero__copy {
+  min-width: 0;
+  max-width: 38rem;
+}
+
+.sol-hero__title {
+  margin-top: 1.15rem;
+}
+
+.sol-hero__line {
+  display: block;
+}
+
+.sol-hero__lead {
+  margin-top: 1.25rem;
+  max-width: 42rem;
+}
+
+.sol-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  margin-top: 1.75rem;
+}
+
+/* These labels are full sentences. The homepage pill stays nowrap because
+   its labels are short; here the line may break instead of overflowing. */
+.sol-hero .pill {
+  height: auto;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+  padding-block: 0.75rem;
+}
+
+.sol-figure {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: var(--h-radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  animation: sol-figure-in 1.1s var(--h-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) backwards;
+  animation-delay: 280ms;
+}
+
+.sol-figure__img,
+.sol-figure__hold {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sol-figure__img {
+  object-fit: cover;
+}
+
+.sol-figure__hold {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  background:
+    radial-gradient(90% 80% at 80% 0%, color-mix(in srgb, var(--brand-b) 18%, transparent), transparent 68%),
+    var(--panel-wash),
+    var(--bg-sunken);
+}
+
+.sol-figure__mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-a);
+}
+
+.sol-figure__label {
+  max-width: 16rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@keyframes sol-figure-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .sol-hero__grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  }
+
+  .sol-hero__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .sol-figure {
+    aspect-ratio: 4 / 5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sol-figure {
+    transform: none;
+  }
+}
