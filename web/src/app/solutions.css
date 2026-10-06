@@ -1,6 +1,6 @@
 /* /solutions — same panel, type and pill language as the homepage.
-   Entrance is the existing .h-rise / .h-word CSS. This file only places the
-   hero and the photograph slot. */
+   Hero entrance is the existing .h-rise / .h-word CSS. The workday below it
+   uses the shared reveal observer and a native-scroll slip stack. */
 
 .sol-hero {
   padding: clamp(28px, 4vw, 64px) clamp(20px, 3vw, 40px) clamp(56px, 8vw, 104px);
@@ -135,4 +135,356 @@
   .sol-figure {
     transform: none;
   }
+}
+
+/* ---- the workday -------------------------------------------------------- */
+
+.sol-problem {
+  padding: clamp(64px, 8vw, 112px) clamp(20px, 3vw, 40px);
+}
+
+.sol-problem__inner {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-problem__title-line {
+  display: block;
+}
+
+.sol-problem__title-line + .sol-problem__title-line {
+  margin-top: 0.15em;
+}
+
+.sol-problem__story {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vw, 56px);
+  margin-top: clamp(36px, 5vw, 64px);
+}
+
+.sol-desk-wrap {
+  position: sticky;
+  top: 5.25rem;
+  z-index: 2;
+  /* Start, not stretch: a full-height grid item has nowhere to stick.
+     Width stays 100% because the slips are absolute and would otherwise
+     collapse the column on small screens. */
+  align-self: start;
+  width: 100%;
+}
+
+.sol-desk {
+  position: relative;
+  height: 280px;
+  padding: 0;
+}
+
+.sol-desk.feature-card:hover {
+  transform: none;
+}
+
+.sol-desk__kicker {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-slip {
+  position: absolute;
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  transition:
+    opacity 0.7s var(--m-ease, var(--h-ease)),
+    translate 0.7s var(--m-ease, var(--h-ease)),
+    scale 0.7s var(--m-ease, var(--h-ease));
+}
+
+html.js-motion .sol-slip:not(.is-in) {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.98;
+}
+
+.sol-slip__card {
+  padding: 0.75rem 0.85rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.sol-slip__card--row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sol-slip__kicker {
+  display: block;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-slip__when {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.sol-cells,
+.sol-bubbles,
+.sol-sums,
+.sol-lines,
+.sol-tasks {
+  display: grid;
+  margin-top: 0.65rem;
+}
+
+.sol-cells {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.sol-cells i,
+.sol-sums i,
+.sol-lines i {
+  display: block;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.sol-cells i {
+  height: 10px;
+}
+
+.sol-cells i[data-fill="on"] {
+  background: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.sol-bubbles {
+  gap: 6px;
+}
+
+.sol-bubbles i {
+  display: block;
+  height: 14px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+}
+
+.sol-bubbles i[data-side="in"] {
+  width: 78%;
+}
+
+.sol-bubbles i[data-side="out"] {
+  width: 62%;
+  margin-left: auto;
+  background: var(--accent-weak);
+  border-color: var(--accent-line);
+}
+
+.sol-sums,
+.sol-lines {
+  gap: 7px;
+}
+
+.sol-sums i,
+.sol-lines i {
+  height: 7px;
+}
+
+.sol-sums i:nth-child(1) { width: 72%; }
+.sol-sums i:nth-child(2) { width: 54%; }
+.sol-sums i[data-total="true"] {
+  width: 40%;
+  height: 9px;
+  margin-top: 4px;
+  background: var(--accent);
+}
+
+.sol-lines i[data-title="true"] {
+  width: 48%;
+  height: 9px;
+  background: var(--text-faint);
+}
+
+.sol-lines i:nth-child(2) { width: 100%; }
+.sol-lines i:nth-child(3) { width: 92%; }
+.sol-lines i:nth-child(4) { width: 70%; }
+
+.sol-tasks {
+  gap: 8px;
+}
+
+.sol-tasks i {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 16px;
+}
+
+.sol-tasks i::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hover);
+}
+
+.sol-tasks i[data-done="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sol-tasks i::after {
+  content: "";
+  height: 6px;
+  width: 70%;
+  border-radius: 99px;
+  background: var(--border);
+}
+
+.sol-bell {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  background:
+    radial-gradient(circle at 50% 50%, var(--accent) 0 3px, transparent 3.5px),
+    var(--accent-weak);
+}
+
+.sol-slip[data-kind="sheet"] { left: 6%; top: 18%; width: 52%; rotate: -2.5deg; z-index: 1; }
+.sol-slip[data-kind="messages"] { right: 6%; top: 8%; width: 42%; rotate: 2deg; z-index: 2; }
+.sol-slip[data-kind="sum"] { left: 10%; top: 46%; width: 40%; rotate: -1deg; z-index: 3; }
+.sol-slip[data-kind="report"] { right: 8%; top: 40%; width: 44%; rotate: 1.5deg; z-index: 4; }
+.sol-slip[data-kind="reminder"] { left: 8%; bottom: 8%; width: 46%; rotate: -1.5deg; z-index: 5; }
+.sol-slip[data-kind="task"] { right: 7%; bottom: 7%; width: 42%; rotate: 2deg; z-index: 6; }
+
+.sol-problem__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-problem__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem 1rem;
+  align-items: baseline;
+  min-height: 42vh;
+  padding-top: 0.25rem;
+}
+
+.sol-problem__index {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.sol-problem__item p {
+  margin: 0;
+  max-width: 28rem;
+  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.65rem);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-problem__close {
+  max-width: 40rem;
+  margin-top: clamp(12px, 3vw, 28px);
+}
+
+.sol-problem__bridge {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-problem__bridge + .sol-problem__bridge {
+  margin-top: 0.35rem;
+}
+
+.sol-problem__sum {
+  margin: 1.75rem 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-problem__next {
+  margin: 0.75rem 0 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+@media (min-width: 900px) {
+  .sol-problem__story {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+    align-items: start;
+  }
+
+  .sol-problem__list {
+    order: 1;
+  }
+
+  .sol-desk-wrap {
+    order: 2;
+    top: 6.5rem;
+  }
+
+  .sol-desk {
+    height: 540px;
+  }
+
+  .sol-problem__item {
+    min-height: 34vh;
+  }
+}
+
+@media (max-width: 899px) {
+  .sol-desk {
+    height: 248px;
+  }
+
+  /* One sentence occupies the open band under the stuck desk, so the line
+     stays readable while the slips pile up above it. */
+  .sol-problem__item {
+    min-height: calc(100svh - 5.25rem - 248px);
+    align-items: center;
+    padding-top: 0;
+  }
+
+  .sol-slip[data-kind="sheet"] { width: 54%; top: 16%; }
+  .sol-slip[data-kind="messages"] { width: 46%; top: 10%; }
+  .sol-slip[data-kind="sum"] { width: 44%; top: 42%; }
+  .sol-slip[data-kind="report"] { width: 48%; top: 36%; }
+  .sol-slip[data-kind="reminder"] { width: 50%; bottom: 14%; }
+  .sol-slip[data-kind="task"] { width: 42%; right: 8%; bottom: 16%; }
 }

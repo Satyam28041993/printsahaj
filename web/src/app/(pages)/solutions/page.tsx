@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SolutionsHero from "@/components/solutions/SolutionsHero";
+import SolutionsProblem from "@/components/solutions/SolutionsProblem";
 import { solutions } from "@content/solutions";
 import "../../solutions.css";
 
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function SolutionsPage() {
-  return <SolutionsHero />;
+  return (
+    <>
+      <SolutionsHero />
+      <SolutionsProblem />
+    </>
+  );
 }

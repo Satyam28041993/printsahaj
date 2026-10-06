@@ -1,6 +1,6 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
- * Later sections land in this file. The hero is the only section built so far.
+ * Later sections land in this file. The hero and the workday problem are built.
  */
 
 import { printSahajSite } from "./site";
@@ -33,4 +33,23 @@ export const solutions = {
       alt: "A business owner at a normal desk, laptop open, phone and papers nearby, thinking through the work.",
     },
   },
+  problem: {
+    lines: [
+      "Most businesses don't have a technology problem.",
+      "They have a “too much work” problem.",
+    ] as const,
+    items: [
+      { id: "report", kind: "report", text: "A report takes two hours." },
+      { id: "sheet", kind: "sheet", text: "The same information is entered in three places." },
+      { id: "messages", kind: "messages", text: "Someone keeps checking WhatsApp for new leads." },
+      { id: "sum", kind: "sum", text: "A simple calculation still happens in Excel." },
+      { id: "reminder", kind: "reminder", text: "The owner has to ask someone for an update every time." },
+      { id: "task", kind: "task", text: "A team spends hours doing something that could happen automatically." },
+    ] as const,
+    bridge: ["These may look like small problems.", "Together, they cost time, money and attention."] as const,
+    sum: "Small problems add up.",
+    next: "That's where technology can help.",
+  },
 } as const;
+
+export type SolutionFragmentKind = (typeof solutions.problem.items)[number]["kind"];
