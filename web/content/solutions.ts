@@ -1,6 +1,6 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
- * Later sections land in this file. The hero and the workday problem are built.
+ * Later sections land in this file. The hero, the workday, and the approach are built.
  */
 
 import { printSahajSite } from "./site";
@@ -49,6 +49,50 @@ export const solutions = {
     bridge: ["These may look like small problems.", "Together, they cost time, money and attention."] as const,
     sum: "Small problems add up.",
     next: "That's where technology can help.",
+  },
+  approach: {
+    title: "We start with the problem, not the product.",
+    supporting:
+      "Before we talk about software, AI or automation, we first understand how the work actually happens.",
+    steps: [
+      {
+        id: "understand",
+        number: "01",
+        title: "Understand",
+        question: "What is taking too much time?",
+        body: ["We look at how the work happens today."],
+      },
+      {
+        id: "find",
+        number: "02",
+        title: "Find",
+        question: "Where is the real problem?",
+        body: [
+          "Sometimes it is a manual task.",
+          "Sometimes it is poor communication.",
+          "Sometimes it is simply an old way of doing things.",
+        ],
+      },
+      {
+        id: "simplify",
+        number: "03",
+        title: "Simplify",
+        question: "What is the easiest way to fix it?",
+        body: [
+          "Maybe you need AI.",
+          "Maybe automation.",
+          "Maybe a simple tool.",
+          "Maybe an existing solution is already enough.",
+        ],
+      },
+      {
+        id: "build",
+        number: "04",
+        title: "Build",
+        question: "Only build what is actually useful.",
+        body: ["If something needs to be built, we build it around your actual workflow."],
+      },
+    ],
   },
 } as const;
 
