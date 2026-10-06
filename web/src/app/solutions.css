@@ -1331,6 +1331,10 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
     grid-template-columns: 1fr 1fr 1fr;
     max-width: none;
   }
+
+  .sol-env--more {
+    grid-column: span 2;
+  }
 }
 
 /* ---- the rest of the story ---------------------------------------------- */
