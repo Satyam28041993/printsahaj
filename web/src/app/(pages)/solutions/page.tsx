@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import SolutionsApproach from "@/components/solutions/SolutionsApproach";
 import SolutionsAreas from "@/components/solutions/SolutionsAreas";
 import SolutionsClose from "@/components/solutions/SolutionsClose";
+import SolutionsFaq from "@/components/solutions/SolutionsFaq";
 import SolutionsHero from "@/components/solutions/SolutionsHero";
 import SolutionsIndustries from "@/components/solutions/SolutionsIndustries";
 import SolutionsPrinciples from "@/components/solutions/SolutionsPrinciples";
@@ -29,6 +30,7 @@ export default function SolutionsPage() {
       <SolutionsPrint />
       <SolutionsStartSmall />
       <SolutionsPrinciples />
+      <SolutionsFaq />
       <SolutionsClose />
     </>
   );

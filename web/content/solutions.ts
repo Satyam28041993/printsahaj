@@ -321,6 +321,48 @@ export const solutions = {
       },
     ] as const,
   },
+  faq: {
+    title: "Questions you may have.",
+    supporting: "Before we talk, here are a few things worth knowing.",
+    items: [
+      {
+        id: "custom",
+        question: "Do I need custom software?",
+        answer:
+          "Not necessarily. Sometimes the right solution is an existing tool, a better process, a small automation, or a simple calculator. We start by understanding the problem before recommending what to build.",
+      },
+      {
+        id: "tools",
+        question: "Can you work with the tools we already use?",
+        answer:
+          "Yes. If your current tools are doing the job, we would rather improve the workflow around them than replace them unnecessarily.",
+      },
+      {
+        id: "unknown",
+        question: "What if I don't know what needs to be automated?",
+        answer:
+          "That's completely fine. You don't need to arrive with a technical solution. Tell us what takes too much time, gets repeated, or keeps causing friction. We'll help identify where technology actually makes sense.",
+      },
+      {
+        id: "small",
+        question: "Can we start with something small?",
+        answer:
+          "Yes. In many cases, starting with one real problem is the better approach. Solve it, learn from it, and scale when it proves useful.",
+      },
+      {
+        id: "printing",
+        question: "Do you only work with printing and packaging businesses?",
+        answer:
+          "No. Printing and packaging is where our deepest domain experience comes from, but the way we solve problems applies across growing businesses and teams.",
+      },
+      {
+        id: "start",
+        question: "How do we get started?",
+        answer:
+          "Start with a conversation about the work. Tell us what feels repetitive, unclear, slow, or difficult. We'll help you figure out what, if anything, should be improved.",
+      },
+    ] as const,
+  },
   close: {
     title: "What's one thing in your business you wish was easier?",
     supporting: [

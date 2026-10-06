@@ -1,34 +1,43 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { Calculator, FileBarChart, ListChecks, MessageCircle, MessageSquare, Table2, type LucideIcon } from "lucide-react";
 import { solutions, type SolutionFragmentKind } from "@content/solutions";
 import { useReveal } from "@/lib/useReveal";
 
+const WORK: Record<SolutionFragmentKind, { label: string; Icon: LucideIcon }> = {
+  report: { label: "Report", Icon: FileBarChart },
+  sheet: { label: "Data entry", Icon: Table2 },
+  messages: { label: "Customer message", Icon: MessageSquare },
+  sum: { label: "Calculation", Icon: Calculator },
+  reminder: { label: "Update", Icon: MessageCircle },
+  task: { label: "Task", Icon: ListChecks },
+};
+
 /**
- * The workday. Sentences stay in the page. Abstract slips pile onto a desk
- * as each sentence crosses the viewport. Scroll stays native — nothing pins
- * the page or captures the wheel. Slips are decorative; the words are not.
+ * The workday. On a phone each sentence sits with the card it describes.
+ * On a wide screen the same cards stay in one board and the sentence in
+ * view is the one that comes forward. Scroll stays native.
  */
 export default function SolutionsProblem() {
   const { problem } = solutions;
   const revealRef = useReveal<HTMLElement>();
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
-  const [seen, setSeen] = useState(0);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const nodes = itemRefs.current.filter(Boolean) as HTMLElement[];
     if (nodes.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        let next = -1;
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          next = Math.max(next, Number((entry.target as HTMLElement).dataset.index));
-        }
-        if (next < 0) return;
-        setSeen((current) => Math.max(current, next + 1));
+        const visible = entries.filter((entry) => entry.isIntersecting);
+        if (visible.length === 0) return;
+        visible.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const index = Number((visible[0].target as HTMLElement).dataset.index);
+        if (Number.isNaN(index)) return;
+        setActive(index);
       },
-      { threshold: 0.55, rootMargin: "0px 0px -18% 0px" },
+      { threshold: [0.35, 0.6, 0.85], rootMargin: "-18% 0px -40% 0px" },
     );
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
@@ -51,16 +60,9 @@ export default function SolutionsProblem() {
 
         <div className="sol-problem__story">
           <div className="sol-desk-wrap">
-            <div className="sol-desk feature-card feature-card--teal" aria-hidden="true">
-              <p className="sol-desk__kicker">Workday</p>
+            <div className="sol-board" aria-hidden="true">
               {problem.items.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`sol-slip${index < seen ? " is-in" : ""}`}
-                  data-kind={item.kind}
-                >
-                  <Slip kind={item.kind} />
-                </div>
+                <WorkCard key={item.id} kind={item.kind} active={index === active} />
               ))}
             </div>
           </div>
@@ -77,6 +79,9 @@ export default function SolutionsProblem() {
               >
                 <span className="sol-problem__index">{String(index + 1).padStart(2, "0")}</span>
                 <p>{item.text}</p>
+                <div className="sol-problem__visual">
+                  <WorkCard kind={item.kind} active />
+                </div>
               </li>
             ))}
           </ol>
@@ -96,74 +101,68 @@ export default function SolutionsProblem() {
   );
 }
 
-function Slip({ kind }: { kind: SolutionFragmentKind }) {
+function WorkCard({ kind, active }: { kind: SolutionFragmentKind; active: boolean }) {
+  const { label, Icon } = WORK[kind];
+  return (
+    <div className={active ? "sol-work is-active" : "sol-work"} data-kind={kind}>
+      <span className="sol-work__icon">
+        <Icon size={18} strokeWidth={1.6} aria-hidden />
+      </span>
+      <span className="sol-work__label">{label}</span>
+      <Cue kind={kind} />
+    </div>
+  );
+}
+
+function Cue({ kind }: { kind: SolutionFragmentKind }) {
   if (kind === "sheet") {
     return (
-      <div className="sol-slip__card">
-        <span className="sol-slip__kicker">Sheet</span>
-        <span className="sol-cells">
-          {Array.from({ length: 12 }, (_, index) => (
-            <i key={index} data-fill={index % 4 === 0 ? "on" : undefined} />
-          ))}
-        </span>
-      </div>
+      <span className="sol-cue sol-cue--grid" aria-hidden>
+        {Array.from({ length: 8 }, (_, index) => (
+          <i key={index} data-on={index === 1 ? "true" : undefined} />
+        ))}
+      </span>
     );
   }
   if (kind === "messages") {
     return (
-      <div className="sol-slip__card">
-        <span className="sol-slip__kicker">Messages</span>
-        <span className="sol-bubbles">
-          <i data-side="in" />
-          <i data-side="out" />
-          <i data-side="in" />
-        </span>
-      </div>
+      <span className="sol-cue sol-cue--bubbles" aria-hidden>
+        <i data-side="in" />
+        <i data-side="out" />
+      </span>
     );
   }
   if (kind === "sum") {
     return (
-      <div className="sol-slip__card">
-        <span className="sol-slip__kicker">Sum</span>
-        <span className="sol-sums">
-          <i />
-          <i />
-          <i data-total="true" />
-        </span>
-      </div>
+      <span className="sol-cue sol-cue--sum" aria-hidden>
+        <i />
+        <i />
+        <i data-total="true" />
+      </span>
     );
   }
   if (kind === "report") {
     return (
-      <div className="sol-slip__card">
-        <span className="sol-slip__kicker">Report</span>
-        <span className="sol-lines">
-          <i data-title="true" />
-          <i />
-          <i />
-          <i />
-        </span>
-      </div>
+      <span className="sol-cue sol-cue--bars" aria-hidden>
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
     );
   }
   if (kind === "reminder") {
     return (
-      <div className="sol-slip__card sol-slip__card--row">
-        <span className="sol-bell" />
-        <span>
-          <span className="sol-slip__kicker">Reminder</span>
-          <span className="sol-slip__when">Later today</span>
-        </span>
-      </div>
+      <span className="sol-cue sol-cue--bubbles" aria-hidden>
+        <i data-side="out" />
+        <i data-side="in" />
+      </span>
     );
   }
   return (
-    <div className="sol-slip__card">
-      <span className="sol-slip__kicker">Task</span>
-      <span className="sol-tasks">
-        <i data-done="true" />
-        <i />
-      </span>
-    </div>
+    <span className="sol-cue sol-cue--tasks" aria-hidden>
+      <i data-done="true" />
+      <i />
+    </span>
   );
 }

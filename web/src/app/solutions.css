@@ -182,220 +182,156 @@
   margin-top: clamp(36px, 5vw, 64px);
 }
 
+/* The shared board is the desktop story. Phones render one card under
+   each sentence instead, so the picture and the words stay together. */
 .sol-desk-wrap {
-  position: sticky;
-  top: 5.25rem;
-  z-index: 2;
-  /* Start, not stretch: a full-height grid item has nowhere to stick.
-     Width stays 100% because the slips are absolute and would otherwise
-     collapse the column on small screens. */
-  align-self: start;
-  width: 100%;
+  display: none;
 }
 
-.sol-desk {
-  position: relative;
-  height: 280px;
-  padding: 0;
+.sol-board {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
 }
 
-.sol-desk.feature-card:hover {
-  transform: none;
-}
-
-.sol-desk__kicker {
-  position: absolute;
-  top: 1rem;
-  left: 1.1rem;
-  z-index: 1;
-  margin: 0;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.sol-slip {
-  position: absolute;
-  opacity: 1;
-  translate: 0 0;
-  scale: 1;
-  transition:
-    opacity 0.7s var(--m-ease, var(--h-ease)),
-    translate 0.7s var(--m-ease, var(--h-ease)),
-    scale 0.7s var(--m-ease, var(--h-ease));
-}
-
-html.js-motion .sol-slip:not(.is-in) {
-  opacity: 0;
-  translate: 0 16px;
-  scale: 0.98;
-}
-
-.sol-slip__card {
-  padding: 0.75rem 0.85rem 0.9rem;
+.sol-work {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "icon label"
+    "cue cue";
+  gap: 0.4rem 0.6rem;
+  align-items: center;
+  padding: 0.7rem 0.75rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: 0.95rem;
   background: var(--bg-elevated);
   box-shadow: var(--shadow-card);
 }
 
-.sol-slip__card--row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.sol-slip__kicker {
-  display: block;
-  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.sol-slip__when {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.8125rem;
-  color: var(--text-muted);
-}
-
-.sol-cells,
-.sol-bubbles,
-.sol-sums,
-.sol-lines,
-.sol-tasks {
+.sol-work__icon {
+  grid-area: icon;
   display: grid;
-  margin-top: 0.65rem;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  color: var(--accent);
 }
 
-.sol-cells {
-  grid-template-columns: repeat(4, 1fr);
+.sol-work__label {
+  grid-area: label;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.sol-cue {
+  grid-area: cue;
+  display: grid;
   gap: 4px;
 }
 
-.sol-cells i,
-.sol-sums i,
-.sol-lines i {
+.sol-cue i {
   display: block;
-  border-radius: 3px;
+}
+
+.sol-cue--grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.sol-cue--grid i {
+  height: 8px;
+  border-radius: 2px;
   background: var(--border);
 }
 
-.sol-cells i {
-  height: 10px;
+.sol-cue--grid i[data-on="true"] {
+  background: color-mix(in srgb, var(--accent) 70%, var(--border));
 }
 
-.sol-cells i[data-fill="on"] {
-  background: color-mix(in srgb, var(--accent) 55%, var(--border));
-}
-
-.sol-bubbles {
-  gap: 6px;
-}
-
-.sol-bubbles i {
-  display: block;
-  height: 14px;
-  border-radius: 8px;
-  background: var(--bg-sunken);
+.sol-cue--bubbles i {
+  height: 9px;
+  border-radius: 7px;
   border: 1px solid var(--border);
+  background: var(--bg-sunken);
 }
 
-.sol-bubbles i[data-side="in"] {
+.sol-cue--bubbles i[data-side="in"] {
   width: 78%;
 }
 
-.sol-bubbles i[data-side="out"] {
-  width: 62%;
+.sol-cue--bubbles i[data-side="out"] {
+  width: 58%;
   margin-left: auto;
   background: var(--accent-weak);
   border-color: var(--accent-line);
 }
 
-.sol-sums,
-.sol-lines {
-  gap: 7px;
-}
-
-.sol-sums i,
-.sol-lines i {
-  height: 7px;
-}
-
-.sol-sums i:nth-child(1) { width: 72%; }
-.sol-sums i:nth-child(2) { width: 54%; }
-.sol-sums i[data-total="true"] {
-  width: 40%;
-  height: 9px;
-  margin-top: 4px;
-  background: var(--accent);
-}
-
-.sol-lines i[data-title="true"] {
-  width: 48%;
-  height: 9px;
-  background: var(--text-faint);
-}
-
-.sol-lines i:nth-child(2) { width: 100%; }
-.sol-lines i:nth-child(3) { width: 92%; }
-.sol-lines i:nth-child(4) { width: 70%; }
-
-.sol-tasks {
-  gap: 8px;
-}
-
-.sol-tasks i {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 16px;
-}
-
-.sol-tasks i::before {
-  content: "";
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid var(--border-hover);
-}
-
-.sol-tasks i[data-done="true"]::before {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.sol-tasks i::after {
-  content: "";
+.sol-cue--sum i,
+.sol-cue--bars i {
   height: 6px;
-  width: 70%;
   border-radius: 99px;
   background: var(--border);
 }
 
-.sol-bell {
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--accent-line);
-  background:
-    radial-gradient(circle at 50% 50%, var(--accent) 0 3px, transparent 3.5px),
-    var(--accent-weak);
+.sol-cue--sum i:nth-child(1) { width: 72%; }
+.sol-cue--sum i:nth-child(2) { width: 48%; }
+.sol-cue--sum i[data-total="true"] {
+  width: 36%;
+  height: 8px;
+  margin-top: 2px;
+  background: var(--accent);
 }
 
-.sol-slip[data-kind="sheet"] { left: 6%; top: 18%; width: 52%; rotate: -2.5deg; z-index: 1; }
-.sol-slip[data-kind="messages"] { right: 6%; top: 8%; width: 42%; rotate: 2deg; z-index: 2; }
-.sol-slip[data-kind="sum"] { left: 10%; top: 46%; width: 40%; rotate: -1deg; z-index: 3; }
-.sol-slip[data-kind="report"] { right: 8%; top: 40%; width: 44%; rotate: 1.5deg; z-index: 4; }
-.sol-slip[data-kind="reminder"] { left: 8%; bottom: 8%; width: 46%; rotate: -1.5deg; z-index: 5; }
-.sol-slip[data-kind="task"] { right: 7%; bottom: 7%; width: 42%; rotate: 2deg; z-index: 6; }
+.sol-cue--bars {
+  grid-template-columns: repeat(4, 1fr);
+  align-items: end;
+  height: 22px;
+}
+
+.sol-cue--bars i {
+  height: 40%;
+  border-radius: 2px 2px 0 0;
+}
+
+.sol-cue--bars i:nth-child(2) { height: 70%; }
+.sol-cue--bars i:nth-child(3) { height: 100%; background: var(--accent); }
+.sol-cue--bars i:nth-child(4) { height: 55%; }
+
+.sol-cue--tasks {
+  gap: 6px;
+}
+
+.sol-cue--tasks i {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 12px;
+}
+
+.sol-cue--tasks i::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hover);
+}
+
+.sol-cue--tasks i[data-done="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sol-cue--tasks i::after {
+  content: "";
+  width: 58%;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--border);
+}
 
 .sol-problem__list {
   margin: 0;
@@ -408,8 +344,25 @@ html.js-motion .sol-slip:not(.is-in) {
   grid-template-columns: auto minmax(0, 1fr);
   gap: 0.85rem 1rem;
   align-items: baseline;
-  min-height: 42vh;
-  padding-top: 0.25rem;
+  min-height: 0;
+  margin-top: 1.75rem;
+  padding-top: 0;
+}
+
+.sol-problem__item:first-child {
+  margin-top: 0;
+}
+
+.sol-problem__visual {
+  grid-column: 1 / -1;
+  max-width: min(100%, 22rem);
+  margin-top: 0.15rem;
+}
+
+@media (min-width: 640px) {
+  .sol-problem__visual {
+    max-width: min(100%, 32rem);
+  }
 }
 
 .sol-problem__index {
@@ -473,38 +426,47 @@ html.js-motion .sol-slip:not(.is-in) {
   }
 
   .sol-desk-wrap {
-    order: 2;
+    display: block;
+    position: sticky;
     top: 6.5rem;
+    order: 2;
+    align-self: start;
   }
 
-  .sol-desk {
-    height: 540px;
+  .sol-problem__visual {
+    display: none;
   }
 
   .sol-problem__item {
-    min-height: 34vh;
+    min-height: clamp(6.75rem, 15vh, 9.5rem);
+    margin-top: 0;
+    align-items: start;
+    padding-top: 0.35rem;
+  }
+
+  .sol-work {
+    opacity: 0.55;
+    transition:
+      opacity 0.35s var(--m-ease, var(--h-ease)),
+      border-color 0.35s var(--m-ease, var(--h-ease));
+  }
+
+  .sol-work.is-active {
+    opacity: 1;
+    border-color: var(--accent-line);
   }
 }
 
-@media (max-width: 899px) {
-  .sol-desk {
-    height: 248px;
+@media (prefers-reduced-motion: reduce) {
+  .sol-work,
+  .sol-path::before,
+  .sol-faq__panel {
+    transition: none;
   }
 
-  /* One sentence occupies the open band under the stuck desk, so the line
-     stays readable while the slips pile up above it. */
-  .sol-problem__item {
-    min-height: calc(100svh - 5.25rem - 248px);
-    align-items: center;
-    padding-top: 0;
+  .sol-path::before {
+    transform: none;
   }
-
-  .sol-slip[data-kind="sheet"] { width: 54%; top: 16%; }
-  .sol-slip[data-kind="messages"] { width: 46%; top: 10%; }
-  .sol-slip[data-kind="sum"] { width: 44%; top: 42%; }
-  .sol-slip[data-kind="report"] { width: 48%; top: 36%; }
-  .sol-slip[data-kind="reminder"] { width: 50%; bottom: 14%; }
-  .sol-slip[data-kind="task"] { width: 42%; right: 8%; bottom: 16%; }
 }
 
 /* ---- the approach ------------------------------------------------------- */
@@ -913,42 +875,58 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
 }
 
 .sol-path {
+  position: relative;
   display: flex;
-  align-items: stretch;
-  gap: 1.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.sol-path::before {
+  content: "";
+  position: absolute;
+  left: 1.22rem;
+  top: 1.9rem;
+  bottom: 1.9rem;
+  width: 1px;
+  background: var(--accent);
+  transform-origin: top center;
+  transition: transform 0.7s var(--m-ease, var(--h-ease));
+}
+
+html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
+  transform: scaleY(0);
+}
+
 .sol-path li {
   position: relative;
-  flex: 1;
-  display: grid;
-  place-items: center;
-  min-height: 5.5rem;
-  padding: 1rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-card);
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0;
   font-family: var(--font-display);
-  font-size: clamp(0.82rem, 0.72rem + 0.35vw, 1.05rem);
+  font-size: clamp(0.95rem, 0.88rem + 0.3vw, 1.15rem);
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-align: center;
   color: var(--text-primary);
 }
 
-.sol-path li + li::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: -1.2rem;
-  width: 0.9rem;
-  height: 1px;
-  background: var(--accent);
+.sol-path__mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--accent);
 }
 
 .sol-ai .sol-figure {
@@ -1090,45 +1068,38 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
     gap: 1.5rem 1.75rem;
   }
 
-  .sol-path--tall {
-    flex-direction: column;
-    gap: 1.15rem;
+  .sol-path {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
   }
 
-  .sol-path--tall li + li::before {
-    top: -0.95rem;
-    left: 1.75rem;
-    width: 2px;
-    height: 0.75rem;
+  .sol-path::before {
+    left: 10%;
+    right: 10%;
+    top: 1.45rem;
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    transform-origin: left center;
+  }
+
+  html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
+    transform: scaleX(0);
+  }
+
+  .sol-path li {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.2rem 0.15rem;
+    text-align: center;
   }
 }
 
 @media (max-width: 959px) {
-  .sol-path:not(.sol-path--tall) {
-    gap: 0.7rem;
-  }
-
-  .sol-path:not(.sol-path--tall) li + li::before {
-    left: -0.58rem;
-    width: 0.45rem;
-  }
-
-  .sol-path--tall {
-    flex-direction: column;
-    gap: 1.15rem;
-  }
-
-  .sol-path--tall li + li {
-    margin-left: 0;
-  }
-
-  .sol-path--tall li + li::before {
-    top: -0.95rem;
-    left: 1.75rem;
-    width: 2px;
-    height: 0.75rem;
-  }
-
   .sol-ai .sol-figure {
     aspect-ratio: 16 / 11;
     max-height: none;
@@ -1297,6 +1268,17 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: var(--text-primary);
+}
+
+.sol-env__line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sol-env__icon {
+  flex: none;
+  color: var(--text-faint);
 }
 
 .sol-env--more {
@@ -1608,6 +1590,108 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
 
 .sol-principle__body p + p {
   margin-top: 0.25rem;
+}
+
+.sol-faq {
+  background: var(--bg-base);
+  padding: clamp(12px, 2vw, 28px) clamp(20px, 4vw, 48px) clamp(48px, 6vw, 80px);
+}
+
+.sol-faq__inner {
+  width: min(100%, 40rem);
+  margin-inline: auto;
+}
+
+.sol-faq__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 1.1rem + 1.6vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.sol-faq__support {
+  max-width: 34rem;
+  margin: 0.85rem 0 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.sol-faq__list {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.sol-faq__item {
+  border-bottom: 1px solid var(--border);
+}
+
+.sol-faq__heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.sol-faq__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.85rem 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sol-faq__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 0.35rem;
+}
+
+.sol-faq__chevron {
+  flex: none;
+  color: var(--text-faint);
+  transition: transform 0.3s var(--m-ease, var(--h-ease));
+}
+
+.sol-faq__button[aria-expanded="true"] .sol-faq__chevron {
+  transform: rotate(180deg);
+}
+
+.sol-faq__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s var(--m-ease, var(--h-ease));
+}
+
+.sol-faq__panel.is-open {
+  grid-template-rows: 1fr;
+}
+
+.sol-faq__panel > div {
+  overflow: hidden;
+}
+
+.sol-faq__panel p {
+  max-width: 38rem;
+  margin: 0;
+  padding: 0 0 1.05rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
 .sol-close {
