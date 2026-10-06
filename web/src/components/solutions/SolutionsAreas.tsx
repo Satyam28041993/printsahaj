@@ -69,12 +69,6 @@ export default function SolutionsAreas() {
           />
           <div className="sol-area__visual sol-ai" data-reveal style={beat(4)}>
             <SolutionsFigure alt="" label={areas.ai.figure.label} />
-            <div className="sol-ai__tool" aria-hidden="true">
-              <span className="sol-ai__kicker">A note</span>
-              <span className="sol-ai__line" />
-              <span className="sol-ai__line sol-ai__line--short" />
-              <span className="sol-ai__reply" />
-            </div>
           </div>
         </article>
 
@@ -91,7 +85,7 @@ export default function SolutionsAreas() {
             <ul className="sol-screens">
               {areas.software.screens.map((screen, index) => (
                 <li key={screen.slug} className="sol-screens__item" data-reveal style={beat(index)}>
-                  <ShowcaseMedia slug={screen.slug as ShowcaseSlug} title={screen.title} collage="showcase" />
+                  <ShowcaseMedia slug={screen.slug as ShowcaseSlug} title={screen.title} />
                   <a className="sol-areas__link" href={screen.href}>
                     {screen.link}
                   </a>

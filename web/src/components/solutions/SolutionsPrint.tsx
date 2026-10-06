@@ -45,21 +45,33 @@ export default function SolutionsPrint() {
         </div>
 
         <ul className="sol-print__more">
-          {print.secondary.map((item, index) => (
-            <li key={item.name} className="sol-proof" data-reveal style={beat(index + 4)}>
-              <h3 className="sol-proof__name">{item.name}</h3>
-              {"slug" in item ? (
+          {print.secondary.map((item, index) =>
+            "slug" in item ? (
+              <li key={item.name} className="sol-proof" data-reveal style={beat(index + 4)}>
+                <h3 className="sol-proof__name">{item.name}</h3>
                 <ShowcaseMedia slug={item.slug as ShowcaseSlug} title={item.screen} collage="showcase" />
-              ) : (
-                <Costing label={item.resultLabel} />
-              )}
-              <p className="sol-proof__line">{item.line}</p>
-              <a className="sol-link" href={item.href}>
-                {item.link}
-              </a>
-            </li>
-          ))}
+                <p className="sol-proof__line">{item.line}</p>
+                <a className="sol-link" href={item.href}>
+                  {item.link}
+                </a>
+              </li>
+            ) : null,
+          )}
         </ul>
+        {print.secondary.map((item) =>
+          "slug" in item ? null : (
+            <div key={item.name} className="sol-print__cost" data-reveal style={beat(7)}>
+              <Costing label={item.resultLabel} />
+              <div>
+                <h3 className="sol-proof__name">{item.name}</h3>
+                <p className="sol-proof__line">{item.line}</p>
+                <a className="sol-link" href={item.href}>
+                  {item.link}
+                </a>
+              </div>
+            </div>
+          ),
+        )}
 
         <p data-reveal className="sol-print__statement" style={beat(8)}>
           {print.statement.map((line) => (
