@@ -1,7 +1,8 @@
 /**
  * /solutions copy. The page is a problem-first story, not a second homepage.
  * Later sections land in this file. The hero, the workday, the approach,
- * the five situations, the trust break, and the business environments are built.
+ * the five situations, the trust break, the business environments,
+ * printing experience, starting small, the principles, and the close are built.
  */
 
 import { printSahajSite } from "./site";
@@ -231,6 +232,97 @@ export const solutions = {
       { id: "printing", label: "Printing & Packaging", note: "Deep expertise" },
       { id: "more", label: "And more" },
     ] as const,
+  },
+  print: {
+    title: "One industry we know especially well.",
+    supporting: [
+      "Our roots are in printing and packaging.",
+      "Working closely with this industry led us to build tools for artwork checking, label costing, production workflows, security verification and business operations.",
+      "That experience taught us something important:",
+      "Every industry has its own way of working.",
+      "But good problem-solving starts the same way — understand the work, find the friction, and make it simpler.",
+    ] as const,
+    statement: ["The industry may be specific.", "The way we solve problems isn't."] as const,
+    primary: {
+      name: "Flexora",
+      line: "ERP and HRMS for flexographic label printing.",
+      href: "/products/flexora/",
+      link: "See Flexora",
+      slug: "flexora",
+      screen: "Flexora plant command centre, demo data",
+    },
+    secondary: [
+      {
+        name: "PrintVerify",
+        line: "Artwork and separations checked before production.",
+        href: "/products/printverify/",
+        link: "See PrintVerify",
+        slug: "printverify",
+        screen: "PrintVerify vendor plate check, demo artwork",
+      },
+      {
+        name: "CRM",
+        line: "Enquiries, quotes and follow-ups in one place.",
+        href: "/crm/",
+        link: "See the CRM",
+        slug: "crm",
+        screen: "CRM enquiry pipeline, demo data",
+      },
+      {
+        name: "Label Rate",
+        line: "Roll-label costing from size, paper, ink and wastage.",
+        href: "/calculators/?tab=label-rate",
+        link: "Open the full calculator",
+        resultLabel: "Per 1,000 labels",
+      },
+    ] as const,
+  },
+  start: {
+    title: "You don't have to change everything at once.",
+    lines: [
+      "Start with one problem.",
+      "Fix one process.",
+      "Save a little time.",
+      "See what happens.",
+      "Then decide what comes next.",
+    ] as const,
+    steps: ["One problem", "One improvement", "Real result", "Next step"] as const,
+    figure: {
+      label: "A calm workspace. The photograph comes later.",
+      alt: "A business owner at a laptop in a real workplace, using a simple tool, the work a little easier.",
+    },
+  },
+  principles: {
+    title: "We won't recommend technology just because it's new.",
+    supporting: "We'll recommend it when it makes sense for your business.",
+    items: [
+      {
+        number: "01",
+        title: "Useful",
+        body: ["If it doesn't solve a real problem, we don't need it."],
+      },
+      {
+        number: "02",
+        title: "Simple",
+        body: ["Technology should make work easier, not harder."],
+      },
+      {
+        number: "03",
+        title: "Practical",
+        body: ["Start with what matters.", "Improve as you grow."],
+      },
+    ] as const,
+  },
+  close: {
+    title: "What's one thing in your business you wish was easier?",
+    supporting: [
+      "Tell us about it.",
+      "You don't need to know what technology you need.",
+      "That's our job to figure out.",
+    ] as const,
+    primary: { label: "Tell Us About Your Problem", href: "/contact/" },
+    secondary: { label: "Explore Our Products", href: "/products/" },
+    note: ["No pressure.", "No complicated pitch.", "Just a conversation about what could be better."] as const,
   },
 } as const;
 
