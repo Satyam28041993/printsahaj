@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { ArrowRight, CheckCircle2, Database, Repeat2, Settings2, Users, Workflow, type LucideIcon } from "lucide-react";
 import ShowcaseMedia from "@/components/landing/ShowcaseMedia";
 import SolutionsFigure from "@/components/solutions/SolutionsFigure";
 import { homeShowcase } from "@content/homeShowcase";
@@ -112,7 +113,7 @@ export default function SolutionsAreas() {
             examples={areas.workflows.examples}
           />
           <div className="sol-area__visual" data-reveal style={beat(4)}>
-            <FlowList steps={areas.workflows.flow} tall />
+            <FlowList steps={areas.workflows.flow} />
           </div>
         </article>
 
@@ -177,12 +178,30 @@ function AreaCopy({
   );
 }
 
-function FlowList({ steps, tall = false }: { steps: readonly string[]; tall?: boolean }) {
+const FLOW_ICONS: Record<string, LucideIcon> = {
+  Repeat: Repeat2,
+  Automate: Workflow,
+  Done: CheckCircle2,
+  People: Users,
+  Information: Database,
+  Process: Settings2,
+  Action: ArrowRight,
+};
+
+function FlowList({ steps }: { steps: readonly string[] }) {
   return (
-    <ol className={tall ? "sol-path sol-path--tall" : "sol-path"}>
-      {steps.map((step) => (
-        <li key={step}>{step}</li>
-      ))}
+    <ol className="sol-path">
+      {steps.map((step) => {
+        const Icon = FLOW_ICONS[step];
+        return (
+          <li key={step}>
+            <span className="sol-path__mark" aria-hidden="true">
+              {Icon ? <Icon size={20} strokeWidth={1.6} /> : null}
+            </span>
+            <span className="sol-path__name">{step}</span>
+          </li>
+        );
+      })}
     </ol>
   );
 }
