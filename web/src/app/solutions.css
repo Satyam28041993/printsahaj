@@ -178,20 +178,39 @@
 .sol-problem__story {
   display: flex;
   flex-direction: column;
-  gap: clamp(28px, 4vw, 56px);
-  margin-top: clamp(36px, 5vw, 64px);
+  gap: clamp(28px, 4vw, 48px);
+  margin-top: clamp(32px, 4vw, 56px);
 }
 
-/* The shared board is the desktop story. Phones render one card under
-   each sentence instead, so the picture and the words stay together. */
+/* One board, in normal flow. It only sticks beside the sentences on a wide screen. */
 .sol-desk-wrap {
-  display: none;
+  position: static;
+  width: 100%;
 }
 
 .sol-board {
+  padding: 0.85rem 0.85rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.sol-board__kicker {
+  margin: 0 0 0.55rem;
+  padding-inline: 0.35rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-board__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.65rem;
+  gap: 0.35rem;
 }
 
 .sol-work {
@@ -200,13 +219,12 @@
   grid-template-areas:
     "icon label"
     "cue cue";
-  gap: 0.4rem 0.6rem;
+  gap: 0.35rem 0.55rem;
   align-items: center;
-  padding: 0.7rem 0.75rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.95rem;
-  background: var(--bg-elevated);
-  box-shadow: var(--shadow-card);
+  padding: 0.65rem 0.7rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: 0.8rem;
+  background: transparent;
 }
 
 .sol-work__icon {
@@ -345,24 +363,12 @@
   gap: 0.85rem 1rem;
   align-items: baseline;
   min-height: 0;
-  margin-top: 1.75rem;
+  margin-top: 1.15rem;
   padding-top: 0;
 }
 
 .sol-problem__item:first-child {
   margin-top: 0;
-}
-
-.sol-problem__visual {
-  grid-column: 1 / -1;
-  max-width: min(100%, 22rem);
-  margin-top: 0.15rem;
-}
-
-@media (min-width: 640px) {
-  .sol-problem__visual {
-    max-width: min(100%, 32rem);
-  }
 }
 
 .sol-problem__index {
@@ -414,6 +420,11 @@
   color: var(--accent);
 }
 
+.sol-work.is-active {
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-elevated));
+}
+
 @media (min-width: 900px) {
   .sol-problem__story {
     display: grid;
@@ -426,34 +437,29 @@
   }
 
   .sol-desk-wrap {
-    display: block;
     position: sticky;
-    top: 6.5rem;
+    top: 6.75rem;
     order: 2;
     align-self: start;
   }
 
-  .sol-problem__visual {
-    display: none;
-  }
-
   .sol-problem__item {
-    min-height: clamp(6.75rem, 15vh, 9.5rem);
+    min-height: clamp(5.5rem, 12vh, 8rem);
     margin-top: 0;
     align-items: start;
-    padding-top: 0.35rem;
+    padding-top: 0.2rem;
   }
 
   .sol-work {
-    opacity: 0.55;
+    opacity: 0.62;
     transition:
       opacity 0.35s var(--m-ease, var(--h-ease)),
-      border-color 0.35s var(--m-ease, var(--h-ease));
+      border-color 0.35s var(--m-ease, var(--h-ease)),
+      background-color 0.35s var(--m-ease, var(--h-ease));
   }
 
   .sol-work.is-active {
     opacity: 1;
-    border-color: var(--accent-line);
   }
 }
 
@@ -1246,34 +1252,41 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
 }
 
 .sol-envs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 1.35rem 2rem;
-  max-width: 40rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  max-width: 52rem;
   margin: clamp(2rem, 4vw, 3rem) 0 0;
   padding: 0;
   list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--border);
 }
 
 .sol-env {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 0 0 0.4rem;
-  border-bottom: 1px solid var(--border);
+  justify-content: center;
+  gap: 0.28rem;
+  min-height: 4.5rem;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: var(--bg-base);
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 1.02rem + 0.45vw, 1.45rem);
+  font-size: 1.02rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
   color: var(--text-primary);
 }
 
 .sol-env__line {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
 }
 
 .sol-env__icon {
@@ -1282,14 +1295,20 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
 }
 
 .sol-env--more {
-  border-bottom-color: transparent;
   font-weight: 500;
   color: var(--text-muted);
 }
 
+.sol-env--more .sol-env__line {
+  padding-left: calc(16px + 0.55rem);
+}
+
 .sol-env--deep {
-  gap: 0.2rem;
-  border-bottom-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-base));
+}
+
+.sol-env--deep .sol-env__icon {
+  color: var(--accent);
 }
 
 .sol-env__note {
@@ -1299,6 +1318,19 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+@media (min-width: 640px) {
+  .sol-envs {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sol-envs {
+    grid-template-columns: 1fr 1fr 1fr;
+    max-width: none;
+  }
 }
 
 /* ---- the rest of the story ---------------------------------------------- */
@@ -1411,6 +1443,16 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
 .sol-print .dvc {
   width: 100%;
   max-width: none;
+}
+
+/* The real PrintVerify screen, flat and large enough to read. No crop, no tilt. */
+.sol-proof--verify .media-figure {
+  max-width: 1000px;
+}
+
+.sol-proof--verify .dvf__screen > img {
+  object-fit: contain;
+  object-position: center;
 }
 
 .sol-print__more {
@@ -1769,6 +1811,10 @@ html.js-motion .sol-area__visual:not(.is-in) .sol-path::before {
   .sol-print__more {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
+  }
+
+  .sol-proof--verify {
+    grid-column: 1 / -1;
   }
 
   .sol-start__grid {

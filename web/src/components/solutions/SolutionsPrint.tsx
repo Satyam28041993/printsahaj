@@ -47,9 +47,19 @@ export default function SolutionsPrint() {
         <ul className="sol-print__more">
           {print.secondary.map((item, index) =>
             "slug" in item ? (
-              <li key={item.name} className="sol-proof" data-reveal style={beat(index + 4)}>
+              <li
+                key={item.name}
+                className={item.slug === "printverify" ? "sol-proof sol-proof--verify" : "sol-proof"}
+                data-reveal
+                style={beat(index + 4)}
+              >
                 <h3 className="sol-proof__name">{item.name}</h3>
-                <ShowcaseMedia slug={item.slug as ShowcaseSlug} title={item.screen} collage="showcase" />
+                <ShowcaseMedia
+                  slug={item.slug as ShowcaseSlug}
+                  title={item.screen}
+                  collage="showcase"
+                  flat={item.slug === "printverify"}
+                />
                 <p className="sol-proof__line">{item.line}</p>
                 <a className="sol-link" href={item.href}>
                   {item.link}

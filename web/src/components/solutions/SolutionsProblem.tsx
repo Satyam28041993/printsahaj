@@ -15,9 +15,9 @@ const WORK: Record<SolutionFragmentKind, { label: string; Icon: LucideIcon }> = 
 };
 
 /**
- * The workday. On a phone each sentence sits with the card it describes.
- * On a wide screen the same cards stay in one board and the sentence in
- * view is the one that comes forward. Scroll stays native.
+ * One shared workday board. The sentences stay in the page beside it on a
+ * wide screen, and in normal flow under it on a phone. Nothing sticks on
+ * mobile, and scroll stays native.
  */
 export default function SolutionsProblem() {
   const { problem } = solutions;
@@ -37,7 +37,7 @@ export default function SolutionsProblem() {
         if (Number.isNaN(index)) return;
         setActive(index);
       },
-      { threshold: [0.35, 0.6, 0.85], rootMargin: "-18% 0px -40% 0px" },
+      { threshold: [0.4, 0.7], rootMargin: "-20% 0px -35% 0px" },
     );
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
@@ -61,9 +61,12 @@ export default function SolutionsProblem() {
         <div className="sol-problem__story">
           <div className="sol-desk-wrap">
             <div className="sol-board" aria-hidden="true">
-              {problem.items.map((item, index) => (
-                <WorkCard key={item.id} kind={item.kind} active={index === active} />
-              ))}
+              <p className="sol-board__kicker">Workday</p>
+              <div className="sol-board__grid">
+                {problem.items.map((item, index) => (
+                  <WorkCard key={item.id} kind={item.kind} active={index === active} />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -79,9 +82,6 @@ export default function SolutionsProblem() {
               >
                 <span className="sol-problem__index">{String(index + 1).padStart(2, "0")}</span>
                 <p>{item.text}</p>
-                <div className="sol-problem__visual">
-                  <WorkCard kind={item.kind} active />
-                </div>
               </li>
             ))}
           </ol>
