@@ -1,0 +1,1706 @@
+/* /solutions — same panel, type and pill language as the homepage.
+   Hero entrance is the existing .h-rise / .h-word CSS. The workday below it
+   uses the shared reveal observer and a native-scroll slip stack. */
+
+.sol-hero {
+  padding: clamp(28px, 4vw, 64px) clamp(20px, 3vw, 40px) clamp(56px, 8vw, 104px);
+}
+
+.sol-hero__grid {
+  display: grid;
+  align-items: center;
+  gap: clamp(28px, 4vw, 72px);
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-hero__copy {
+  min-width: 0;
+  max-width: 38rem;
+}
+
+.sol-hero__title {
+  margin-top: 1.15rem;
+}
+
+.sol-hero__line {
+  display: block;
+}
+
+.sol-hero__lead {
+  margin-top: 1.25rem;
+  max-width: 42rem;
+}
+
+.sol-hero__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  margin-top: 1.75rem;
+}
+
+/* These labels are full sentences. The homepage pill stays nowrap because
+   its labels are short; here the line may break instead of overflowing. */
+.sol-hero .pill {
+  height: auto;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+  padding-block: 0.75rem;
+}
+
+.sol-figure {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  aspect-ratio: 16 / 10;
+  border: 1px solid var(--border);
+  border-radius: var(--h-radius);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  animation: sol-figure-in 1.1s var(--h-ease, cubic-bezier(0.2, 0.7, 0.2, 1)) backwards;
+  animation-delay: 280ms;
+}
+
+.sol-figure__img,
+.sol-figure__hold {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sol-figure__img {
+  object-fit: cover;
+}
+
+/* The hero frame is a tall crop of a wide photograph. Keep the person,
+   who sits on the right of the picture. Mobile shows more of the desk. */
+.sol-figure--hero .sol-figure__img {
+  object-position: 62% 46%;
+}
+
+.sol-figure--ai .sol-figure__img {
+  object-position: center 42%;
+}
+
+.sol-figure--start .sol-figure__img {
+  object-position: center 40%;
+}
+
+.sol-figure__hold {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.25rem;
+  background:
+    radial-gradient(90% 80% at 80% 0%, color-mix(in srgb, var(--brand-b) 18%, transparent), transparent 68%),
+    var(--panel-wash),
+    var(--bg-sunken);
+}
+
+.sol-figure__mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-a);
+}
+
+.sol-figure__label {
+  max-width: 16rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@keyframes sol-figure-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .sol-hero__grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
+  }
+
+  .sol-hero__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .sol-figure {
+    aspect-ratio: 4 / 5;
+  }
+
+  .sol-figure--hero .sol-figure__img {
+    object-position: 78% 38%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sol-figure {
+    transform: none;
+  }
+}
+
+/* ---- the workday -------------------------------------------------------- */
+
+.sol-problem {
+  padding: clamp(64px, 8vw, 112px) clamp(20px, 3vw, 40px);
+}
+
+.sol-problem__inner {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-problem__title-line {
+  display: block;
+}
+
+.sol-problem__title-line + .sol-problem__title-line {
+  margin-top: 0.15em;
+}
+
+.sol-problem__story {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 4vw, 56px);
+  margin-top: clamp(36px, 5vw, 64px);
+}
+
+.sol-desk-wrap {
+  position: sticky;
+  top: 5.25rem;
+  z-index: 2;
+  /* Start, not stretch: a full-height grid item has nowhere to stick.
+     Width stays 100% because the slips are absolute and would otherwise
+     collapse the column on small screens. */
+  align-self: start;
+  width: 100%;
+}
+
+.sol-desk {
+  position: relative;
+  height: 280px;
+  padding: 0;
+}
+
+.sol-desk.feature-card:hover {
+  transform: none;
+}
+
+.sol-desk__kicker {
+  position: absolute;
+  top: 1rem;
+  left: 1.1rem;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-slip {
+  position: absolute;
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  transition:
+    opacity 0.7s var(--m-ease, var(--h-ease)),
+    translate 0.7s var(--m-ease, var(--h-ease)),
+    scale 0.7s var(--m-ease, var(--h-ease));
+}
+
+html.js-motion .sol-slip:not(.is-in) {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.98;
+}
+
+.sol-slip__card {
+  padding: 0.75rem 0.85rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.sol-slip__card--row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sol-slip__kicker {
+  display: block;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-slip__when {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.sol-cells,
+.sol-bubbles,
+.sol-sums,
+.sol-lines,
+.sol-tasks {
+  display: grid;
+  margin-top: 0.65rem;
+}
+
+.sol-cells {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.sol-cells i,
+.sol-sums i,
+.sol-lines i {
+  display: block;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.sol-cells i {
+  height: 10px;
+}
+
+.sol-cells i[data-fill="on"] {
+  background: color-mix(in srgb, var(--accent) 55%, var(--border));
+}
+
+.sol-bubbles {
+  gap: 6px;
+}
+
+.sol-bubbles i {
+  display: block;
+  height: 14px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+}
+
+.sol-bubbles i[data-side="in"] {
+  width: 78%;
+}
+
+.sol-bubbles i[data-side="out"] {
+  width: 62%;
+  margin-left: auto;
+  background: var(--accent-weak);
+  border-color: var(--accent-line);
+}
+
+.sol-sums,
+.sol-lines {
+  gap: 7px;
+}
+
+.sol-sums i,
+.sol-lines i {
+  height: 7px;
+}
+
+.sol-sums i:nth-child(1) { width: 72%; }
+.sol-sums i:nth-child(2) { width: 54%; }
+.sol-sums i[data-total="true"] {
+  width: 40%;
+  height: 9px;
+  margin-top: 4px;
+  background: var(--accent);
+}
+
+.sol-lines i[data-title="true"] {
+  width: 48%;
+  height: 9px;
+  background: var(--text-faint);
+}
+
+.sol-lines i:nth-child(2) { width: 100%; }
+.sol-lines i:nth-child(3) { width: 92%; }
+.sol-lines i:nth-child(4) { width: 70%; }
+
+.sol-tasks {
+  gap: 8px;
+}
+
+.sol-tasks i {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 16px;
+}
+
+.sol-tasks i::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hover);
+}
+
+.sol-tasks i[data-done="true"]::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sol-tasks i::after {
+  content: "";
+  height: 6px;
+  width: 70%;
+  border-radius: 99px;
+  background: var(--border);
+}
+
+.sol-bell {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-line);
+  background:
+    radial-gradient(circle at 50% 50%, var(--accent) 0 3px, transparent 3.5px),
+    var(--accent-weak);
+}
+
+.sol-slip[data-kind="sheet"] { left: 6%; top: 18%; width: 52%; rotate: -2.5deg; z-index: 1; }
+.sol-slip[data-kind="messages"] { right: 6%; top: 8%; width: 42%; rotate: 2deg; z-index: 2; }
+.sol-slip[data-kind="sum"] { left: 10%; top: 46%; width: 40%; rotate: -1deg; z-index: 3; }
+.sol-slip[data-kind="report"] { right: 8%; top: 40%; width: 44%; rotate: 1.5deg; z-index: 4; }
+.sol-slip[data-kind="reminder"] { left: 8%; bottom: 8%; width: 46%; rotate: -1.5deg; z-index: 5; }
+.sol-slip[data-kind="task"] { right: 7%; bottom: 7%; width: 42%; rotate: 2deg; z-index: 6; }
+
+.sol-problem__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-problem__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem 1rem;
+  align-items: baseline;
+  min-height: 42vh;
+  padding-top: 0.25rem;
+}
+
+.sol-problem__index {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--text-faint);
+}
+
+.sol-problem__item p {
+  margin: 0;
+  max-width: 28rem;
+  font-size: clamp(1.2rem, 1rem + 0.8vw, 1.65rem);
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-problem__close {
+  max-width: 40rem;
+  margin-top: clamp(12px, 3vw, 28px);
+}
+
+.sol-problem__bridge {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-problem__bridge + .sol-problem__bridge {
+  margin-top: 0.35rem;
+}
+
+.sol-problem__sum {
+  margin: 1.75rem 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-problem__next {
+  margin: 0.75rem 0 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.5;
+  color: var(--accent);
+}
+
+@media (min-width: 900px) {
+  .sol-problem__story {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(300px, 1.08fr);
+    align-items: start;
+  }
+
+  .sol-problem__list {
+    order: 1;
+  }
+
+  .sol-desk-wrap {
+    order: 2;
+    top: 6.5rem;
+  }
+
+  .sol-desk {
+    height: 540px;
+  }
+
+  .sol-problem__item {
+    min-height: 34vh;
+  }
+}
+
+@media (max-width: 899px) {
+  .sol-desk {
+    height: 248px;
+  }
+
+  /* One sentence occupies the open band under the stuck desk, so the line
+     stays readable while the slips pile up above it. */
+  .sol-problem__item {
+    min-height: calc(100svh - 5.25rem - 248px);
+    align-items: center;
+    padding-top: 0;
+  }
+
+  .sol-slip[data-kind="sheet"] { width: 54%; top: 16%; }
+  .sol-slip[data-kind="messages"] { width: 46%; top: 10%; }
+  .sol-slip[data-kind="sum"] { width: 44%; top: 42%; }
+  .sol-slip[data-kind="report"] { width: 48%; top: 36%; }
+  .sol-slip[data-kind="reminder"] { width: 50%; bottom: 14%; }
+  .sol-slip[data-kind="task"] { width: 42%; right: 8%; bottom: 16%; }
+}
+
+/* ---- the approach ------------------------------------------------------- */
+
+.sol-approach {
+  padding: clamp(72px, 9vw, 120px) clamp(20px, 3vw, 40px) clamp(80px, 10vw, 128px);
+  background: var(--bg-base);
+}
+
+.sol-approach__inner {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-approach__title {
+  max-width: 16em;
+}
+
+.sol-approach__lede {
+  max-width: 38rem;
+  margin: 1.25rem 0 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-approach__journey {
+  position: relative;
+  margin-top: clamp(40px, 6vw, 72px);
+}
+
+.sol-approach__rail {
+  pointer-events: none;
+}
+
+.sol-approach__track {
+  position: absolute;
+  inset: 0;
+}
+
+.sol-approach__base,
+.sol-approach__fill {
+  position: absolute;
+  left: 15px;
+  width: 1px;
+  background: var(--border);
+  top: var(--from, 1.75rem);
+  height: calc(var(--to, calc(100% - 2rem)) - var(--from, 1.75rem));
+}
+
+.sol-approach__fill {
+  background: var(--accent);
+  height: calc(var(--at, var(--to, calc(100% - 2rem))) - var(--from, 1.75rem));
+}
+
+.sol-approach__node {
+  position: absolute;
+  left: 15px;
+  top: var(--at, var(--to, calc(100% - 2rem)));
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-base);
+  box-shadow: 0 0 0 1px var(--accent-line);
+  translate: -50% -50%;
+}
+
+.sol-approach__node svg {
+  width: 26px;
+  height: 26px;
+}
+
+.sol-approach__labels {
+  display: none;
+}
+
+.sol-approach__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-approach__step {
+  min-height: 42vh;
+  padding-left: 3.25rem;
+}
+
+.sol-approach__step:last-child {
+  padding-bottom: 0.5rem;
+}
+
+.sol-approach__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.2rem + 0.8vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  scroll-margin-top: 8rem;
+}
+
+.sol-approach__num {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--text-faint);
+}
+
+.sol-approach__question {
+  max-width: 28rem;
+  margin: 0.85rem 0 0;
+  font-size: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-approach__body {
+  max-width: 32rem;
+  margin-top: 0.85rem;
+}
+
+.sol-approach__body p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-approach__body p + p {
+  margin-top: 0.3rem;
+}
+
+html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__fill {
+  height: 0;
+}
+
+html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
+  top: var(--from, 1.75rem);
+}
+
+.sol-approach__journey.is-set .sol-approach__fill,
+.sol-approach__journey.is-set .sol-approach__node {
+  transition:
+    height 0.85s var(--m-ease, var(--h-ease)),
+    top 0.85s var(--m-ease, var(--h-ease));
+}
+
+@media (min-width: 960px) {
+  .sol-approach__rail {
+    position: sticky;
+    top: 5.5rem;
+    z-index: 3;
+    margin-bottom: clamp(28px, 4vw, 48px);
+    padding-bottom: 0.35rem;
+    background: var(--bg-base);
+  }
+
+  /* Covers the clear band under the header so a previous step doesn't
+     show through the navigation while this path is stuck. */
+  .sol-approach__rail::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 6.5rem;
+    background: var(--bg-base);
+  }
+
+  .sol-approach__track {
+    position: relative;
+    inset: auto;
+    height: 44px;
+  }
+
+  .sol-approach__base,
+  .sol-approach__fill {
+    top: 50%;
+    left: var(--from, 12.5%);
+    width: calc(var(--to, 87.5%) - var(--from, 12.5%));
+    height: 1px;
+  }
+
+  .sol-approach__fill {
+    width: calc(var(--at, var(--to, 87.5%)) - var(--from, 12.5%));
+    height: 1px;
+  }
+
+  .sol-approach__node {
+    left: var(--at, var(--to, 87.5%));
+    top: 50%;
+  }
+
+  .sol-approach__labels {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(20px, 2.2vw, 40px);
+  }
+
+  .sol-approach__label {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-align: center;
+    color: var(--text-primary);
+  }
+
+  html.js-motion .sol-approach__label {
+    color: var(--text-faint);
+  }
+
+  html.js-motion .sol-approach__journey[data-step="0"] .sol-approach__label:nth-child(-n+1),
+  html.js-motion .sol-approach__journey[data-step="1"] .sol-approach__label:nth-child(-n+2),
+  html.js-motion .sol-approach__journey[data-step="2"] .sol-approach__label:nth-child(-n+3),
+  html.js-motion .sol-approach__journey[data-step="3"] .sol-approach__label {
+    color: var(--text-primary);
+  }
+
+  html.js-motion .sol-approach__journey[data-step="0"] .sol-approach__label:nth-child(1),
+  html.js-motion .sol-approach__journey[data-step="1"] .sol-approach__label:nth-child(2),
+  html.js-motion .sol-approach__journey[data-step="2"] .sol-approach__label:nth-child(3),
+  html.js-motion .sol-approach__journey[data-step="3"] .sol-approach__label:nth-child(4) {
+    color: var(--accent);
+  }
+
+  .sol-approach__steps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(20px, 2.2vw, 40px);
+    align-items: start;
+  }
+
+  .sol-approach__step {
+    min-height: 0;
+    padding-left: 0;
+  }
+
+  html.js-motion .sol-approach__step:nth-child(2) {
+    margin-top: 42vh;
+  }
+
+  html.js-motion .sol-approach__step:nth-child(3) {
+    margin-top: 84vh;
+  }
+
+  html.js-motion .sol-approach__step:nth-child(4) {
+    margin-top: 126vh;
+  }
+
+  .sol-approach__step:last-child {
+    min-height: 0;
+  }
+
+  html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__fill {
+    width: 0;
+    height: 1px;
+  }
+
+  html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
+    left: var(--from, 12.5%);
+    top: 50%;
+  }
+
+  .sol-approach__journey.is-set .sol-approach__fill,
+  .sol-approach__journey.is-set .sol-approach__node {
+    transition:
+      width 0.85s var(--m-ease, var(--h-ease)),
+      left 0.85s var(--m-ease, var(--h-ease));
+  }
+}
+
+/* ---- five situations ---------------------------------------------------- */
+
+.sol-areas {
+  scroll-margin-top: 6.5rem;
+  padding: clamp(72px, 9vw, 112px) clamp(20px, 3vw, 40px) clamp(80px, 10vw, 128px);
+}
+
+.sol-areas__inner {
+  width: 100%;
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.sol-areas__title {
+  max-width: 16em;
+}
+
+.sol-areas__support {
+  max-width: 36rem;
+  margin: 1.35rem 0 0;
+}
+
+.sol-areas__line {
+  display: block;
+  font-size: var(--text-body-lg);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.sol-areas__line + .sol-areas__line {
+  margin-top: 0.2rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.15rem + 0.6vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.sol-area {
+  display: grid;
+  gap: clamp(28px, 4vw, 48px);
+  margin-top: clamp(56px, 8vw, 96px);
+  padding-top: clamp(40px, 6vw, 72px);
+  border-top: 1px solid var(--border);
+}
+
+.sol-area__kicker {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-area__kicker span {
+  color: var(--accent);
+}
+
+.sol-area__title {
+  margin: 0.85rem 0 0;
+  max-width: 16em;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 1.3rem + 1.1vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.sol-area__title span {
+  display: block;
+}
+
+.sol-area__body {
+  max-width: 36rem;
+  margin-top: 1rem;
+}
+
+.sol-area__body p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-area__body p + p {
+  margin-top: 0.45rem;
+}
+
+.sol-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-width: 38rem;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-tags li {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+}
+
+.sol-areas__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.sol-path {
+  display: flex;
+  align-items: stretch;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-path li {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  min-height: 5.5rem;
+  padding: 1rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-display);
+  font-size: clamp(0.82rem, 0.72rem + 0.35vw, 1.05rem);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.sol-path li + li::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -1.2rem;
+  width: 0.9rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+.sol-ai .sol-figure {
+  width: 100%;
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  max-height: 480px;
+}
+
+.sol-screens {
+  display: grid;
+  gap: 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-screens__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sol-screens .media-figure,
+.sol-screens .dvc {
+  width: 100%;
+  max-width: none;
+}
+
+.sol-rate {
+  padding: 1.25rem 1.25rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.sol-rate__title {
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-rate__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1.25rem;
+  margin: 1rem 0 0;
+}
+
+.sol-rate__fields div:last-child {
+  grid-column: 1 / -1;
+}
+
+.sol-rate__fields dt {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+.sol-rate__fields dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.sol-rate__fields dd span {
+  margin-left: 0.35rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.sol-rate__result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.15rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.sol-rate__result span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.sol-rate__result strong {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+
+.sol-rate__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
+@media (min-width: 960px) {
+  .sol-area--automation,
+  .sol-area--ai,
+  .sol-area--software,
+  .sol-area--flow,
+  .sol-area--tools {
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    align-items: center;
+  }
+
+  .sol-area--ai .sol-area__visual,
+  .sol-area--flow .sol-area__visual {
+    order: -1;
+  }
+
+  .sol-area--software {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sol-area--software .sol-area__copy {
+    max-width: 40rem;
+  }
+
+  .sol-screens {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 1.5rem 1.75rem;
+  }
+
+  .sol-path--tall {
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .sol-path--tall li + li::before {
+    top: -0.95rem;
+    left: 1.75rem;
+    width: 2px;
+    height: 0.75rem;
+  }
+}
+
+@media (max-width: 959px) {
+  .sol-path:not(.sol-path--tall) {
+    gap: 0.7rem;
+  }
+
+  .sol-path:not(.sol-path--tall) li + li::before {
+    left: -0.58rem;
+    width: 0.45rem;
+  }
+
+  .sol-path--tall {
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .sol-path--tall li + li {
+    margin-left: 0;
+  }
+
+  .sol-path--tall li + li::before {
+    top: -0.95rem;
+    left: 1.75rem;
+    width: 2px;
+    height: 0.75rem;
+  }
+
+  .sol-ai .sol-figure {
+    aspect-ratio: 16 / 11;
+    max-height: none;
+  }
+}
+
+/* ---- trust break -------------------------------------------------------- */
+
+.sol-trust {
+  background: var(--bg-base);
+  padding: clamp(56px, 7vw, 104px) clamp(20px, 4vw, 48px) clamp(40px, 5vw, 72px);
+  text-align: center;
+}
+
+.sol-trust__inner {
+  width: min(100%, 46rem);
+  margin-inline: auto;
+}
+
+.sol-trust__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 1.15rem + 2.4vw, 3.25rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-trust__support {
+  width: min(100%, 34rem);
+  margin: clamp(1.5rem, 3vw, 2.25rem) auto 0;
+}
+
+.sol-trust__support p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-trust__support p + p {
+  margin-top: 0.8rem;
+}
+
+.sol-trust__support p:last-child {
+  margin-top: 1.25rem;
+  color: var(--text-primary);
+}
+
+.sol-trust__turn,
+.sol-trust__okay {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 1.05rem + 2.1vw, 2.85rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-trust__turn {
+  margin-top: clamp(3rem, 7vw, 5.5rem);
+}
+
+.sol-trust__okay {
+  margin-top: clamp(4.5rem, 10vh, 6rem);
+}
+
+.sol-trust__close {
+  margin: clamp(2.75rem, 6vw, 4.25rem) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1rem + 0.55vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.sol-trust__close span {
+  display: block;
+}
+
+.sol-trust__close span + span {
+  margin-top: 0.2rem;
+}
+
+@media (min-width: 960px) {
+  .sol-trust__okay {
+    margin-top: clamp(6.5rem, 14vh, 9rem);
+  }
+}
+
+/* ---- business environments ---------------------------------------------- */
+
+.sol-industries {
+  background: var(--bg-base);
+  padding: clamp(28px, 4vw, 48px) clamp(20px, 4vw, 48px) clamp(48px, 6vw, 80px);
+}
+
+.sol-industries__inner {
+  width: min(100%, 44rem);
+  margin-inline: auto;
+}
+
+.sol-industries__title {
+  margin: 0;
+  max-width: 14em;
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 1.1rem + 1.7vw, 2.55rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-industries__support {
+  max-width: 34rem;
+  margin-top: clamp(1.35rem, 2.5vw, 2rem);
+}
+
+.sol-industries__support p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-industries__support p + p {
+  margin-top: 0.7rem;
+}
+
+.sol-industries__support p:nth-child(4) {
+  margin-top: 1.2rem;
+}
+
+.sol-industries__support p:last-child {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sol-envs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.35rem 2rem;
+  max-width: 40rem;
+  margin: clamp(2rem, 4vw, 3rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-env {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 0 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 1.02rem + 0.45vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.sol-env--more {
+  border-bottom-color: transparent;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.sol-env--deep {
+  gap: 0.2rem;
+  border-bottom-color: var(--accent);
+}
+
+.sol-env__note {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ---- the rest of the story ---------------------------------------------- */
+
+.sol-print,
+.sol-start,
+.sol-principles {
+  background: var(--bg-base);
+  padding: clamp(20px, 3vw, 40px) clamp(20px, 4vw, 48px) clamp(56px, 7vw, 88px);
+}
+
+.sol-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.sol-print__inner {
+  width: min(100%, 1360px);
+  margin-inline: auto;
+}
+
+.sol-print__title,
+.sol-start__title,
+.sol-principles__title {
+  margin: 0;
+  max-width: 16em;
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.1rem + 1.9vw, 2.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-close__title {
+  margin: 0 auto;
+  max-width: 16em;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.2rem + 2.5vw, 3.4rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-print__support,
+.sol-start__lines {
+  max-width: 36rem;
+  margin-top: 1.35rem;
+}
+
+.sol-print__support p,
+.sol-start__lines p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.sol-print__support p + p,
+.sol-start__lines p + p {
+  margin-top: 0.75rem;
+}
+
+.sol-print__support p:nth-child(n + 4) {
+  color: var(--text-primary);
+}
+
+.sol-print__support p:last-child {
+  font-weight: 600;
+}
+
+.sol-print__lead {
+  display: grid;
+  gap: clamp(28px, 4vw, 56px);
+  align-items: center;
+}
+
+.sol-proof {
+  min-width: 0;
+}
+
+.sol-proof__name {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.sol-proof__line {
+  max-width: 36rem;
+  margin: 0.85rem 0 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.sol-print .media-figure,
+.sol-print .dvc {
+  width: 100%;
+  max-width: none;
+}
+
+.sol-print__more {
+  display: grid;
+  gap: 2rem;
+  margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-print__cost {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 2.75rem;
+  margin-top: clamp(1.75rem, 3vw, 2.5rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.sol-print__cost .sol-proof__name,
+.sol-print__cost .sol-proof__line {
+  margin-top: 0;
+}
+
+.sol-cost {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.sol-cost__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 1.3rem + 0.8vw, 2.15rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+
+.sol-cost__label {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.sol-print__statement {
+  max-width: 16em;
+  margin: clamp(2.75rem, 6vw, 4.5rem) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 1.2rem + 1.8vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+  color: var(--text-primary);
+}
+
+.sol-print__statement span {
+  display: block;
+}
+
+.sol-print__statement span + span {
+  margin-top: 0.2rem;
+}
+
+.sol-start__grid {
+  display: grid;
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+  width: min(100%, 1360px);
+  margin-inline: auto;
+}
+
+.sol-start .sol-figure {
+  margin: 0.35rem 0 0;
+  aspect-ratio: 16 / 10;
+  max-height: 340px;
+}
+
+.sol-steps {
+  margin: clamp(1.75rem, 3vw, 2.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-steps li {
+  position: relative;
+  padding-left: 1.15rem;
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.1rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.sol-steps li + li {
+  margin-top: 1.15rem;
+}
+
+.sol-steps li + li::before {
+  content: "";
+  position: absolute;
+  top: -0.85rem;
+  left: 0.28rem;
+  width: 1px;
+  height: 0.65rem;
+  background: var(--accent);
+}
+
+.sol-principles__inner {
+  width: min(100%, 52rem);
+  margin-inline: auto;
+}
+
+.sol-principles__support {
+  max-width: 28rem;
+  margin: 1.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.sol-principles__list {
+  margin: clamp(2.75rem, 6vw, 4.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sol-principle + .sol-principle {
+  margin-top: clamp(2.25rem, 5vw, 3.75rem);
+}
+
+.sol-principle:nth-child(2) {
+  margin-left: 1.25rem;
+}
+
+.sol-principle:nth-child(3) {
+  margin-left: 2.5rem;
+}
+
+.sol-principle__num {
+  margin: 0;
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+
+.sol-principle__name {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 1.3rem + 1.8vw, 3.15rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.sol-principle__body {
+  max-width: 28rem;
+  margin-top: 0.7rem;
+}
+
+.sol-principle__body p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.sol-principle__body p + p {
+  margin-top: 0.25rem;
+}
+
+.sol-close {
+  padding: clamp(72px, 9vw, 128px) clamp(20px, 4vw, 48px);
+  text-align: center;
+}
+
+.sol-close__inner {
+  width: min(100%, 42rem);
+  margin-inline: auto;
+}
+
+
+.sol-close__support {
+  max-width: 32rem;
+  margin: 1.35rem auto 0;
+}
+
+.sol-close__support p {
+  margin: 0;
+  font-size: var(--text-body-lg);
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.sol-close__support p + p {
+  margin-top: 0.45rem;
+}
+
+.sol-close__support p:last-child {
+  color: var(--text-primary);
+}
+
+.sol-close__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.7rem;
+  margin-top: 2rem;
+}
+
+.sol-close .pill {
+  height: auto;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: center;
+  padding-block: 0.75rem;
+}
+
+.sol-close__note {
+  margin: 1.75rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.sol-close__note span {
+  display: block;
+}
+
+@media (min-width: 720px) {
+  .sol-close__actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 960px) {
+  .sol-print__lead {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .sol-print__more {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .sol-start__grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  }
+
+  .sol-start .sol-figure {
+    margin-top: 0.6rem;
+  }
+
+  .sol-principle:nth-child(2) {
+    margin-left: 14%;
+  }
+
+  .sol-principle:nth-child(3) {
+    margin-left: 28%;
+  }
+}
+
