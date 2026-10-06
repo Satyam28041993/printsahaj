@@ -934,9 +934,10 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
 }
 
 .sol-ai .sol-figure {
+  width: 100%;
   margin: 0;
-  aspect-ratio: 4 / 5;
-  max-height: 460px;
+  aspect-ratio: 4 / 3;
+  max-height: 480px;
 }
 
 .sol-screens {
@@ -1423,10 +1424,10 @@ html.js-motion .sol-approach__journey:not(.is-set) .sol-approach__node {
 .sol-print__cost {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 1.75rem;
+  align-items: center;
+  gap: 1rem 2.75rem;
   margin-top: clamp(1.75rem, 3vw, 2.5rem);
-  padding-top: 1.15rem;
+  padding-top: 1.25rem;
   border-top: 1px solid var(--border);
 }
 
