@@ -301,14 +301,6 @@
 .sol-cue--bars i:nth-child(3) { height: 100%; background: var(--accent); }
 .sol-cue--bars i:nth-child(4) { height: 55%; }
 
-.sol-cue--time i {
-  width: 42%;
-  height: 8px;
-  border-radius: 99px;
-  background: var(--accent-weak);
-  border: 1px solid var(--accent-line);
-}
-
 .sol-cue--tasks {
   gap: 6px;
 }
@@ -363,8 +355,14 @@
 
 .sol-problem__visual {
   grid-column: 1 / -1;
-  max-width: 18rem;
+  max-width: min(100%, 22rem);
   margin-top: 0.15rem;
+}
+
+@media (min-width: 640px) {
+  .sol-problem__visual {
+    max-width: min(100%, 32rem);
+  }
 }
 
 .sol-problem__index {
@@ -440,14 +438,14 @@
   }
 
   .sol-problem__item {
-    min-height: 24vh;
+    min-height: clamp(6.75rem, 15vh, 9.5rem);
     margin-top: 0;
     align-items: start;
     padding-top: 0.35rem;
   }
 
   .sol-work {
-    opacity: 0.42;
+    opacity: 0.55;
     transition:
       opacity 0.35s var(--m-ease, var(--h-ease)),
       border-color 0.35s var(--m-ease, var(--h-ease));

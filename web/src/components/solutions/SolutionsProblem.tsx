@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, Calculator, FileBarChart, ListChecks, MessageSquare, Table2, type LucideIcon } from "lucide-react";
+import { Calculator, FileBarChart, ListChecks, MessageCircle, MessageSquare, Table2, type LucideIcon } from "lucide-react";
 import { solutions, type SolutionFragmentKind } from "@content/solutions";
 import { useReveal } from "@/lib/useReveal";
 
@@ -10,7 +10,7 @@ const WORK: Record<SolutionFragmentKind, { label: string; Icon: LucideIcon }> = 
   sheet: { label: "Data entry", Icon: Table2 },
   messages: { label: "Customer message", Icon: MessageSquare },
   sum: { label: "Calculation", Icon: Calculator },
-  reminder: { label: "Reminder", Icon: Bell },
+  reminder: { label: "Update", Icon: MessageCircle },
   task: { label: "Task", Icon: ListChecks },
 };
 
@@ -153,8 +153,9 @@ function Cue({ kind }: { kind: SolutionFragmentKind }) {
   }
   if (kind === "reminder") {
     return (
-      <span className="sol-cue sol-cue--time" aria-hidden>
-        <i />
+      <span className="sol-cue sol-cue--bubbles" aria-hidden>
+        <i data-side="out" />
+        <i data-side="in" />
       </span>
     );
   }
