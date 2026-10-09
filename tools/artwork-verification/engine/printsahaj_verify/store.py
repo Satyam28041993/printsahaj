@@ -25,6 +25,11 @@ from printsahaj_verify.remarks import load_remarks
 from printsahaj_verify.run import JOB_FILE_NAME
 
 SAFE_CODE = re.compile(r"[A-Za-z0-9._-]+")
+# "." and ".." match SAFE_CODE, but they are directory names, not job codes.
+_DIRECTORY_ENTRIES = frozenset({".", ".."})
+JOB_CODE_ERROR = (
+    "Job code may only contain letters, numbers, dot, dash and underscore"
+)
 
 JOBS_ROOT_ENV = "PRINTSAHAJ_JOBS_ROOT"
 DEFAULT_JOBS_ROOT = (
@@ -42,16 +47,50 @@ def jobs_root(root: Path | None = None) -> Path:
 
 
 def _safe_code(job_id: str) -> str:
+    """Return *job_id* when it is a single name inside the jobs directory.
+
+    Raises JobSpecError for an empty code, ``.`` or ``..``, an absolute
+    path, or any code that contains a separator or a traversal segment.
+    Callers must decode the request path before passing it in.
+    """
     code = job_id.strip()
-    if not code or not SAFE_CODE.fullmatch(code):
-        raise JobSpecError(
-            "Job code may only contain letters, numbers, dot, dash and underscore"
-        )
+    if _rejects_job_code(code):
+        raise JobSpecError(JOB_CODE_ERROR)
     return code
 
 
+def _rejects_job_code(code: str) -> bool:
+    """True when *code* is empty, absolute, or not one safe path segment."""
+    if not code or "\x00" in code or Path(code).is_absolute():
+        return True
+    segments = re.split(r"[/\\]", code)
+    if any(part in _DIRECTORY_ENTRIES or part == "" for part in segments):
+        return True
+    return SAFE_CODE.fullmatch(code) is None
+
+
+def _assert_inside_jobs_root(base: Path, folder: Path) -> None:
+    """Raise JobSpecError unless *folder* resolves to a child of *base*."""
+    try:
+        resolved_base = base.resolve()
+        resolved_folder = folder.resolve()
+    except (OSError, RuntimeError) as error:
+        raise JobSpecError(JOB_CODE_ERROR) from error
+    if resolved_folder.parent != resolved_base:
+        raise JobSpecError(JOB_CODE_ERROR)
+
+
 def job_folder(job_id: str, root: Path | None = None) -> Path:
-    return jobs_root(root) / _safe_code(job_id)
+    """Return the directory for one job. It is always inside the jobs root.
+
+    The resolved path is a direct child of the jobs root. ``.``, ``..``,
+    empty ids, absolute paths, and ids with a separator or traversal
+    segment raise JobSpecError.
+    """
+    base = jobs_root(root)
+    folder = base / _safe_code(job_id)
+    _assert_inside_jobs_root(base, folder)
+    return folder
 
 
 def list_jobs(root: Path | None = None) -> list[dict[str, Any]]:
