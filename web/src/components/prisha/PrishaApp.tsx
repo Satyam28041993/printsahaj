@@ -17,7 +17,7 @@ import type { Mode, Progress, Worksheet } from "@/lib/prisha/types";
 import { BUILT_IN, SUBJECTS, subjectStyle } from "@/lib/prisha/worksheets";
 import Editor, { cropPortrait } from "./Editor";
 import Runner, { type RoundResult } from "./Runner";
-import { Avatar, StarCount, TopBar } from "./ui";
+import { Avatar, CornerPhoto, StarCount, TopBar } from "./ui";
 
 type View =
   | { name: "home" }
@@ -101,7 +101,9 @@ export default function PrishaApp() {
         <TopBar
           title={style ? `${style.emoji} ${style.name}` : view.mode === "test" ? "📝 Take a test" : "🎯 Practice"}
           onBack={() => go({ name: "home" })}
+          right={<Avatar photo={photo} size="sm" />}
         />
+        <CornerPhoto photo={photo} />
         {view.subject && (
           <div className="ph-modeswitch" role="group" aria-label="Mode">
             <button type="button" className={view.mode === "practice" ? "on" : ""} onClick={() => go({ ...view, mode: "practice" })}>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listenOnce, matchSpoken, speechSupported } from "@/lib/prisha/speech";
 import { isCorrect } from "@/lib/prisha/store";
 import type { Mode, Question, Worksheet } from "@/lib/prisha/types";
-import { Avatar, CHEERS, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle, speak } from "./ui";
+import { Avatar, CHEERS, CornerPhoto, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle, speak } from "./ui";
 
 type Item = { q: Question; instruction: string; helper?: string };
 
@@ -176,6 +176,7 @@ export default function Runner({ worksheet, photo, mode, onlyIds, onFinish, onEx
     return (
       <div className="ph-screen">
         <TopBar title={worksheet.title} onBack={onExit} />
+        <CornerPhoto photo={photo} />
         <section className="ph-card ph-result" aria-live="polite">
           <Avatar photo={photo} size="sm" />
           <div className="ph-result-stars" aria-label={`${stars} of 3 stars`}>
@@ -256,7 +257,9 @@ export default function Runner({ worksheet, photo, mode, onlyIds, onFinish, onEx
           </>
         }
         onBack={onExit}
+        right={<Avatar photo={photo} size="xs" />}
       />
+      <CornerPhoto photo={photo} />
 
       <div className="ph-progressbar" role="progressbar" aria-valuemin={0} aria-valuemax={items.length} aria-valuenow={index + 1}>
         <span style={{ width: `${Math.max(percent, 4)}%` }} />
