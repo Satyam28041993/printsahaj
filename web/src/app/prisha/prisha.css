@@ -1280,3 +1280,64 @@ body:has(.ph-root) {
     height: 136px;
   }
 }
+
+.ph-avatar-xs .ph-avatar-ring {
+  width: 60px;
+  height: 60px;
+  padding: 4px;
+}
+.ph-avatar-xs .ph-avatar-img,
+.ph-avatar-xs .ph-avatar-blank {
+  border-width: 3px;
+}
+.ph-avatar-xs .ph-avatar-blank {
+  font-size: 28px;
+}
+.ph-avatar-xs .ph-avatar-book {
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+  right: -6px;
+  bottom: -4px;
+}
+.ph-topbar-right .ph-avatar {
+  margin-right: 6px;
+}
+
+@media (max-width: 560px) {
+  .ph-topbar-right .ph-avatar-sm .ph-avatar-ring {
+    width: 70px;
+    height: 70px;
+  }
+  .ph-avatar-xs .ph-avatar-ring {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Wide screens: the photo fills the pink background circle (92% / 18% of
+   the window, see .ph-root background) instead of the top bar. */
+.ph-corner-photo {
+  display: none;
+}
+/* 1240px: below that the circle would touch the 880px content column. */
+@media (min-width: 1240px) {
+  .ph-corner-photo .ph-avatar-spark.s2 {
+    right: auto;
+    left: -26px;
+    top: auto;
+    bottom: 4px;
+  }
+  .ph-corner-photo {
+    display: block;
+    position: fixed;
+    left: 92vw;
+    top: 18vh;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .ph-topbar-right .ph-avatar {
+    display: none;
+  }
+}

@@ -99,7 +99,7 @@ export function TopBar({ title, onBack, right }: { title: ReactNode; onBack?: ()
 }
 
 /** Prisha in a rainbow circle with a book — or a smiling placeholder before a photo is added. */
-export function Avatar({ photo, size = "lg" }: { photo?: string; size?: "lg" | "sm" }) {
+export function Avatar({ photo, size = "lg" }: { photo?: string; size?: "lg" | "sm" | "xs" }) {
   return (
     <span className={`ph-avatar ph-avatar-${size}`}>
       <span className="ph-avatar-ring">
@@ -122,6 +122,16 @@ export function Avatar({ photo, size = "lg" }: { photo?: string; size?: "lg" | "
         </>
       )}
     </span>
+  );
+}
+
+/** On wide screens: Prisha's photo sits in the pink circle of the background
+ * (top right). Narrow screens show the small one in the top bar instead. */
+export function CornerPhoto({ photo }: { photo?: string }) {
+  return (
+    <div className="ph-corner-photo" aria-hidden="true">
+      <Avatar photo={photo} />
+    </div>
   );
 }
 
