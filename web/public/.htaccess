@@ -45,3 +45,12 @@ ErrorDocument 404 /404.html
     Deny from all
   </IfModule>
 </FilesMatch>
+
+# /prisha/ is a family page (Prisha's Learning Hub), not part of the site:
+# keep it out of search engines. The page also carries a robots noindex meta
+# tag. It is deliberately NOT listed in robots.txt — a Disallow line would
+# advertise the path and stop crawlers from ever seeing the noindex.
+SetEnvIf Request_URI "^/prisha(/|$)" PRISHA_PAGE
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive" env=PRISHA_PAGE
+</IfModule>
