@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listenOnce, matchSpoken, speechSupported } from "@/lib/prisha/speech";
 import { isCorrect } from "@/lib/prisha/store";
 import type { Mode, Question, Worksheet } from "@/lib/prisha/types";
-import { CHEERS, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle, speak } from "./ui";
+import { Avatar, CHEERS, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle, speak } from "./ui";
 
 type Item = { q: Question; instruction: string; helper?: string };
 
@@ -17,6 +17,7 @@ export type RoundResult = {
 
 type Props = {
   worksheet: Worksheet;
+  photo?: string;
   mode: Mode;
   /** Only these questions (practising mistakes). */
   onlyIds?: string[];
@@ -27,7 +28,7 @@ type Props = {
 
 const INPUT_PREF = "prisha.input.v1";
 
-export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onPracticeIds }: Props) {
+export default function Runner({ worksheet, photo, mode, onlyIds, onFinish, onExit, onPracticeIds }: Props) {
   const items: Item[] = useMemo(() => {
     const all = worksheet.parts.flatMap((p) =>
       p.questions.map((q) => ({ q, instruction: p.instruction, helper: p.helper })),
@@ -176,6 +177,7 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
       <div className="ph-screen">
         <TopBar title={worksheet.title} onBack={onExit} />
         <section className="ph-card ph-result" aria-live="polite">
+          <Avatar photo={photo} size="sm" />
           <div className="ph-result-stars" aria-label={`${stars} of 3 stars`}>
             {[1, 2, 3].map((n) => (
               <span key={n} className={n <= stars ? "ph-bigstar on" : "ph-bigstar"} style={{ animationDelay: `${n * 0.18}s` }}>

@@ -43,8 +43,8 @@ const toQDraft = (q: Question): QDraft => ({
 const blankQ = (): QDraft => ({ id: newId("q"), prompt: "", image: "", sequence: "", answer: "", accept: "", choices: "", hint: "" });
 const blankPart = (): PDraft => ({ id: newId("p"), instruction: "", helper: "", questions: [blankQ()] });
 
-/** Shrinks a photo to at most 320px so many fit in the browser's storage. */
-function resizeImage(file: File): Promise<string> {
+/** Shrinks a photo (default 320px) so many fit in the browser's storage. */
+export function resizeImage(file: File, max = 320): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Could not read the picture."));
@@ -52,7 +52,7 @@ function resizeImage(file: File): Promise<string> {
       const img = new Image();
       img.onerror = () => reject(new Error("This file is not a picture."));
       img.onload = () => {
-        const scale = Math.min(1, 320 / Math.max(img.width, img.height));
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
@@ -66,6 +66,35 @@ function resizeImage(file: File): Promise<string> {
       img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
+  });
+}
+
+/** A square close-up for the round photo: from a portrait the face sits in
+ * the upper middle, so take a square starting a little below the top. */
+export function cropPortrait(file: File, size = 360): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("This file is not a picture."));
+    };
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const portrait = img.height > img.width;
+      const side = portrait ? Math.min(img.width, img.height * 0.62) : Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2;
+      const sy = portrait ? Math.min(img.height * 0.1, img.height - side) : (img.height - side) / 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Could not read the picture."));
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.src = url;
   });
 }
 
