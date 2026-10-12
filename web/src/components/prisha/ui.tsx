@@ -2,16 +2,59 @@
 
 import type { ReactNode } from "react";
 
+/*
+ * Many computers have no Marathi voice (Windows almost never does), and the
+ * browser then stays silent. So the voice is picked by hand: Marathi if
+ * installed, else Hindi (reads Devanagari fine: कमळ ≈ "kamal"), else any
+ * Indian voice; English prefers an Indian, then any English voice.
+ */
+const VOICE_ORDER: Record<string, string[]> = {
+  mr: ["mr-IN", "mr", "hi-IN", "hi", "en-IN"],
+  hi: ["hi-IN", "hi", "mr-IN", "mr", "en-IN"],
+  en: ["en-IN", "en-GB", "en-US", "en"],
+};
+
+function pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
+  const order = VOICE_ORDER[lang] ?? VOICE_ORDER.en;
+  for (const want of order) {
+    const matches = voices.filter((v) => v.lang.replace("_", "-").toLowerCase().startsWith(want.toLowerCase()));
+    // Google's online voices sound clearer than the built-in ones.
+    const best = matches.find((v) => /google/i.test(v.name)) ?? matches[0];
+    if (best) return best;
+  }
+  return voices.find((v) => v.default) ?? voices[0];
+}
+
 /** Reads text aloud with the browser's own voice, if it has one. */
 export function speak(text: string, lang: string) {
   try {
     const synth = window.speechSynthesis;
     if (!synth) return;
+    const say = () => {
+      const u = new SpeechSynthesisUtterance(text.replace(/[_?·]/g, " "));
+      const voice = pickVoice(synth.getVoices(), lang);
+      if (voice) {
+        u.voice = voice;
+        u.lang = voice.lang;
+      } else {
+        u.lang = lang === "mr" ? "mr-IN" : lang === "hi" ? "hi-IN" : "en-IN";
+      }
+      u.rate = 0.85;
+      synth.speak(u);
+    };
     synth.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[_?·]/g, " "));
-    u.lang = lang === "mr" ? "mr-IN" : lang === "hi" ? "hi-IN" : "en-IN";
-    u.rate = 0.85;
-    synth.speak(u);
+    // The voice list loads late on first use; wait for it once.
+    if (synth.getVoices().length) setTimeout(say, 60);
+    else {
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        say();
+      };
+      synth.addEventListener("voiceschanged", go, { once: true });
+      setTimeout(go, 700);
+    }
   } catch {
     /* no voice: the button simply does nothing */
   }
