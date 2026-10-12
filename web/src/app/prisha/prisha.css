@@ -648,6 +648,43 @@ body:has(.ph-root) {
   outline: none;
 }
 
+.ph-voice {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+.ph-mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 60px;
+  padding: 8px 26px;
+  border: 0;
+  border-radius: 999px;
+  background: #7c5cff;
+  color: #fff;
+  font-size: 21px;
+  font-weight: 800;
+  box-shadow: 0 5px 0 #5b3fd6;
+}
+.ph-mic span {
+  font-size: 28px;
+}
+.ph-mic:disabled:not(.on) {
+  opacity: 0.5;
+}
+.ph-mic.on {
+  background: #ff5f8f;
+  box-shadow: 0 5px 0 #d63d6c;
+  animation: ph-pulse 1s ease-in-out infinite;
+}
+.ph-heard {
+  margin: 0;
+  font-size: 18px;
+  color: var(--ph-muted);
+}
+
 .ph-feedback {
   margin: 18px auto 0;
   max-width: 560px;

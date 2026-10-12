@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { listenOnce, matchSpoken, speechSupported } from "@/lib/prisha/speech";
 import { isCorrect } from "@/lib/prisha/store";
 import type { Mode, Question, Worksheet } from "@/lib/prisha/types";
-import { CHEERS, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle } from "./ui";
+import { CHEERS, GENTLE, Picture, SpeakButton, TopBar, pick, roundStars, shuffle, speak } from "./ui";
 
 type Item = { q: Question; instruction: string; helper?: string };
 
@@ -42,6 +43,12 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
   const [typed, setTyped] = useState("");
   const [last, setLast] = useState("");
   const [finished, setFinished] = useState<RoundResult | null>(null);
+  const [canListen] = useState(speechSupported);
+  const [listening, setListening] = useState(false);
+  const [heard, setHeard] = useState("");
+  const stopListening = useRef<(() => void) | null>(null);
+  // Stop the mic when leaving the screen.
+  useEffect(() => () => stopListening.current?.(), []);
   const [typing, setTyping] = useState<boolean>(() => {
     try {
       return localStorage.getItem(INPUT_PREF) === "type";
@@ -89,6 +96,7 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
 
   function next(res = results) {
     setTyped("");
+    setHeard("");
     setStatus("asking");
     setMessage("");
     if (index + 1 >= items.length) finish(res);
@@ -113,9 +121,46 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
     if (ok) {
       setStatus("right");
       setMessage(pick(CHEERS));
+      speak(q.answer, worksheet.lang);
     } else {
       setStatus("wrong");
       setMessage(pick(GENTLE));
+    }
+  }
+
+  async function listen() {
+    if (!q || listening) return;
+    setHeard("");
+    setListening(true);
+    try {
+      const alts = await listenOnce(worksheet.lang, (stop) => (stopListening.current = stop));
+      if (!alts.length) {
+        setHeard("I didn't hear anything — press 🎤 and say it 🙂");
+        return;
+      }
+      const values = hasChoices ? options : [q.answer];
+      const match = matchSpoken(
+        alts,
+        values.map((v) => ({ value: v, forms: v === q.answer ? [v, ...(q.accept ?? [])] : [v] })),
+      );
+      if (match) {
+        setHeard(`🎤 I heard “${alts[0]}”`);
+        answer(match);
+      } else {
+        setHeard(`🎤 I heard “${alts[0]}” — say it once more?`);
+      }
+    } catch (e) {
+      const err = (e as Error).message;
+      setHeard(
+        err === "not-allowed" || err === "service-not-allowed"
+          ? "The microphone is blocked. Allow it for this site in the browser, then try again."
+          : err === "network"
+            ? "Voice needs the internet. Tap or type the answer instead."
+            : "Voice is not working right now. Tap or type the answer instead.",
+      );
+    } finally {
+      stopListening.current = null;
+      setListening(false);
     }
   }
 
@@ -294,6 +339,25 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
           </div>
         )}
 
+        {canListen && (
+          <div className="ph-voice">
+            <button
+              type="button"
+              className={`ph-mic${listening ? " on" : ""}`}
+              onClick={listen}
+              disabled={status === "right" || listening}
+              aria-label="Say the answer"
+            >
+              <span aria-hidden="true">🎤</span> {listening ? "Listening…" : "Say it · बोला"}
+            </button>
+            {heard && (
+              <p className="ph-heard" role="status" lang={worksheet.lang}>
+                {heard}
+              </p>
+            )}
+          </div>
+        )}
+
         {status === "right" && (
           <div className="ph-feedback ph-feedback-good" role="status">
             <span className="ph-tick">✔</span>
@@ -321,6 +385,7 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
               onClick={() => {
                 setStatus("asking");
                 setTyped("");
+                setHeard("");
               }}
             >
               🔁 Try again

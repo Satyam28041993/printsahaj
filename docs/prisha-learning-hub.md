@@ -32,6 +32,21 @@ Worked out (check against the sheet the teacher marks):
 - Pictures are colour emoji of the same items, in the same order (the photo
   copies are grey and the photo shows the child's name, so it is not published).
 
+## Voice answers (🎤 Say it · बोला)
+
+`web/src/lib/prisha/speech.ts`. The browser's speech recogniser (Chrome,
+Edge, Android Chrome, Safari; not Firefox) listens in Marathi (`mr-IN`) or
+English (`en-IN`) per worksheet. The heard text is matched to the closest
+answer on screen (कमल / कमळ / "Kamal" all match कमळ). If nothing is clearly
+closest it asks her to say it again — a mishearing never counts as wrong. A
+clearly said wrong option does count. The mic button is hidden where the
+browser has no recogniser.
+
+Chrome sends the audio to Google's speech service while the mic is on (the
+browser asks for microphone permission the first time). Nothing is stored by
+the hub. Single letters (अ/आ, इ/ई) are hard for any recogniser; when unsure it
+asks again, and tapping still works.
+
 ## Privacy
 
 `noindex, nofollow` meta tag plus an `X-Robots-Tag` header. Not in
