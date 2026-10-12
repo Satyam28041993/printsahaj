@@ -13,7 +13,8 @@ no nav/footer, not linked from any page, not in any sitemap.
 
 ## Data lives in the browser
 
-Custom worksheets, progress and stars are saved in that browser's
+Custom worksheets, progress, stars and Prisha's photo (Parent corner →
+Prisha's photo; shown in the round frame on the home and result screens) are saved in that browser's
 localStorage only. Nothing is uploaded and there is no backend. Clearing
 browser data, a private window, or another device starts empty — use
 **Parent corner → Download backup / Restore backup**.

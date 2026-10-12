@@ -98,6 +98,33 @@ export function TopBar({ title, onBack, right }: { title: ReactNode; onBack?: ()
   );
 }
 
+/** Prisha in a rainbow circle with a book — or a smiling placeholder before a photo is added. */
+export function Avatar({ photo, size = "lg" }: { photo?: string; size?: "lg" | "sm" }) {
+  return (
+    <span className={`ph-avatar ph-avatar-${size}`}>
+      <span className="ph-avatar-ring">
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- local data URL from this browser
+          <img src={photo} alt="Prisha" className="ph-avatar-img" />
+        ) : (
+          <span className="ph-avatar-blank" aria-hidden="true">
+            👧
+          </span>
+        )}
+      </span>
+      <span className="ph-avatar-book" aria-hidden="true">
+        📖
+      </span>
+      {size === "lg" && (
+        <>
+          <span className="ph-avatar-spark s1" aria-hidden="true">✨</span>
+          <span className="ph-avatar-spark s2" aria-hidden="true">⭐</span>
+        </>
+      )}
+    </span>
+  );
+}
+
 export function StarCount({ n }: { n: number }) {
   return (
     <span className="ph-starcount" aria-label={`${n} stars`}>

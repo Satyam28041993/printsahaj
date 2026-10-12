@@ -8,6 +8,7 @@ import type { Attempt, Progress, Question, Worksheet } from "./types";
 
 const WS_KEY = "prisha.worksheets.v1";
 const PROGRESS_KEY = "prisha.progress.v1";
+const PHOTO_KEY = "prisha.photo.v1";
 
 /** Case, extra spaces and Unicode form never make an answer wrong. */
 export function normalize(s: string): string {
@@ -46,6 +47,24 @@ export function loadCustom(): Worksheet[] {
 
 export function saveCustom(list: Worksheet[]): boolean {
   return write(WS_KEY, list);
+}
+
+/** Prisha's photo for the home screen: a small JPEG data URL, this browser only. */
+export function loadPhoto(): string {
+  const p = read<string>(PHOTO_KEY, "");
+  return typeof p === "string" && p.startsWith("data:image/") ? p : "";
+}
+
+export function savePhoto(dataUrl: string): boolean {
+  if (!dataUrl) {
+    try {
+      localStorage.removeItem(PHOTO_KEY);
+    } catch {
+      /* fine */
+    }
+    return true;
+  }
+  return write(PHOTO_KEY, dataUrl);
 }
 
 export const emptyProgress = (): Progress => ({ attempts: [], stats: {}, stars: 0 });
@@ -96,10 +115,17 @@ export function isWorksheet(x: unknown): x is Worksheet {
   );
 }
 
-export type Backup = { app: "prisha-learning-hub"; version: 1; exportedAt: string; worksheets: Worksheet[]; progress: Progress };
+export type Backup = {
+  app: "prisha-learning-hub";
+  version: 1;
+  exportedAt: string;
+  worksheets: Worksheet[];
+  progress: Progress;
+  photo?: string;
+};
 
-export function makeBackup(worksheets: Worksheet[], progress: Progress): Backup {
-  return { app: "prisha-learning-hub", version: 1, exportedAt: new Date().toISOString(), worksheets, progress };
+export function makeBackup(worksheets: Worksheet[], progress: Progress, photo?: string): Backup {
+  return { app: "prisha-learning-hub", version: 1, exportedAt: new Date().toISOString(), worksheets, progress, ...(photo ? { photo } : {}) };
 }
 
 /** Parses a backup file; throws a readable message when it is not one. */
@@ -113,7 +139,8 @@ export function parseBackup(text: string): Backup {
   if (!data || data.app !== "prisha-learning-hub" || !Array.isArray(data.worksheets)) {
     throw new Error("This file is not a Learning Hub backup.");
   }
-  return { ...data, worksheets: data.worksheets.filter(isWorksheet).map((w) => ({ ...w, builtIn: false })) };
+  const photo = typeof data.photo === "string" && data.photo.startsWith("data:image/") ? data.photo : undefined;
+  return { ...data, photo, worksheets: data.worksheets.filter(isWorksheet).map((w) => ({ ...w, builtIn: false })) };
 }
 
 export const newId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;

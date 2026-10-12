@@ -4,18 +4,20 @@ import { useRef, useState } from "react";
 import {
   emptyProgress,
   loadCustom,
+  loadPhoto,
   loadProgress,
   makeBackup,
   parseBackup,
   recordAttempt,
   saveCustom,
+  savePhoto,
   saveProgress,
 } from "@/lib/prisha/store";
 import type { Mode, Progress, Worksheet } from "@/lib/prisha/types";
 import { BUILT_IN, SUBJECTS, subjectStyle } from "@/lib/prisha/worksheets";
-import Editor from "./Editor";
+import Editor, { cropPortrait } from "./Editor";
 import Runner, { type RoundResult } from "./Runner";
-import { StarCount, TopBar } from "./ui";
+import { Avatar, StarCount, TopBar } from "./ui";
 
 type View =
   | { name: "home" }
@@ -29,6 +31,7 @@ type View =
 export default function PrishaApp() {
   const [custom, setCustom] = useState<Worksheet[]>(loadCustom);
   const [progress, setProgress] = useState<Progress>(loadProgress);
+  const [photo, setPhoto] = useState<string>(loadPhoto);
   const [view, setView] = useState<View>({ name: "home" });
   const [parentOk, setParentOk] = useState(false);
   const [notice, setNotice] = useState("");
@@ -80,6 +83,7 @@ export default function PrishaApp() {
       <Runner
         key={view.round}
         worksheet={ws}
+        photo={photo}
         mode={view.mode}
         onlyIds={view.onlyIds}
         onExit={() => go({ name: "home" })}
@@ -166,11 +170,7 @@ export default function PrishaApp() {
     return (
       <div className="ph-screen ph-home">
         <header className="ph-hero">
-          <div className="ph-hero-deco" aria-hidden="true">
-            <span>🌈</span>
-            <span>⭐</span>
-            <span>🎈</span>
-          </div>
+          <Avatar photo={photo} />
           <h1 className="ph-title">Prisha&apos;s Learning Hub</h1>
           <p className="ph-subtitle">Hello Prisha! What shall we learn today? 🌞</p>
           <StarCount n={progress.stars} />
@@ -301,7 +301,7 @@ export default function PrishaApp() {
 
   function renderParent() {
     const download = () => {
-      const blob = new Blob([JSON.stringify(makeBackup(custom, progress), null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(makeBackup(custom, progress, photo), null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `prisha-learning-hub-backup-${new Date().toISOString().slice(0, 10)}.json`;
@@ -314,6 +314,7 @@ export default function PrishaApp() {
         const merged = [...custom.filter((c) => !b.worksheets.some((w) => w.id === c.id)), ...b.worksheets];
         const withProgress = b.progress && confirm("Also restore progress and stars from this backup? (OK = yes, Cancel = keep current progress)");
         if (!updateCustom(merged)) throw new Error("The browser's storage is full.");
+        if (b.photo && !photo && savePhoto(b.photo)) setPhoto(b.photo);
         if (withProgress) {
           const p = { ...emptyProgress(), ...b.progress };
           setProgress(p);
@@ -382,6 +383,53 @@ export default function PrishaApp() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="ph-card">
+          <h2 className="ph-h2">Prisha&apos;s photo</h2>
+          <div className="ph-photo-row">
+            <Avatar photo={photo} size="sm" />
+            <div className="ph-actions ph-actions-left">
+              <label className="ph-btn">
+                📷 {photo ? "Change photo" : "Add photo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!f) return;
+                    try {
+                      const url = await cropPortrait(f);
+                      if (!savePhoto(url)) throw new Error("The browser's storage is full.");
+                      setPhoto(url);
+                      setNotice("Photo added — see the home screen! 😊");
+                    } catch (err) {
+                      setNotice((err as Error).message);
+                    }
+                  }}
+                />
+              </label>
+              {photo && (
+                <button
+                  type="button"
+                  className="ph-btn ph-btn-ghost"
+                  onClick={() => {
+                    savePhoto("");
+                    setPhoto("");
+                    setNotice("Photo removed.");
+                  }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="ph-text">
+            The photo stays <strong>only in this browser on this device</strong> — it is not uploaded to the website. Add it again on
+            another phone or laptop (or restore a backup there).
+          </p>
         </section>
 
         <section className="ph-card">
