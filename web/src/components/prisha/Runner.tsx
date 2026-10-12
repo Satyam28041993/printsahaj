@@ -143,7 +143,12 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
         alts,
         values.map((v) => ({ value: v, forms: v === q.answer ? [v, ...(q.accept ?? [])] : [v] })),
       );
-      if (match) {
+      if (status === "right") {
+        // Already answered: saying it again is just practice, the score stays.
+        const again = match === q.answer;
+        setHeard(again ? `🎤 Yes! “${q.answer}” 👏` : `🎤 I heard “${alts[0]}” — the word is “${q.answer}”`);
+        speak(q.answer, worksheet.lang);
+      } else if (match) {
         setHeard(`🎤 I heard “${alts[0]}”`);
         answer(match);
       } else {
@@ -345,10 +350,10 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
               type="button"
               className={`ph-mic${listening ? " on" : ""}`}
               onClick={listen}
-              disabled={status === "right" || listening}
+              disabled={listening}
               aria-label="Say the answer"
             >
-              <span aria-hidden="true">🎤</span> {listening ? "Listening…" : "Say it · बोला"}
+              <span aria-hidden="true">🎤</span> {listening ? "Listening…" : status === "right" ? "Say it again · पुन्हा बोला" : "Say it · बोला"}
             </button>
             {heard && (
               <p className="ph-heard" role="status" lang={worksheet.lang}>
@@ -362,6 +367,7 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
           <div className="ph-feedback ph-feedback-good" role="status">
             <span className="ph-tick">✔</span>
             <span className="ph-feedback-msg">{message}</span>
+            <SpeakButton text={q.answer} lang={worksheet.lang} label="Hear the answer again" />
             <span className="ph-starpop" aria-hidden="true">
               ⭐
             </span>
@@ -373,6 +379,7 @@ export default function Runner({ worksheet, mode, onlyIds, onFinish, onExit, onP
             {q.hint && <p className="ph-hint">💡 {q.hint}</p>}
             <p className="ph-correct" lang={worksheet.lang}>
               The answer is <strong>{q.answer}</strong>
+              <SpeakButton text={q.answer} lang={worksheet.lang} label="Hear the answer" />
             </p>
           </div>
         )}

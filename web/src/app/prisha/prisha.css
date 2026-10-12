@@ -1180,3 +1180,8 @@ body:has(.ph-root) {
     transition: none !important;
   }
 }
+
+.ph-correct .ph-speak {
+  margin-left: 8px;
+  vertical-align: middle;
+}
