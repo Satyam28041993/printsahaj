@@ -8,6 +8,7 @@ no nav/footer, not linked from any page, not in any sitemap.
 | Route | `web/src/app/prisha/` (layout = noindex meta + Baloo 2 font, `prisha.css`) |
 | Screens | `web/src/components/prisha/` (home, runner, editor, progress, parent corner) |
 | School worksheets | `web/src/lib/prisha/worksheets.ts` |
+| Exam practice (Sem 1, all 5 subjects) | `web/src/lib/prisha/exam-practice.ts` |
 | Storage, answer check, backup | `web/src/lib/prisha/store.ts` |
 | Search-engine header | `web/public/.htaccess` (`X-Robots-Tag` for `/prisha`) |
 
@@ -32,6 +33,24 @@ Worked out (check against the sheet the teacher marks):
 - Animal 12 (curled horns) is **Sheep**; "Ram" is also accepted.
 - Pictures are colour emoji of the same items, in the same order (the photo
   copies are grey and the photo shows the child's name, so it is not published).
+
+## Exam practice — first semester 2026-27
+
+The school's "question paper pattern" sheets (Hindi, English, Marathi, EVS,
+Maths; 50 marks each) list only question **types** and marks. Each subject
+has one "Exam practice (Sem 1)" worksheet whose parts follow those types in
+the printed order, one practice item per mark (50 questions per subject).
+The items are our own Sr. KG-level practice, **not the actual paper**. On the
+worksheet list, "One part at a time" chips (Q1, Q2 …) start a single part.
+
+Choices made where a type cannot be done on screen as printed:
+- "Match / join / circle" → tap the right one of 2–4 choices.
+- EVS "Color the fruits" → "Which colour is a banana?" etc.
+- EVS "Circle the vegetables": tomato counted as a vegetable (as in class).
+- Maths "Write Table" → table of 2 (missing number in 2, 4, 6 …). If the
+  teacher means a different table, change it in `exam-practice.ts`.
+- Marathi Q10 "चार वर्ण वाले शब्द": अननस, सरबत, मखमल, करवत, हरभरा.
+- EVS Q3/Q4 reuse the class worksheet's 12 animals and 9 fruits.
 
 ## Voice answers (🎤 Say it · बोला)
 

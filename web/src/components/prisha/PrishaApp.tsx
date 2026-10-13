@@ -22,7 +22,7 @@ import { Avatar, CornerPhoto, StarCount, TopBar } from "./ui";
 type View =
   | { name: "home" }
   | { name: "pick"; mode: Mode; subject?: string }
-  | { name: "run"; worksheetId: string; mode: Mode; onlyIds?: string[]; round: number }
+  | { name: "run"; worksheetId: string; mode: Mode; onlyIds?: string[]; label?: string; round: number }
   | { name: "progress" }
   | { name: "parent" }
   | { name: "edit"; worksheet?: Worksheet };
@@ -45,8 +45,8 @@ export default function PrishaApp() {
     setView(v);
     window.scrollTo({ top: 0 });
   };
-  const run = (worksheetId: string, mode: Mode, onlyIds?: string[]) =>
-    go({ name: "run", worksheetId, mode, onlyIds, round: ++roundRef.current });
+  const run = (worksheetId: string, mode: Mode, onlyIds?: string[], label?: string) =>
+    go({ name: "run", worksheetId, mode, onlyIds, label, round: ++roundRef.current });
 
   const updateCustom = (list: Worksheet[]) => {
     const ok = saveCustom(list);
@@ -54,7 +54,7 @@ export default function PrishaApp() {
     return ok;
   };
 
-  function saveRound(ws: Worksheet, mode: Mode, onlyIds: string[] | undefined, r: RoundResult) {
+  function saveRound(ws: Worksheet, mode: Mode, onlyIds: string[] | undefined, label: string | undefined, r: RoundResult) {
     const allIds = ws.parts.flatMap((p) => p.questions.map((q) => q.id));
     const asked = onlyIds ? allIds.filter((id) => onlyIds.includes(id)) : allIds;
     const next = recordAttempt(
@@ -62,7 +62,7 @@ export default function PrishaApp() {
       {
         at: new Date().getTime(),
         worksheetId: ws.id,
-        title: onlyIds ? `${ws.title} (practice again)` : ws.title,
+        title: label ? `${ws.title} · ${label}` : onlyIds ? `${ws.title} (practice again)` : ws.title,
         subject: ws.subject,
         mode,
         total: r.total,
@@ -88,7 +88,7 @@ export default function PrishaApp() {
         onlyIds={view.onlyIds}
         onExit={() => go({ name: "home" })}
         onPracticeIds={(ids) => run(ws.id, "practice", ids)}
-        onFinish={(r) => saveRound(ws, view.mode, view.onlyIds, r)}
+        onFinish={(r) => saveRound(ws, view.mode, view.onlyIds, view.label, r)}
       />
     );
   }
@@ -122,17 +122,36 @@ export default function PrishaApp() {
             const count = w.parts.reduce((n, p) => n + p.questions.length, 0);
             const last = progress.attempts.find((a) => a.worksheetId === w.id);
             return (
-              <button key={w.id} type="button" className="ph-wscard" style={{ "--c": s.color } as React.CSSProperties} onClick={() => run(w.id, view.mode)}>
-                <span className="ph-wscard-emoji">{s.emoji}</span>
-                <span className="ph-wscard-body">
-                  <span className="ph-wscard-title">{w.title}</span>
-                  <span className="ph-wscard-meta">
-                    {s.name} · {count} questions
-                    {last ? ` · last: ${last.correct}/${last.total}` : ""}
+              <div key={w.id} className="ph-wsgroup">
+                <button type="button" className="ph-wscard" style={{ "--c": s.color } as React.CSSProperties} onClick={() => run(w.id, view.mode)}>
+                  <span className="ph-wscard-emoji">{s.emoji}</span>
+                  <span className="ph-wscard-body">
+                    <span className="ph-wscard-title">{w.title}</span>
+                    <span className="ph-wscard-meta">
+                      {s.name} · {count} questions
+                      {last ? ` · last: ${last.correct}/${last.total}` : ""}
+                    </span>
                   </span>
-                </span>
-                <span className="ph-wscard-go">{view.mode === "test" ? "📝" : "▶"}</span>
-              </button>
+                  <span className="ph-wscard-go">{view.mode === "test" ? "📝" : "▶"}</span>
+                </button>
+                {w.parts.length > 2 && (
+                  <div className="ph-partchips" role="group" aria-label={`Practise one part of ${w.title}`}>
+                    <span className="ph-partchips-label">One part at a time:</span>
+                    {w.parts.map((p, i) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className="ph-partchip"
+                        style={{ "--c": s.color } as React.CSSProperties}
+                        title={p.instruction}
+                        onClick={() => run(w.id, view.mode, p.questions.map((q) => q.id), `Q${i + 1}`)}
+                      >
+                        <b>Q{i + 1}</b> {p.helper ?? p.instruction}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
