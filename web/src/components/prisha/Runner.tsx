@@ -338,7 +338,7 @@ export default function Runner({ worksheet, photo, mode, onlyIds, onFinish, onEx
                 <button
                   key={o}
                   type="button"
-                  className={`ph-choice${showRight ? " right" : ""}${status === "wrong" && chosen ? " soft" : ""}`}
+                  className={`ph-choice${/[\p{L}\p{N}]/u.test(o) ? "" : " ph-choice-pic"}${showRight ? " right" : ""}${status === "wrong" && chosen ? " soft" : ""}`}
                   onClick={() => answer(o)}
                   disabled={status === "right"}
                 >

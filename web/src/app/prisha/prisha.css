@@ -1398,3 +1398,10 @@ body:has(.ph-root) {
   letter-spacing: 6px;
   word-break: break-all;
 }
+
+/* Picture choices (🥭 🦉 🍇) need to be big enough to recognise. */
+.ph-choice.ph-choice-pic {
+  min-height: 96px;
+  font-size: clamp(44px, 10vw, 60px);
+  line-height: 1;
+}
