@@ -1341,3 +1341,67 @@ body:has(.ph-root) {
     display: none;
   }
 }
+
+/* ---------- Exam practice: parts, words in tiles, counting ---------- */
+
+.ph-wsgroup {
+  display: grid;
+  gap: 8px;
+}
+.ph-partchips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 6px;
+}
+.ph-partchips-label {
+  font-size: 15px;
+  color: var(--ph-muted);
+  margin-right: 2px;
+}
+.ph-partchip {
+  --c: #4f7cff;
+  min-height: 42px;
+  padding: 6px 14px;
+  border: 2px solid color-mix(in srgb, var(--c) 45%, #fff);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 15px;
+  text-align: left;
+}
+.ph-partchip b {
+  color: var(--c);
+  margin-right: 2px;
+}
+.ph-partchip:hover {
+  background: color-mix(in srgb, var(--c) 10%, #fff);
+}
+
+/* A whole word in a tile ("बदक = ?") widens it into a pill. */
+.ph-tile {
+  min-width: 68px;
+  width: auto;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+@media (max-width: 560px) {
+  .ph-tile {
+    min-width: 54px;
+  }
+}
+
+.ph-pic-lg.ph-pic-many {
+  max-width: 520px;
+  font-size: clamp(44px, 11vw, 64px);
+  line-height: 1.2;
+  letter-spacing: 6px;
+  word-break: break-all;
+}
+
+/* Picture choices (🥭 🦉 🍇) need to be big enough to recognise. */
+.ph-choice.ph-choice-pic {
+  min-height: 96px;
+  font-size: clamp(44px, 10vw, 60px);
+  line-height: 1;
+}

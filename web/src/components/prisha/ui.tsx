@@ -68,6 +68,14 @@ export function SpeakButton({ text, lang, label = "Listen" }: { text: string; la
   );
 }
 
+function graphemes(s: string): number {
+  try {
+    return Array.from(new Intl.Segmenter("en", { granularity: "grapheme" }).segment(s)).length;
+  } catch {
+    return Array.from(s).length;
+  }
+}
+
 /** A picture: emoji text, or an uploaded image (data: URL). */
 export function Picture({ src, size = "lg" }: { src?: string; size?: "lg" | "sm" }) {
   if (!src) return null;
@@ -75,8 +83,10 @@ export function Picture({ src, size = "lg" }: { src?: string; size?: "lg" | "sm"
     // eslint-disable-next-line @next/next/no-img-element -- local data URL, nothing to optimise
     return <img src={src} alt="" className={`ph-pic ph-pic-img ph-pic-${size}`} />;
   }
+  // Several emoji (counting questions) get a smaller size so they fit in rows.
+  const many = size === "lg" && graphemes(src) > 2;
   return (
-    <span className={`ph-pic ph-pic-${size}`} aria-hidden="true">
+    <span className={`ph-pic ph-pic-${size}${many ? " ph-pic-many" : ""}`} aria-hidden="true">
       {src}
     </span>
   );

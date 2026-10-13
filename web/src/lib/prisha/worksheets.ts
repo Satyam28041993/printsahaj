@@ -1,3 +1,5 @@
+import { blanks, word } from "./builders";
+import { EXAM_PRACTICE } from "./exam-practice";
 import type { Question, Worksheet } from "./types";
 
 /*
@@ -23,42 +25,6 @@ const VOWELS_PRINTED = new Set([0, 2, 5, 8, 11]);
 
 const CONSONANTS = ["क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ", "ट", "ठ", "ड", "ढ", "ण"];
 const CONSONANTS_PRINTED = new Set([0, 1, 4, 5, 7, 9, 11, 12, 14]);
-
-/** One question per blank. The tile row shows the printed letters only, so
- * the child sees the sheet as it is, with the current blank marked. */
-function blanks(prefix: string, letters: string[], printed: Set<number>, rowLength: number): Question[] {
-  const out: Question[] = [];
-  letters.forEach((letter, i) => {
-    if (printed.has(i)) return;
-    const rowStart = Math.floor(i / rowLength) * rowLength;
-    const row = letters.slice(rowStart, rowStart + rowLength).map((l, j) => {
-      const k = rowStart + j;
-      if (k === i) return "_";
-      return printed.has(k) ? l : "·";
-    });
-    // Three wrong choices close to the answer: its neighbours in the row of letters.
-    const near = [letters[i - 1], letters[i + 1], letters[i + 2], letters[i - 2]].filter(
-      (l): l is string => !!l && l !== letter,
-    );
-    out.push({
-      id: `${prefix}-${i + 1}`,
-      prompt: "कोणते अक्षर येईल?",
-      sequence: row,
-      answer: letter,
-      choices: near.slice(0, 3),
-      hint: i > 0 ? `${letters[i - 1]} नंतर येणारे अक्षर (comes after ${letters[i - 1]})` : undefined,
-    });
-  });
-  return out;
-}
-
-const word = (id: string, parts: string[], answer: string, choices: string[]): Question => ({
-  id,
-  prompt: `${parts.join(" + ")} = ?`,
-  answer,
-  choices,
-  hint: `अक्षरे क्रमाने जोडा: ${parts.join(" → ")} (join them in order)`,
-});
 
 export const MARATHI_WORKSHEET: Worksheet = {
   id: "eps-2026-10-09-marathi",
@@ -166,7 +132,7 @@ export const EVS_WORKSHEET: Worksheet = {
   ],
 };
 
-export const BUILT_IN: Worksheet[] = [MARATHI_WORKSHEET, EVS_WORKSHEET];
+export const BUILT_IN: Worksheet[] = [MARATHI_WORKSHEET, EVS_WORKSHEET, ...EXAM_PRACTICE];
 
 export const SUBJECTS: { name: string; emoji: string; color: string }[] = [
   { name: "Marathi", emoji: "🌸", color: "#ff7a59" },
