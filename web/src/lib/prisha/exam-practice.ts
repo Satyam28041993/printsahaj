@@ -1,4 +1,5 @@
 import { blanks, word } from "./builders";
+import { TEACHER_ANIMALS, TEACHER_COLOURS, TEACHER_FRUITS, others } from "./teacher-lists";
 import type { Part, Question, Worksheet } from "./types";
 
 /*
@@ -320,38 +321,12 @@ export const EVS_EXAM: Worksheet = {
       q("v2-5", "Which one is a vegetable?", "🥬 Cabbage", ["🍌 Banana", "🍇 Grapes"], { accept: ["Cabbage"], hint: "Cabbage is a vegetable." }),
       q("v2-6", "Which one is a vegetable?", "🍅 Tomato", ["🍓 Strawberry", "🥭 Mango"], { accept: ["Tomato"], hint: "In class we keep tomato with the vegetables." }),
     ]),
-    part("v3", "Q.3) Write Animals name? (12 Marks)", "Same animals as the class worksheet", [
-      evsName("v3-1", "🦁", "Lion", ["Tiger", "Cat"]),
-      evsName("v3-2", "🐯", "Tiger", ["Lion", "Zebra"]),
-      evsName("v3-3", "🐄", "Cow", ["Sheep", "Pig"]),
-      evsName("v3-4", "🦌", "Deer", ["Giraffe", "Cow"]),
-      evsName("v3-5", "🐷", "Pig", ["Cow", "Bear"]),
-      evsName("v3-6", "🐻", "Bear", ["Monkey", "Pig"]),
-      evsName("v3-7", "🐵", "Monkey", ["Bear", "Cat"]),
-      evsName("v3-8", "🐱", "Cat", ["Tiger", "Lion"]),
-      evsName("v3-9", "🦓", "Zebra", ["Deer", "Giraffe"]),
-      evsName("v3-10", "🦒", "Giraffe", ["Zebra", "Elephant"]),
-      evsName("v3-11", "🐘", "Elephant", ["Giraffe", "Cow"]),
-      evsName("v3-12", "🐑", "Sheep", ["Cow", "Deer"], ["Ram"]),
-    ]),
-    part("v4", "Q.4 )Fruits Name? (9 Marks)", "Same fruits as the class worksheet", [
-      evsName("v4-1", "🍍", "Pineapple", ["Banana", "Mango"]),
-      evsName("v4-2", "🍓", "Strawberry", ["Apple", "Peach"]),
-      evsName("v4-3", "🍌", "Banana", ["Mango", "Pear"]),
-      evsName("v4-4", "🍉", "Watermelon", ["Melon", "Orange"]),
-      evsName("v4-5", "🥭", "Mango", ["Pear", "Guava"]),
-      evsName("v4-6", "🍑", "Peach", ["Orange", "Apple"]),
-      evsName("v4-7", "🍎", "Apple", ["Peach", "Strawberry"]),
-      evsName("v4-8", "🍐", "Pear", ["Guava", "Mango"]),
-      evsName("v4-9", "🍇", "Grapes", ["Strawberry", "Melon"]),
-    ]),
-    part("v5", "Q.5) Match the colours with the correct name? (5 Marks)", "Which colour is this?", [
-      evsName("v5-1", "🔴", "Red", ["Blue", "Yellow"]),
-      evsName("v5-2", "🔵", "Blue", ["Green", "Red"]),
-      evsName("v5-3", "🟢", "Green", ["Yellow", "Blue"]),
-      evsName("v5-4", "🟡", "Yellow", ["Red", "Black"]),
-      evsName("v5-5", "⚫", "Black", ["Green", "Blue"]),
-    ]),
+    part("v3", "Q.3) Write Animals name? (12 Marks)", "The 12 animals from the teacher's sheet (30/10)",
+      TEACHER_ANIMALS.map((it, i) => evsName(`v3-${i + 1}`, it.picture, it.name, others(TEACHER_ANIMALS, i)))),
+    part("v4", "Q.4 )Fruits Name? (9 Marks)", "The 9 fruits from the teacher's sheet (30/10)",
+      TEACHER_FRUITS.map((it, i) => evsName(`v4-${i + 1}`, it.picture, it.name, others(TEACHER_FRUITS, i)))),
+    part("v5", "Q.5) Match the colours with the correct name? (5 Marks)", "The 5 colours from the teacher's sheet (30/10)",
+      TEACHER_COLOURS.map((it, i) => evsName(`v5-${i + 1}`, it.picture, it.name, others(TEACHER_COLOURS, i)))),
     part("v6", "Q. 6) Join the season to cloths ? (4 Marks)", "Seasons: Summer ☀️, Rainy 🌧️, Winter ❄️", [
       q("v6-1", "When do we wear a sweater?", "Winter", ["Summer", "Rainy"], { image: "🧥", hint: "A sweater keeps us warm when it is cold ❄️." }),
       q("v6-2", "When do we wear a raincoat?", "Rainy", ["Winter", "Summer"], { image: "🧥🌧️", hint: "A raincoat keeps us dry in the rain 🌧️." }),

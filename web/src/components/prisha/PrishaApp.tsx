@@ -16,12 +16,14 @@ import {
 import type { Mode, Progress, Worksheet } from "@/lib/prisha/types";
 import { BUILT_IN, SUBJECTS, subjectStyle } from "@/lib/prisha/worksheets";
 import Editor, { cropPortrait } from "./Editor";
+import Learn from "./Learn";
 import Runner, { type RoundResult } from "./Runner";
 import { Avatar, CornerPhoto, StarCount, TopBar } from "./ui";
 
 type View =
   | { name: "home" }
-  | { name: "pick"; mode: Mode; subject?: string }
+  | { name: "pick"; mode: Mode | "learn"; subject?: string }
+  | { name: "learn"; worksheetId: string; onlyIds?: string[] }
   | { name: "run"; worksheetId: string; mode: Mode; onlyIds?: string[]; label?: string; round: number }
   | { name: "progress" }
   | { name: "parent" }
@@ -45,8 +47,10 @@ export default function PrishaApp() {
     setView(v);
     window.scrollTo({ top: 0 });
   };
-  const run = (worksheetId: string, mode: Mode, onlyIds?: string[], label?: string) =>
-    go({ name: "run", worksheetId, mode, onlyIds, label, round: ++roundRef.current });
+  const run = (worksheetId: string, mode: Mode | "learn", onlyIds?: string[], label?: string) =>
+    mode === "learn"
+      ? go({ name: "learn", worksheetId, onlyIds })
+      : go({ name: "run", worksheetId, mode, onlyIds, label, round: ++roundRef.current });
 
   const updateCustom = (list: Worksheet[]) => {
     const ok = saveCustom(list);
@@ -93,19 +97,36 @@ export default function PrishaApp() {
     );
   }
 
+  if (view.name === "learn") {
+    const ws = byId(view.worksheetId);
+    if (!ws) return renderHome();
+    return (
+      <Learn
+        worksheet={ws}
+        photo={photo}
+        onlyIds={view.onlyIds}
+        onExit={() => go({ name: "home" })}
+        onPractise={(ids) => run(ws.id, "practice", ids.length === ws.parts.flatMap((p) => p.questions).length ? undefined : ids)}
+      />
+    );
+  }
+
   if (view.name === "pick") {
     const list = all.filter((w) => !view.subject || w.subject === view.subject);
     const style = view.subject ? subjectStyle(view.subject) : null;
     return (
       <div className="ph-screen">
         <TopBar
-          title={style ? `${style.emoji} ${style.name}` : view.mode === "test" ? "📝 Take a test" : "🎯 Practice"}
+          title={style ? `${style.emoji} ${style.name}` : view.mode === "test" ? "📝 Take a test" : view.mode === "learn" ? "📖 Learn" : "🎯 Practice"}
           onBack={() => go({ name: "home" })}
           right={<Avatar photo={photo} size="sm" />}
         />
         <CornerPhoto photo={photo} />
         {view.subject && (
           <div className="ph-modeswitch" role="group" aria-label="Mode">
+            <button type="button" className={view.mode === "learn" ? "on" : ""} onClick={() => go({ ...view, mode: "learn" })}>
+              📖 Learn
+            </button>
             <button type="button" className={view.mode === "practice" ? "on" : ""} onClick={() => go({ ...view, mode: "practice" })}>
               🎯 Practice
             </button>
@@ -114,7 +135,13 @@ export default function PrishaApp() {
             </button>
           </div>
         )}
-        <p className="ph-lead">{view.mode === "test" ? "Do your best! You'll see your score at the end." : "Take your time — you can try again and again."}</p>
+        <p className="ph-lead">
+          {view.mode === "test"
+            ? "Do your best! You'll see your score at the end."
+            : view.mode === "learn"
+              ? "Look, listen and say it — then practise!"
+              : "Take your time — you can try again and again."}
+        </p>
         {list.length === 0 && <p className="ph-empty">No worksheets here yet. Ask Papa or Mumma to add one! 📄</p>}
         <div className="ph-wslist">
           {list.map((w) => {
@@ -132,7 +159,7 @@ export default function PrishaApp() {
                       {last ? ` · last: ${last.correct}/${last.total}` : ""}
                     </span>
                   </span>
-                  <span className="ph-wscard-go">{view.mode === "test" ? "📝" : "▶"}</span>
+                  <span className="ph-wscard-go">{view.mode === "test" ? "📝" : view.mode === "learn" ? "📖" : "▶"}</span>
                 </button>
                 {w.parts.length > 2 && (
                   <div className="ph-partchips" role="group" aria-label={`Practise one part of ${w.title}`}>

@@ -1,4 +1,5 @@
 import { blanks, word } from "./builders";
+import { EVS_WRITE_LEARN } from "./evs-write-learn";
 import { EXAM_PRACTICE } from "./exam-practice";
 import type { Question, Worksheet } from "./types";
 
@@ -132,7 +133,7 @@ export const EVS_WORKSHEET: Worksheet = {
   ],
 };
 
-export const BUILT_IN: Worksheet[] = [MARATHI_WORKSHEET, EVS_WORKSHEET, ...EXAM_PRACTICE];
+export const BUILT_IN: Worksheet[] = [MARATHI_WORKSHEET, EVS_WORKSHEET, EVS_WRITE_LEARN, ...EXAM_PRACTICE];
 
 export const SUBJECTS: { name: string; emoji: string; color: string }[] = [
   { name: "Marathi", emoji: "🌸", color: "#ff7a59" },

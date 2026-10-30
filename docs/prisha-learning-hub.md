@@ -9,6 +9,8 @@ no nav/footer, not linked from any page, not in any sitemap.
 | Screens | `web/src/components/prisha/` (home, runner, editor, progress, parent corner) |
 | School worksheets | `web/src/lib/prisha/worksheets.ts` |
 | Exam practice (Sem 1, all 5 subjects) | `web/src/lib/prisha/exam-practice.ts` |
+| Teacher's lists (30/10: fruits, animals, colours) | `web/src/lib/prisha/teacher-lists.ts`, `evs-write-learn.ts` |
+| 📖 Learn flashcards | `web/src/components/prisha/Learn.tsx` |
 | Storage, answer check, backup | `web/src/lib/prisha/store.ts` |
 | Search-engine header | `web/public/.htaccess` (`X-Robots-Tag` for `/prisha`) |
 
@@ -50,7 +52,17 @@ Choices made where a type cannot be done on screen as printed:
 - Maths "Write Table" → table of 2 (missing number in 2, 4, 6 …). If the
   teacher means a different table, change it in `exam-practice.ts`.
 - Marathi Q10 "चार वर्ण वाले शब्द": अननस, सरबत, मखमल, करवत, हरभरा.
-- EVS Q3/Q4 reuse the class worksheet's 12 animals and 9 fruits.
+- EVS Q3/Q4/Q5 use the teacher's 30/10 lists: 12 animals (Pig, Goat, Sheep,
+  Horse, Cow, Lion, Elephant, Zebra, Deer, Monkey, Giraffe, Tiger), 9 fruits
+  (Strawberry, Mango, Apple, Papaya, Banana, Watermelon, Orange, Grapes,
+  Pineapple) and 5 colours (Yellow, Blue, Red, Brown, Green). Papaya has no
+  emoji, so it is a small SVG drawing in `teacher-lists.ts`.
+
+## 📖 Learn
+
+Each subject page has Learn / Practice / Test. Learn shows flashcards
+(picture, word, its letters) with 🔊 Say it and 🔤 Spell it; nothing is
+scored, and the last card leads into practice of the same questions.
 
 ## Voice answers (🎤 Say it · बोला)
 
