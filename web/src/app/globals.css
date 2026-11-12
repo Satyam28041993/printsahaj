@@ -92,6 +92,15 @@
   --cta-flip-fg: #f5f6f7;
   --cta-flip-muted: #b4bac3;
   --scroll-bar-h: 3px;
+
+  /* Flexible-packaging cost breakdown: fixed categorical slots (validated for CVD). */
+  --fp-s1: #2a78d6;
+  --fp-s2: #eb6834;
+  --fp-s3: #1baf7a;
+  --fp-s4: #eda100;
+  --fp-s5: #e87ba4;
+  --fp-s6: #008300;
+  --fp-s7: #6250d6;
 }
 
 .dark {
@@ -137,6 +146,14 @@
   --cta-flip-bg: #0f2a2b;
   --cta-flip-fg: #f5f6f7;
   --cta-flip-muted: #a9c4c4;
+
+  --fp-s1: #3987e5;
+  --fp-s2: #d95926;
+  --fp-s3: #199e70;
+  --fp-s4: #c98500;
+  --fp-s5: #d55181;
+  --fp-s6: #008300;
+  --fp-s7: #9085e9;
 }
 
 /* Expose tokens to Tailwind as utilities: bg-base, text-muted, border-hairline, … */

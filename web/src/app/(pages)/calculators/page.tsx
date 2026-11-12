@@ -2,6 +2,7 @@
 
 import React, { useLayoutEffect, useState } from "react";
 import { Calculator, Layers, FileSpreadsheet, RotateCw, Box, Settings, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { labelAreaPer1kSqm, labelRatePerThousand } from "@/lib/labelRate";
 import { isCalculatorTab, type CalculatorTab } from "@content/tools";
 
@@ -123,6 +124,22 @@ export default function CalculatorsPage() {
         <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
           Tailored specifically for Indian converters: standard sheet sizes (Demy, Crown, Royal), 1/8&quot; flexo repeats, ₹/sqm paper rates, and ream formulas.
         </p>
+      </div>
+
+      {/* Flexible packaging tools live on their own routes */}
+      <div className="max-w-7xl mx-auto">
+        <Link
+          href="/calculators/flexible/"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 px-5 py-4 text-left transition hover:bg-cyan-500/10"
+        >
+          <span>
+            <span className="block text-sm font-bold text-slate-900 dark:text-white">New: Flexible packaging calculators</span>
+            <span className="block text-xs text-slate-600 dark:text-slate-400">
+              Laminate GSM, pouch cost (3SS, center seal, standy), cylinder spread, ink &amp; adhesive consumption.
+            </span>
+          </span>
+          <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Open →</span>
+        </Link>
       </div>
 
       {/* Tabs */}
