@@ -21,11 +21,12 @@ import { layersFromPreset, makeLayer, structureInputFor, syncBonds, useJob, useR
 
 const MAX_LAYERS = 6;
 
-export default function StructureBuilder({ showRates = true, title = "Structure — layer by layer" }: { showRates?: boolean; title?: string }) {
+export default function StructureBuilder({ showRates = true, title = "Structure — layer by layer", unprinted = false }: { showRates?: boolean; title?: string; unprinted?: boolean }) {
   const { job, patch } = useJob();
   const { book } = useRateBook();
   const bonds = syncBonds(job.bondDryGsm, job.layers.length, job.adhesiveType);
-  const result = computeStructure(structureInputFor(job, book));
+  const structureInput = structureInputFor(job, book, unprinted);
+  const result = computeStructure(structureInput);
 
   const setLayers = (layers: JobLayer[]) =>
     patch({ layers, bondDryGsm: syncBonds(job.bondDryGsm, layers.length, job.adhesiveType) });
@@ -73,7 +74,7 @@ export default function StructureBuilder({ showRates = true, title = "Structure 
         {job.layers.map((layer, index) => {
           const material = getMaterial(layer.materialId);
           const paper = material.kind === "paper";
-          const gsm = layerGsm(structureInputFor(job, book).layers[index]);
+          const gsm = layerGsm(structureInput.layers[index]);
           return (
             <li key={layer.uid}>
               <div className="rounded-2xl border border-hairline bg-sunken p-3.5">
@@ -197,7 +198,8 @@ export default function StructureBuilder({ showRates = true, title = "Structure 
             unit="GSM"
             value={job.inkDryGsm}
             onChange={(value) => patch({ inkDryGsm: value })}
-            help={INK_SOURCE}
+            disabled={unprinted}
+            help={unprinted ? "Plain (unprinted) job — ink GSM is not counted. Neeche 'Printed job' on karo to yeh judega." : INK_SOURCE}
           />
           {showRates && <RateField rateKey="inkRatePerKgDry" label="Ink rate (dry)" unit="₹/kg dry" />}
         </div>

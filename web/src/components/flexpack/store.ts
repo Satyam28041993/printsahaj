@@ -210,8 +210,13 @@ export function layersFromPreset(preset: StructurePreset): JobLayer[] {
   return preset.layers.map((layer) => makeLayer(layer.materialId, layer.thickness));
 }
 
-/** Job + rate book → the engine's structure input. */
-export function structureInputFor(job: JobState, book: RateBook): StructureInput {
+/**
+ * Job + rate book → the engine's structure input.
+ * `unprinted` drops the ink line. Only the pouch-cost screen passes it (that is
+ * where the "Printed job" switch lives); the structure tool always counts the
+ * ink GSM it shows.
+ */
+export function structureInputFor(job: JobState, book: RateBook, unprinted = false): StructureInput {
   return {
     layers: job.layers.map((layer) => {
       const paper = getMaterial(layer.materialId).kind === "paper";
@@ -229,6 +234,6 @@ export function structureInputFor(job: JobState, book: RateBook): StructureInput
       dryGsm,
       ratePerKgDry: book.adhesiveRatePerKgDry,
     })),
-    ink: { dryGsm: job.printed ? job.inkDryGsm : 0, ratePerKgDry: book.inkRatePerKgDry },
+    ink: { dryGsm: unprinted ? 0 : job.inkDryGsm, ratePerKgDry: book.inkRatePerKgDry },
   };
 }

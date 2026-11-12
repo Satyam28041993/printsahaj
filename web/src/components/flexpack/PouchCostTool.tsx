@@ -48,8 +48,11 @@ const EXCEL_MAP: Record<string, ExcelMaterial> = {
 
 export function costInputFor(job: JobState, book: RateBook): PouchCostInput {
   const gravure = job.process === "gravure";
+  // A plain pouch never goes through the press: no ink, no cylinders, and no
+  // printing conversion, print waste or print setup either.
+  const stages = CONVERSION_ORDER.filter((id) => job.printed || id !== "printing");
   return {
-    structure: structureInputFor(job, book),
+    structure: structureInputFor(job, book, !job.printed),
     geometry: {
       type: job.pouchType,
       width: job.width,
@@ -66,10 +69,10 @@ export function costInputFor(job: JobState, book: RateBook): PouchCostInput {
       job.advanced && job.wasteMode === "stages"
         ? {
             mode: "stages",
-            stages: CONVERSION_ORDER.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.stageWaste[id] })),
+            stages: stages.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.stageWaste[id] })),
           }
         : { mode: "simple", combinedPercent: book.combinedWastePercent, setupMetres: job.advanced ? job.simpleSetupMetres : 0 },
-    conversion: CONVERSION_ORDER.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.conversion[id] })),
+    conversion: stages.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.conversion[id] })),
     tooling: job.printed
       ? {
           faceLengthMm: job.faceLengthMm,
@@ -120,6 +123,7 @@ export default function PouchCostTool() {
   const gravure = job.process === "gravure";
   const repeat = checkRepeat(job.circumferenceMm, r.geometry.repeatMm);
   const first = r.firstOrder;
+  const stageIds = CONVERSION_ORDER.filter((id) => job.printed || id !== "printing");
 
   const parts: BreakdownPart[] = [
     { id: "material", label: "Material (film in pouch + trim)", amount: r.material.net + r.material.trim, slot: 1 },
@@ -270,7 +274,7 @@ export default function PouchCostTool() {
             )}
           </Card>
 
-          <StructureBuilder title="2. Structure" />
+          <StructureBuilder title="2. Structure" unprinted={!job.printed} />
 
           <Card title="3. Waste" hint="Process waste alag, layout trim alag. Yahan sirf process waste.">
             {job.advanced && (
@@ -288,7 +292,7 @@ export default function PouchCostTool() {
             )}
             {job.advanced && job.wasteMode === "stages" ? (
               <div className="space-y-3">
-                {CONVERSION_ORDER.map((id) => (
+                {stageIds.map((id) => (
                   <div key={id} className="grid grid-cols-2 gap-3">
                     <RateField rateKey={`stageWaste.${id}.runWastePercent`} label={`${CONVERSION_LABELS[id]} waste`} unit="%" />
                     <RateField rateKey={`stageWaste.${id}.setupMetres`} label="Setup" unit="metres" />
@@ -311,13 +315,14 @@ export default function PouchCostTool() {
 
           <Card title="4. Conversion" hint="Apne plant ke rate daalo. India ka koi bharosemand published ₹/kg schedule nahi hai.">
             <div className="space-y-3">
-              {CONVERSION_ORDER.map((id) => (
+              {stageIds.map((id) => (
                 <div key={id} className="grid grid-cols-2 gap-3">
                   <RateField rateKey={`conversion.${id}.ratePerKg`} label={CONVERSION_LABELS[id]} unit="₹/kg" />
                   <RateField rateKey={`conversion.${id}.ratePer1000`} label={`${CONVERSION_LABELS[id]}`} unit="₹/1,000 pcs" />
                 </div>
               ))}
             </div>
+            {!job.printed && <p className="mt-3 text-[11px] text-muted">Plain job hai, isliye printing ka conversion aur print waste nahi lag raha.</p>}
             <p className="mt-3 text-[11px] text-muted">₹/kg input kg par lagta hai (waste ke saath). ₹/1,000 order quantity par. Dono mein se jo aap use karte ho woh bharo.</p>
           </Card>
 
@@ -426,8 +431,9 @@ export default function PouchCostTool() {
             </div>
             <div className="mt-4">
               <Row label="Film in pouches" value={`${formatNumber(r.netKg, 1)} kg`} />
-              <Row label="+ layout trim" value={`${formatNumber(r.goodKg, 1)} kg`} />
-              <Row strong label="Laminate to run (with waste)" value={`${formatNumber(r.inputKg, 1)} kg`} sub={`${formatInt(r.inputMetres)} m × ${formatNumber(r.geometry.slitWidthMm, 0)} mm`} />
+              <Row label="+ Layout trim" value={`${formatNumber(r.goodKg - r.netKg, 1)} kg`} />
+              <Row label="+ Process waste & setup" value={`${formatNumber(r.inputKg - r.goodKg, 1)} kg`} />
+              <Row strong label="= Laminate to run" value={`${formatNumber(r.inputKg, 1)} kg`} sub={`${formatInt(r.inputMetres)} m × ${formatNumber(r.geometry.slitWidthMm, 0)} mm`} />
             </div>
           </Card>
 
