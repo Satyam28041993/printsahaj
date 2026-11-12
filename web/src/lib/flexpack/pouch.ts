@@ -20,6 +20,8 @@ export type PouchType = "three-side-seal" | "center-seal" | "stand-up";
 
 export type BackSealType = "fin" | "lap";
 
+export type ThreeSideSealAcross = "width" | "height";
+
 export interface PouchGeometryInput {
   type: PouchType;
   /** Outer width, mm. Center-seal: the face (front panel) width. */
@@ -36,6 +38,13 @@ export interface PouchGeometryInput {
   lanes?: number;
   /** Extra gap between pouches along the web, mm. Default 0. */
   repeatGap?: number;
+  /**
+   * 3-side seal only: which pouch dimension lies ACROSS the web.
+   * "width" (default, the reference Excel): slit = 2 × W, repeat = H.
+   * "height": slit = 2 × H, repeat = W. The pouch area is the same either way;
+   * only the trim share and the print repeat change.
+   */
+  threeSideSealAcross?: ThreeSideSealAcross;
 }
 
 export interface PouchGeometry {
@@ -145,9 +154,10 @@ export function computePouchGeometry(input: PouchGeometryInput): PouchGeometry {
     pouchLengthMm = h;
   } else {
     pouchAreaM2 = threeSideSealAreaM2(w, h);
-    // Same convention as the reference printer Excel: slit = 2 × pouch width.
-    webPerLaneMm = 2 * w;
-    pouchLengthMm = h;
+    // Default is the reference printer Excel's convention: slit = 2 × pouch width.
+    const heightAcross = input.threeSideSealAcross === "height";
+    webPerLaneMm = 2 * (heightAcross ? h : w);
+    pouchLengthMm = heightAcross ? w : h;
   }
 
   const repeatMm = pouchLengthMm + gap;

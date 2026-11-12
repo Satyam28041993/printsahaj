@@ -14,7 +14,7 @@ export const KANODIA_CYLINDER = {
   rateBelow: 2.1,
   rateAbove: 2.3,
   thresholdCircumferenceMm: 750,
-  source: "Kanodia Gravure, Delhi — cylinder price estimator",
+  source: "Kanodia Gravure",
   url: "https://kanodiagravure.com/cylinder-costs/",
   retrieved: "12 Nov 2026",
 } as const;

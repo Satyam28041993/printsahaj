@@ -4,12 +4,13 @@
  *
  * The research rounds mid-way (515.00 kg, ₹157.29/kg), so its rupee totals sit
  * ₹2–3 above the unrounded arithmetic. The engine does not round mid-way; the
- * tests pin the research's own steps and allow only that rounding gap.
+ * tests pin the research's own steps and allow only that rounding gap. Display
+ * values are rounded once, half-up, from the full-precision figure.
  */
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computePouchCost, computeSlabs } from "./pouchCost";
+import { computePouchCost, computeSlabs, roundPaisa } from "./pouchCost";
 import { WORKED_EXAMPLE } from "./workedExample";
 
 const near = (actual: number, expected: number, tolerance: number, label: string): void => {
@@ -54,18 +55,34 @@ test("Step 4 — material ₹16.5845/m² (₹157.29/kg) and the cost lines", () 
   near(r.repeatOrder.factoryCost, 165_144, 3, "repeat factory cost");
 });
 
-test("Step 5 — per pouch, margin and GST as quoted", () => {
-  assert.equal(r.firstOrder.perPouch.cost, 4.27);
-  assert.equal(r.repeatOrder.perPouch.cost, 3.3);
-  assert.equal(r.firstOrder.perPouch.costPer1000, 4271);
-  assert.equal(r.repeatOrder.perPouch.costPer1000, 3303);
-  assert.equal(r.firstOrder.perPouch.sellingPrice, 4.91);
-  assert.equal(r.repeatOrder.perPouch.sellingPrice, 3.8);
-  assert.equal(r.firstOrder.perPouch.gst, 0.88);
-  assert.equal(r.repeatOrder.perPouch.gst, 0.68);
-  assert.equal(r.firstOrder.perPouch.invoicePrice, 5.79);
-  assert.equal(r.repeatOrder.perPouch.invoicePrice, 4.48);
-  assert.equal(Number(r.toolingPerPouch.toFixed(2)), 0.97);
+test("Step 5 — per pouch, margin and GST, rounded only for display", () => {
+  const first = r.firstOrder.perPouch;
+  const repeat = r.repeatOrder.perPouch;
+  assert.equal(roundPaisa(first.cost), 4.27);
+  assert.equal(roundPaisa(repeat.cost), 3.3);
+  assert.equal(Math.round(first.costPer1000), 4271);
+  assert.equal(Math.round(repeat.costPer1000), 3303);
+  assert.equal(roundPaisa(first.sellingPrice), 4.91);
+  assert.equal(roundPaisa(repeat.sellingPrice), 3.8);
+  assert.equal(roundPaisa(first.gst), 0.88);
+  assert.equal(roundPaisa(repeat.gst), 0.68);
+  // Full precision: 4.2705 × 1.15 × 1.18 = 5.7951 → ₹5.80 half-up. The research
+  // table printed ₹5.79 (4.91 + 0.88, rounded lines added) — a rounding slip,
+  // corrected on Satyam's instruction, 12 Nov 2026. See 04-verification-notes.md.
+  assert.equal(roundPaisa(first.invoicePrice), 5.8);
+  assert.equal(roundPaisa(repeat.invoicePrice), 4.48);
+  assert.equal(roundPaisa(r.toolingPerPouch), 0.97);
+});
+
+test("the engine never rounds mid-way: per-pouch lines tie back to the order totals", () => {
+  for (const order of [r.firstOrder, r.repeatOrder]) {
+    near(order.perPouch.cost * r.quantity, order.costBeforeProfit, 1e-6, "cost");
+    near(order.perPouch.sellingPrice * r.quantity, order.sellingPrice, 1e-6, "selling price");
+    near(order.perPouch.gst * r.quantity, order.gst, 1e-6, "GST");
+    near(order.perPouch.invoicePrice * r.quantity, order.invoiceTotal, 1e-6, "invoice");
+  }
+  assert.equal(roundPaisa(1.005), 1.01, "half-up");
+  assert.equal(roundPaisa(2.675), 2.68, "half-up");
 });
 
 test("first vs repeat differ by tooling, and by nothing else", () => {
@@ -120,6 +137,6 @@ test("slabs: a smaller first order carries more cylinder per pouch; repeat barel
   for (let i = 1; i < slabs.length; i += 1) {
     assert.ok(slabs[i].first.cost < slabs[i - 1].first.cost);
   }
-  assert.equal(slabs[2].first.cost, 4.27);
-  assert.equal(slabs[0].repeat.cost, slabs[3].repeat.cost);
+  assert.equal(roundPaisa(slabs[2].first.cost), 4.27);
+  near(slabs[0].repeat.cost, slabs[3].repeat.cost, 1e-9, "repeat cost per pouch does not depend on quantity");
 });

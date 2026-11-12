@@ -56,6 +56,21 @@ test("center-seal: web = 2 × face + back seal + edge trim; area = web × repeat
   assert.equal(backSealAllowanceFor("lap", 10), 10);
 });
 
+test("3SS orientation: Excel default is width across; height across swaps slit and repeat", () => {
+  const base = { type: "three-side-seal" as const, width: 250, height: 70, edgeTrimPerSide: 0 };
+  const excel = computePouchGeometry(base);
+  assert.equal(excel.slitWidthMm, 500, "Job 1 of the workbook: slit 500 = 2 × 250");
+  assert.equal(excel.repeatMm, 70);
+  assert.deepEqual(computePouchGeometry({ ...base, threeSideSealAcross: "width" }), excel);
+  const turned = computePouchGeometry({ ...base, threeSideSealAcross: "height" });
+  assert.equal(turned.slitWidthMm, 140);
+  assert.equal(turned.repeatMm, 250);
+  near(turned.pouchAreaM2, excel.pouchAreaM2);
+  // With trim the two orientations buy different film.
+  const trimmed = computePouchGeometry({ ...base, edgeTrimPerSide: 10, threeSideSealAcross: "height" });
+  near(trimmed.purchasedAreaM2, (160 * 250) / 1_000_000);
+});
+
 test("side-gusset planning model: gussets add to the width perimeter", () => {
   // RollSpec: 150 wide, 220 high, 70 mm gussets → perimeter 300 + 140.
   near(sideGussetAreaM2(150, 220, 70), (220 * 440) / 1_000_000);

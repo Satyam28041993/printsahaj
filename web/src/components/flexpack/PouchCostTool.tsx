@@ -59,6 +59,7 @@ export function costInputFor(job: JobState, book: RateBook): PouchCostInput {
       edgeTrimPerSide: book.edgeTrimMm,
       lanes: job.advanced ? job.lanes : 1,
       repeatGap: job.advanced ? job.repeatGap : 0,
+      threeSideSealAcross: job.advanced ? job.threeSideSealAcross : "width",
     },
     quantity: job.quantity,
     waste:
@@ -210,7 +211,7 @@ export default function PouchCostTool() {
                   unit="mm"
                   value={job.backSealAllowance}
                   onChange={(value) => patch({ backSealAllowance: value })}
-                  help="Fin seal 10 mm = 20 mm web. Lap seal = overlap ek baar."
+                  help="Starting default — change me (geometry-based, not sourced). Fin = 2 × seal width, lap = 1 × overlap."
                 />
               )}
               <NumberField label="Quantity" unit="pouches" step={1000} value={job.quantity} onChange={(value) => patch({ quantity: value })} />
@@ -227,7 +228,27 @@ export default function PouchCostTool() {
                     { value: "lap", label: "Lap seal" },
                   ]}
                 />
-                <span className="text-[11px] text-muted">Sets a 10 mm seal as a starting value — apna total upar likho.</span>
+                <span className="text-[11px] text-muted">
+                  Starting default — change me (geometry-based, not sourced). 10 mm seal: fin = 20 mm, lap = 10 mm. Apna total upar likho.
+                </span>
+              </div>
+            )}
+            {job.pouchType === "three-side-seal" && job.advanced && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-semibold text-primary">Orientation</p>
+                <Segmented
+                  label="Orientation"
+                  value={job.threeSideSealAcross}
+                  onChange={(value) => patch({ threeSideSealAcross: value })}
+                  options={[
+                    { value: "width", label: "Width across web" },
+                    { value: "height", label: "Height across web" },
+                  ]}
+                />
+                <p className="mt-1.5 text-[11px] leading-snug text-muted">
+                  Width across web (default, purani Excel sheet jaisa): slit = 2 × W, repeat = H. Height across web: slit = 2 × H, repeat = W.
+                  Pouch area same rehta hai — sirf trim aur print repeat badalta hai.
+                </p>
               </div>
             )}
             {job.advanced && (
@@ -243,7 +264,9 @@ export default function PouchCostTool() {
               <Row label="Layout trim" value={`${formatNumber(r.geometry.trimShare * 100, 2)}%`} sub="Kharida hua film hai — waste % mein dobara nahi judta." />
             </div>
             {job.pouchType === "three-side-seal" && (
-              <p className="mt-2 text-[11px] text-muted">3SS: slit = 2 × W + trim, repeat = H (two panels). Agar aapki machine par H web ke across hai to W aur H badal kar dekho.</p>
+              <p className="mt-2 text-[11px] text-muted">
+                3SS: do panel. Default slit = 2 × W + trim, repeat = H. Agar aapki machine par H web ke across chalta hai to Advanced mode mein Orientation badlo.
+              </p>
             )}
           </Card>
 
@@ -328,7 +351,7 @@ export default function PouchCostTool() {
                 </div>
                 {gravure && (
                   <p className="mt-2 text-[11px] leading-snug text-muted">
-                    Kanodia Gravure, Delhi — published estimator: ₹2.10/cm² below 750 mm circumference, ₹2.30 above. Retrieved 12 Nov 2026.
+                    Source: Kanodia Gravure, retrieved 12 Nov 2026 — ₹2.10/cm² below 750 mm circumference, ₹2.30/cm² above.
                     Apne cylinder maker ka rate daalo.
                   </p>
                 )}
@@ -438,11 +461,16 @@ export default function PouchCostTool() {
                   <Row label="Laminate ₹/kg (Excel method)" value={formatInr(excel.costPerKg)} />
                   <Row label="Pouches / kg" value={formatNumber(excel.pouchesPerKg, 1)} />
                   <Row strong label="Final ₹/pouch (Excel method)" value={formatInr(excel.finalPerPouch, 4)} />
+                  <div className="mt-3">
+                    <Notice>
+                      Old sheet shortcut: the ink and adhesive lines also include printing/lamination conversion charges, so with true dry
+                      ₹/kg rates the result looks higher. Use it only to compare against old sheets.
+                    </Notice>
+                  </div>
                   <p className="mt-3 text-[11px] leading-snug text-muted">
                     Excel densities ({Object.entries(EXCEL_DENSITIES).filter(([name]) => name !== "MET PET").map(([name, density]) => `${name} ${density}`).join(", ")}),
-                    ink/adhesive = GSM × ₹/kg shortcut (mass balance se zyada aata hai), wastage material rate par, pouching = ₹/1,000 ÷ 1000.
-                    Isme conversion ₹/kg, cylinder, trim aur GST nahi hai. Dhyan do: us sheet ke ink / adhesive rate (₹62.5–90) isi shortcut ke
-                    hisaab se the — yahan ke dry ₹/kg rate ke saath Excel method bahut zyada dikhayega.
+                    ink / adhesive = GSM × ₹/kg, wastage material rate par, pouching = ₹/1,000 ÷ 1000, slit = 2 × W. Isme conversion ₹/kg,
+                    cylinder, trim aur GST nahi hai.
                   </p>
                 </>
               ) : (
@@ -452,6 +480,21 @@ export default function PouchCostTool() {
               )}
             </Card>
           )}
+
+          <Card title="Quote PDF" hint="Abhi bana nahi hai.">
+            <p className="text-xs leading-relaxed text-muted">
+              Is costing ka quotation PDF (first vs repeat, GST alag, quantity slabs) yahan se banega. Yeh feature abhi planned hai — tab tak
+              upar ka on-screen result use karo.
+            </p>
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="mt-3 inline-flex cursor-not-allowed items-center rounded-full border border-dashed border-hairline-hover px-4 py-2 text-xs font-semibold text-faint"
+            >
+              Prepare quote PDF — coming
+            </button>
+          </Card>
 
           <Notice>
             <strong>Example</strong> tag wale rupees sirf arithmetic dikhane ke liye hain — market rate nahi. Apna rate likhte hi tag

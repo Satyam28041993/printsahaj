@@ -19,6 +19,7 @@ import {
   type RateBook,
   type StructureInput,
   type StructurePreset,
+  type ThreeSideSealAcross,
 } from "@/lib/flexpack";
 
 /* ------------------------------------------------------------ tiny LS store */
@@ -113,6 +114,8 @@ export interface JobState {
   backSealAllowance: number;
   lanes: number;
   repeatGap: number;
+  /** 3SS only (Advanced): which dimension lies across the web. */
+  threeSideSealAcross: ThreeSideSealAcross;
   quantity: number;
   wasteMode: "simple" | "stages";
   simpleSetupMetres: number;
@@ -161,6 +164,7 @@ export const DEFAULT_JOB: JobState = {
   backSealAllowance: 20,
   lanes: 1,
   repeatGap: 0,
+  threeSideSealAcross: "width",
   quantity: 50_000,
   wasteMode: "simple",
   simpleSetupMetres: 0,

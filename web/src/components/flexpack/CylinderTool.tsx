@@ -75,8 +75,8 @@ export default function CylinderTool() {
                 <RateField rateKey="gravureThresholdMm" label="Tier split" unit="mm circ." />
               </div>
               <p className="mt-3 text-[11px] leading-snug text-muted">
-                Source: {KANODIA_CYLINDER.source} — ₹{KANODIA_CYLINDER.rateBelow.toFixed(2)}/cm² below {KANODIA_CYLINDER.thresholdCircumferenceMm} mm circumference,
-                ₹{KANODIA_CYLINDER.rateAbove.toFixed(2)} above. Retrieved {KANODIA_CYLINDER.retrieved}. Ek supplier ka published rate hai, market average nahi.
+                Source: {KANODIA_CYLINDER.source}, retrieved {KANODIA_CYLINDER.retrieved} — ₹{KANODIA_CYLINDER.rateBelow.toFixed(2)}/cm² below{" "}
+                {KANODIA_CYLINDER.thresholdCircumferenceMm} mm circumference, ₹{KANODIA_CYLINDER.rateAbove.toFixed(2)}/cm² above. Ek supplier ka published rate hai, market average nahi.
                 Exactly {KANODIA_CYLINDER.thresholdCircumferenceMm} mm ko yahan lower tier maana gaya hai.
               </p>
             </>

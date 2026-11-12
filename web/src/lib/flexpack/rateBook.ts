@@ -132,7 +132,7 @@ export function defaultMetaFor(key: string): RateMeta {
     case "gravureThresholdMm":
       return {
         tag: "sourced",
-        note: `${KANODIA_CYLINDER.source}: ₹${KANODIA_CYLINDER.rateBelow.toFixed(2)}/cm² below ${KANODIA_CYLINDER.thresholdCircumferenceMm} mm circumference, ₹${KANODIA_CYLINDER.rateAbove.toFixed(2)} above. Retrieved ${KANODIA_CYLINDER.retrieved}. Your cylinder maker's rate will differ.`,
+        note: `Source: Kanodia Gravure, retrieved ${KANODIA_CYLINDER.retrieved}. ₹${KANODIA_CYLINDER.rateBelow.toFixed(2)}/cm² below ${KANODIA_CYLINDER.thresholdCircumferenceMm} mm circumference, ₹${KANODIA_CYLINDER.rateAbove.toFixed(2)}/cm² above. Change it to your cylinder maker's rate.`,
       };
     case "flexoPlateRate":
       return {

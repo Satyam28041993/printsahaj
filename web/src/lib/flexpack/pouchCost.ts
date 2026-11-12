@@ -73,9 +73,10 @@ export interface OrderCost {
 }
 
 /**
- * Per-pouch quote lines, rounded to the paisa the way a quotation is typed:
- * the selling price is rounded first, GST is worked on that rounded price, and
- * the invoice price is their sum.
+ * Per-pouch quote lines at FULL precision. Nothing is rounded inside the
+ * engine; round only when displaying (2 decimals, half-up — `roundPaisa`).
+ * So a displayed selling price + displayed GST may differ from the displayed
+ * invoice price by a paisa; the invoice price is the correct one.
  */
 export interface QuoteLines {
   cost: number;
@@ -124,19 +125,14 @@ export interface PouchCostResult {
 const pos = (value: number | undefined): number =>
   typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
 
+/** Display rounding: 2 decimals, half-up. */
 export const roundPaisa = (value: number): number => Math.round((value + Number.EPSILON) * 100) / 100;
 
 function quoteLines(costBeforeProfit: number, quantity: number, profitPercent: number, gstPercent: number): QuoteLines {
   const cost = quantity > 0 ? costBeforeProfit / quantity : 0;
-  const sellingPrice = roundPaisa(cost * (1 + pos(profitPercent) / 100));
-  const gst = roundPaisa((sellingPrice * pos(gstPercent)) / 100);
-  return {
-    cost: roundPaisa(cost),
-    costPer1000: Math.round(cost * 1000),
-    sellingPrice,
-    gst,
-    invoicePrice: roundPaisa(sellingPrice + gst),
-  };
+  const sellingPrice = cost * (1 + pos(profitPercent) / 100);
+  const gst = (sellingPrice * pos(gstPercent)) / 100;
+  return { cost, costPer1000: cost * 1000, sellingPrice, gst, invoicePrice: sellingPrice + gst };
 }
 
 function orderCost(factoryCost: number, input: PouchCostInput): OrderCost {
