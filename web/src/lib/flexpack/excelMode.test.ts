@@ -8,7 +8,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeExcelJob, EXCEL_REFERENCE_JOBS } from "./excelMode";
+import { computeExcelJob, EXCEL_REFERENCE_JOBS, excelJobProblem, tryComputeExcelJob } from "./excelMode";
+import { formatInr, NOT_AVAILABLE } from "./format";
 
 /** Relative tolerance: tighter than any rounding a user could see. */
 const REL = 1e-12;
@@ -99,4 +100,23 @@ test("Excel mode uses the Excel densities, not the product library", () => {
   const r = computeExcelJob(EXCEL_REFERENCE_JOBS.job1.input);
   close(r.filmGsm[0], 16.92, "PET 12 µm × 1.41");
   assert.notEqual(r.filmGsm[0], 16.8);
+});
+
+test("a job the sheet would show as #DIV/0! is refused, never shown as ₹0.00", () => {
+  const base = EXCEL_REFERENCE_JOBS.job1.input;
+  for (const job of Object.values(EXCEL_REFERENCE_JOBS)) {
+    assert.equal(excelJobProblem(job.input), null);
+    assert.deepEqual(tryComputeExcelJob(job.input), computeExcelJob(job.input));
+  }
+
+  const noFirstFilm = { ...base, films: [{ ...base.films[0], microns: 0 }, ...base.films.slice(1)] };
+  assert.ok(Number.isNaN(computeExcelJob(noFirstFilm).costPerKg), "the raw sheet maths really does break here");
+  assert.match(excelJobProblem(noFirstFilm) ?? "", /first film/i);
+  assert.equal(tryComputeExcelJob(noFirstFilm), null);
+  assert.equal(tryComputeExcelJob({ ...base, films: [] }), null);
+  assert.equal(tryComputeExcelJob({ ...base, pouchWidth: 0 }), null);
+
+  assert.equal(formatInr(Number.NaN), NOT_AVAILABLE);
+  assert.equal(formatInr(Number.POSITIVE_INFINITY), NOT_AVAILABLE);
+  assert.notEqual(formatInr(Number.NaN), "₹0.00");
 });

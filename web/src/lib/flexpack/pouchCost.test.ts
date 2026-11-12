@@ -10,7 +10,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computePouchCost, computeSlabs, roundPaisa } from "./pouchCost";
+import { computePouchCost, computeSlabs, displayOrder, displayQuote } from "./pouchCost";
+import { roundPaisa } from "./rounding";
 import { WORKED_EXAMPLE } from "./workedExample";
 
 const near = (actual: number, expected: number, tolerance: number, label: string): void => {
@@ -81,8 +82,42 @@ test("the engine never rounds mid-way: per-pouch lines tie back to the order tot
     near(order.perPouch.gst * r.quantity, order.gst, 1e-6, "GST");
     near(order.perPouch.invoicePrice * r.quantity, order.invoiceTotal, 1e-6, "invoice");
   }
-  assert.equal(roundPaisa(1.005), 1.01, "half-up");
-  assert.equal(roundPaisa(2.675), 2.68, "half-up");
+});
+
+test("display: selling price + GST = invoice price, to the paisa (₹4.91 + ₹0.89 = ₹5.80)", () => {
+  const first = displayQuote(r.firstOrder.perPouch);
+  assert.deepEqual(first, { cost: 4.27, costPer1000: 4271, sellingPrice: 4.91, gst: 0.89, invoicePrice: 5.8 });
+  const repeat = displayQuote(r.repeatOrder.perPouch);
+  assert.deepEqual(repeat, { cost: 3.3, costPer1000: 3303, sellingPrice: 3.8, gst: 0.68, invoicePrice: 4.48 });
+
+  // The invoice figure is the half-up of the full-precision total, never a sum of rounded lines.
+  assert.equal(first.invoicePrice, roundPaisa(r.firstOrder.perPouch.invoicePrice));
+
+  // And the three visible lines add up at every slab, first order and repeat.
+  for (const slab of computeSlabs(WORKED_EXAMPLE, [1_000, 7_777, 10_000, 25_000, 50_000, 100_000, 333_333])) {
+    for (const lines of [slab.first, slab.repeat]) {
+      const shown = displayQuote(lines);
+      assert.equal(roundPaisa(shown.sellingPrice + shown.gst), shown.invoicePrice, `qty ${slab.quantity}`);
+      assert.ok(Math.abs(shown.gst - lines.gst) <= 0.011, "display GST stays within a paisa of the true GST");
+    }
+  }
+});
+
+test("display: whole-order rupees add up too", () => {
+  for (const order of [r.firstOrder, r.repeatOrder]) {
+    const shown = displayOrder(order);
+    assert.equal(shown.sellingPrice + shown.gst, shown.invoicePrice);
+    assert.equal(shown.invoicePrice, Math.round(order.invoiceTotal));
+  }
+});
+
+test("film to buy: pouches + layout trim + process waste = laminate to run", () => {
+  near(r.netKg + r.trimKg + r.processWasteKg, r.inputKg, 1e-9, "kg build-up");
+  near(r.netKg, 472.4, 0.05, "film in pouches");
+  near(r.trimKg, 16.9, 0.05, "layout trim");
+  near(r.processWasteKg, 25.7, 0.05, "process waste");
+  assert.ok(r.trimKg < r.netKg / 10, "the trim line is the increment, not the running total");
+  near(r.material.net + r.material.trim + r.material.processWaste, r.material.total, 1e-6, "rupee build-up");
 });
 
 test("first vs repeat differ by tooling, and by nothing else", () => {

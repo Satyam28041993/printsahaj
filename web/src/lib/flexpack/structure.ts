@@ -148,3 +148,8 @@ export function computeStructure(input: StructureInput): StructureResult {
     bondCount,
   };
 }
+
+/** Films that are in the laminate (GSM > 0) but have no ₹/kg — the cost would silently be too low. */
+export function filmsMissingRate(result: StructureResult): string[] {
+  return result.lines.filter((line) => line.kind === "film" && line.gsm > 0 && line.ratePerKg === 0).map((line) => line.label);
+}

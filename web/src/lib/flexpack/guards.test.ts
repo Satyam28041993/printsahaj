@@ -7,6 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  backSealAllowanceOnSwitch,
   backSealAllowanceFor,
   centerSealAreaM2,
   computePouchGeometry,
@@ -16,10 +17,10 @@ import {
   threeSideSealAreaM2,
   unfoldedGusset,
 } from "./pouch";
-import { bondCountFor, computeStructure, layerGsm } from "./structure";
+import { bondCountFor, computeStructure, filmsMissingRate, layerGsm } from "./structure";
 import { checkRepeat, kanodiaRateFor, spreadTooling, toolingCost } from "./cylinder";
 import { adhesiveConsumption, coatingConsumption, excelShortcutVsMassBalance, inkConsumption, wetFromDry } from "./inkAdhesive";
-import { combinedWastePercent, inputMetresForStage } from "./waste";
+import { MAX_RUN_WASTE_PERCENT, combinedWastePercent, inputMetresForStage, isWasteClamped } from "./waste";
 import { DEFAULT_RATE_BOOK, defaultMetaFor, parseRateBook, serializeRateBook, setRate, tagFor } from "./rateBook";
 import { MATERIALS } from "./materials";
 
@@ -268,4 +269,34 @@ test("rate book: survives a storage round trip and ignores damaged data", () => 
   const damaged = parseRateBook(JSON.stringify({ version: 1, gstPercent: "abc", profitPercent: -4 }));
   assert.equal(damaged.gstPercent, 18);
   assert.equal(damaged.profitPercent, 15);
+});
+
+test("fin / lap switch re-fills only an untouched allowance", () => {
+  assert.equal(backSealAllowanceOnSwitch(20, "fin", "lap"), 10, "untouched fin pre-fill → lap pre-fill");
+  assert.equal(backSealAllowanceOnSwitch(10, "lap", "fin"), 20);
+  assert.equal(backSealAllowanceOnSwitch(26, "fin", "lap"), 26, "the owner's own total is kept");
+  assert.equal(backSealAllowanceOnSwitch(15, "lap", "fin"), 15);
+});
+
+test("a film with GSM but no rate is reported, so a quote cannot silently understate", () => {
+  const structure = computeStructure({
+    layers: [
+      { materialId: "bopp", micron: 18, density: 0.905, ratePerKg: 0 },
+      { materialId: "alu", micron: 9, density: 2.7, ratePerKg: 0 },
+      { materialId: "ldpe", micron: 60, density: 0.922, ratePerKg: 125 },
+      { materialId: "pet", micron: 0, density: 1.4, ratePerKg: 0 },
+    ],
+    bonds: [],
+    ink: { dryGsm: 0, ratePerKgDry: 0 },
+  });
+  assert.deepEqual(filmsMissingRate(structure), ["BOPP", "Alu foil"]);
+});
+
+test("run waste is capped at 95% and the cap is detectable", () => {
+  assert.equal(MAX_RUN_WASTE_PERCENT, 95);
+  assert.equal(isWasteClamped(94.9), false);
+  assert.equal(isWasteClamped(95), true);
+  assert.equal(isWasteClamped(100), true);
+  near(inputMetresForStage(100, 100), 2000);
+  assert.ok(Number.isFinite(inputMetresForStage(100, 250)));
 });

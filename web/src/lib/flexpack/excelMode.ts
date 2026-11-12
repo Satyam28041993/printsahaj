@@ -88,6 +88,23 @@ export interface ExcelJobResult {
   finalPerPouch: number;
 }
 
+/**
+ * Why a job cannot be costed the sheet's way, or null if it can. The sheet
+ * divides by the first film's GSM, the total GSM and the pouch area — in Excel
+ * those cases show #DIV/0!.
+ */
+export function excelJobProblem(job: ExcelJobInput): string | null {
+  const first = job.films[0];
+  if (!first || !(first.microns > 0)) return "The first film has no micron — the old sheet divides every film by the first film's GSM.";
+  if (!(job.pouchWidth > 0) || !(job.pouchHeight > 0)) return "Pouch width and height must be more than 0.";
+  return null;
+}
+
+/** `computeExcelJob`, or null where the sheet itself would show #DIV/0!. Use this from UI code. */
+export function tryComputeExcelJob(job: ExcelJobInput): ExcelJobResult | null {
+  return excelJobProblem(job) === null ? computeExcelJob(job) : null;
+}
+
 export function computeExcelJob(job: ExcelJobInput): ExcelJobResult {
   const filmGsm = job.films.map((film) => EXCEL_DENSITIES[film.material] * film.microns);
   const firstGsm = filmGsm[0];

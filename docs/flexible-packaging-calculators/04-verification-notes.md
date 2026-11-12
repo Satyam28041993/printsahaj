@@ -70,7 +70,9 @@ The gap is ₹2.48 on ₹2.1 lakh — rounding only. Per pouch the two agree to 
 
 **Invoice price — the research table has a rounding slip (corrected).** The research writes "× 1.18 = ₹5.7951" and then quotes **₹5.79**. Half-up, 5.7951 is **₹5.80**. The table's ₹5.79 is ₹4.91 + ₹0.88, two already-rounded lines added together. Satyam's decision, 12 Nov 2026: show **₹5.80**. The engine now carries every per-pouch line at full precision and rounds only for display (2 decimals, half-up), and the golden test expects ₹5.80. The repeat-order invoice stays ₹4.48 (4.4819).
 
-A side effect to know about: because each line is rounded on its own, a displayed selling price plus the displayed GST can differ from the displayed invoice price by one paisa (₹4.91 + ₹0.88 vs ₹5.80). The invoice price is the correct one.
+**The three visible lines always add (Satyam's decision, 12 Nov 2026).** Rounding each line on its own would show ₹4.91 + ₹0.88 next to an invoice of ₹5.80. So, for display only, the GST line is `roundPaisa(invoice) − roundPaisa(selling price)`: **₹4.91 + ₹0.89 = ₹5.80**. The invoice figure is still the half-up of the full-precision total, and the engine's own GST (0.88400) is untouched. The displayed GST is at most one paisa away from the true GST. The same rule is used for whole-order rupees. A test checks the sum at seven quantities, first order and repeat.
+
+**Rounding is true half-up.** `Math.round((v + EPSILON) × 100) / 100` gets some `.xx5` values wrong (2.135 → 2.13, 9.995 → 9.99) because of binary multiplication. `roundHalfUp` in `web/src/lib/flexpack/rounding.ts` shifts the decimal point through the number's decimal text instead, and the screen formatters use the same function. Tests cover every x.xx5 from 0.005 to 99.995, plus negatives (half away from zero).
 
 Other display values were checked for the same slip:
 
@@ -80,7 +82,7 @@ Other display values were checked for the same slip:
 | Repeat cost / pouch | 3.30283 | 3.30 | ₹3.30 |
 | Cost per 1,000 (first / repeat) | 4270.51 / 3302.83 | 4,271 / 3,303 | ₹4,271 / ₹3,303 |
 | Selling price (first / repeat) | 4.91109 / 3.79826 | 4.91 / 3.80 | ₹4.91 / ₹3.80 |
-| GST (first / repeat) | 0.88400 / 0.68369 | 0.88 / 0.68 | ₹0.88 / ₹0.68 |
+| GST (first / repeat) | 0.88400 / 0.68369 | 0.88 / 0.68 | **₹0.89** / ₹0.68 (invoice − selling price, see above) |
 | **Invoice price, first order** | **5.79508** | **5.79** | **₹5.80** |
 | Invoice price, repeat | 4.48194 | 4.48 | ₹4.48 |
 | Cylinder share / pouch | 0.96768 | 0.97 | ₹0.97 |
@@ -103,8 +105,13 @@ Each is written in the code and visible in the UI. None is a rate.
 10. **Film rates with no Example.** Only PET, MET PET and LDPE have an Example ₹/kg (from the worked example). Every other film starts blank. No film price was invented.
 11. **Stage-wise waste defaults.** Print 3% + 800 m, lam 2% + 400 m, slit 1% + 100 m, pouch 4% — RollSpec's worked-example inputs as quoted in the research, tagged Example and described as illustrative.
 12. **Excel-style comparison in Advanced mode.** Shown only for 3-side seal with films the workbook knows. It uses the workbook's densities and its ink / adhesive shortcut with the owner's current rates, so with dry ₹/kg rates it reads far higher than the product path. The card carries Satyam's note that the old sheet's ink and adhesive lines also included printing / lamination conversion. It is a comparison, never the default.
+14. **Plain (unprinted) jobs.** Switching "Printed job" off on the cost screen removes ink GSM, cylinders / plates, the printing conversion line, the printing waste stage and its setup metres. The Structure tool is not affected by that switch.
+15. **Cylinder and Ink tools follow the pouch job.** Print repeat, web width and running metres are pre-filled from the shared job (repeat, slit width, input metres) and stay editable.
+16. **Waste cap.** Run waste is capped at 95% in the maths (100% would need infinite film). The cost screen says so when the cap applies.
 13. **Quote PDF and lead form.** Not built. Satyam will decide where leads go. The Pouch Cost page has a disabled "Prepare quote PDF — coming" placeholder only: no form, no endpoint, no data collected.
 
 ## 5. Tests
 
-`npm test` in `web/` (Node's built-in runner through `tsx`; `vitest` was not used because its peer range conflicts with the repo's `@types/node@^20`). 39 tests: 8 Excel-path, 12 product-path, 19 formula guards.
+`npm test` in `web/` (Node's built-in runner through `tsx`; `vitest` was not used because its peer range conflicts with the repo's `@types/node@^20`). 60 tests: 9 Excel-path, 15 product-path, 22 formula guards, 9 job / storage, 5 rounding.
+
+`.github/workflows/web-ci.yml` runs `npm ci`, `npm test`, `npm run lint` and `npm run build` on every pull request that touches `web/`. `deploy-website.yml` runs the tests and lint before it builds and deploys.

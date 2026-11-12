@@ -21,6 +21,7 @@ import { computePouchGeometry, pouchFilmGrams, pouchesPerKg, type PouchGeometry,
 import { computeStructure, type StructureInput, type StructureResult } from "./structure";
 import { toolingCost, type ToolingInput, type ToolingResult } from "./cylinder";
 import { inputMetresForStage, inputMetresForStages, webKg, type WasteStage } from "./waste";
+import { roundHalfUp } from "./rounding";
 
 export interface ConversionLine {
   id: string;
@@ -74,9 +75,8 @@ export interface OrderCost {
 
 /**
  * Per-pouch quote lines at FULL precision. Nothing is rounded inside the
- * engine; round only when displaying (2 decimals, half-up — `roundPaisa`).
- * So a displayed selling price + displayed GST may differ from the displayed
- * invoice price by a paisa; the invoice price is the correct one.
+ * engine. To put them on screen or on a quotation use `displayQuote`, which
+ * rounds half-up and makes the three visible lines add up exactly.
  */
 export interface QuoteLines {
   cost: number;
@@ -102,7 +102,11 @@ export interface PouchCostResult {
   netKg: number;
   /** Net + layout trim, kg — the research's "good film". */
   goodKg: number;
-  /** What must be bought / run: good kg + process waste + setup. */
+  /** Layout trim, kg (goodKg − netKg). */
+  trimKg: number;
+  /** Process waste + setup, kg (inputKg − goodKg). */
+  processWasteKg: number;
+  /** What must be bought / run: netKg + trimKg + processWasteKg. */
   inputKg: number;
   inputAreaM2: number;
 
@@ -125,8 +129,43 @@ export interface PouchCostResult {
 const pos = (value: number | undefined): number =>
   typeof value === "number" && Number.isFinite(value) && value > 0 ? value : 0;
 
-/** Display rounding: 2 decimals, half-up. */
-export const roundPaisa = (value: number): number => Math.round((value + Number.EPSILON) * 100) / 100;
+
+export interface DisplayQuote {
+  cost: number;
+  costPer1000: number;
+  sellingPrice: number;
+  /** Displayed GST = displayed invoice − displayed selling price. */
+  gst: number;
+  invoicePrice: number;
+}
+
+/**
+ * Rounded figures for display (half-up). The invoice price is the half-up of
+ * the full-precision total and the selling price the half-up of its own
+ * full-precision value; the GST line is their difference, so
+ * selling + GST = invoice always holds on screen (₹4.91 + ₹0.89 = ₹5.80 on the
+ * worked example, where GST alone would round to ₹0.88).
+ * `decimals` is 2 for per-pouch lines and 0 for whole-order rupees.
+ */
+export function displayQuote(
+  lines: { cost: number; sellingPrice: number; invoicePrice: number; costPer1000?: number },
+  decimals = 2,
+): DisplayQuote {
+  const sellingPrice = roundHalfUp(lines.sellingPrice, decimals);
+  const invoicePrice = roundHalfUp(lines.invoicePrice, decimals);
+  return {
+    cost: roundHalfUp(lines.cost, decimals),
+    costPer1000: roundHalfUp(lines.costPer1000 ?? lines.cost * 1000, 0),
+    sellingPrice,
+    gst: roundHalfUp(invoicePrice - sellingPrice, decimals),
+    invoicePrice,
+  };
+}
+
+/** The same rule for a whole order, in whole rupees. */
+export function displayOrder(order: OrderCost): DisplayQuote {
+  return displayQuote({ cost: order.costBeforeProfit, sellingPrice: order.sellingPrice, invoicePrice: order.invoiceTotal, costPer1000: 0 }, 0);
+}
 
 function quoteLines(costBeforeProfit: number, quantity: number, profitPercent: number, gstPercent: number): QuoteLines {
   const cost = quantity > 0 ? costBeforeProfit / quantity : 0;
@@ -221,6 +260,8 @@ export function computePouchCost(input: PouchCostInput): PouchCostResult {
     inputMetres,
     netKg,
     goodKg,
+    trimKg: goodKg - netKg,
+    processWasteKg: inputKg - goodKg,
     inputKg,
     inputAreaM2,
     material,

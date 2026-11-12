@@ -9,3 +9,5 @@ export * from "./excelMode";
 export * from "./rateBook";
 export * from "./workedExample";
 export * from "./format";
+export * from "./rounding";
+export * from "./job";

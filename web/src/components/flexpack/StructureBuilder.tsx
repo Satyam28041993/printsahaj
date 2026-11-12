@@ -13,13 +13,17 @@ import {
   formatNumber,
   getMaterial,
   layerGsm,
+  layersFromPreset,
+  makeLayer,
+  MAX_LAYERS,
+  structureInputFor,
+  syncBonds,
   type AdhesiveType,
+  type JobLayer,
 } from "@/lib/flexpack";
 import { Card, NumberField, Notice, Row, SelectField, Segmented, inputClass } from "./ui";
 import RateField from "./RateField";
-import { layersFromPreset, makeLayer, structureInputFor, syncBonds, useJob, useRateBook, type JobLayer } from "./store";
-
-const MAX_LAYERS = 6;
+import { useJob, useRateBook } from "./store";
 
 export default function StructureBuilder({ showRates = true, title = "Structure — layer by layer", unprinted = false }: { showRates?: boolean; title?: string; unprinted?: boolean }) {
   const { job, patch } = useJob();

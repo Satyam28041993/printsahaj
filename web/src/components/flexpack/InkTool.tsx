@@ -5,16 +5,19 @@ import { Plus, Trash2 } from "lucide-react";
 import {
   ADHESIVE_DEFAULTS,
   adhesiveConsumption,
+  computePouchCost,
+  costInputFor,
   excelShortcutVsMassBalance,
   formatInr,
   formatNumber,
   inkConsumption,
   layerGsm,
+  structureInputFor,
   type RateBasis,
 } from "@/lib/flexpack";
 import { Card, Notice, NumberField, Row, Segmented, Stat, Toggle } from "./ui";
 import RateField from "./RateField";
-import { structureInputFor, useJob, useRateBook } from "./store";
+import { useJob, useRateBook } from "./store";
 
 interface ColourRow {
   uid: number;
@@ -34,8 +37,14 @@ const START_COLOURS: ColourRow[] = [
 export default function InkTool() {
   const { job } = useJob();
   const { book } = useRateBook();
-  const [widthMm, setWidthMm] = useState(580);
-  const [metres, setMetres] = useState(8421);
+  // Web width and running length follow the shared pouch job until the owner types their own.
+  const jobRun = computePouchCost(costInputFor(job, book));
+  const jobWidthMm = jobRun.geometry.slitWidthMm;
+  const jobMetres = Math.round(jobRun.inputMetres);
+  const [widthOverride, setWidthOverride] = useState<number | null>(null);
+  const [metresOverride, setMetresOverride] = useState<number | null>(null);
+  const widthMm = widthOverride ?? jobWidthMm;
+  const metres = metresOverride ?? jobMetres;
   const [colours, setColours] = useState<ColourRow[]>(START_COLOURS);
   const [inkSolids, setInkSolids] = useState(30);
   const [bonds, setBonds] = useState(2);
@@ -69,12 +78,29 @@ export default function InkTool() {
       <div className="space-y-6 lg:col-span-7">
         <Card title="Print / lamination area" hint="Web jo machine se guzarta hai: width × running metres.">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <NumberField label="Web width" unit="mm" value={widthMm} onChange={setWidthMm} />
-            <NumberField label="Running length" unit="metres" value={metres} onChange={setMetres} />
+            <NumberField label="Web width" unit="mm" value={widthMm} onChange={setWidthOverride} />
+            <NumberField label="Running length" unit="metres" value={metres} onChange={setMetresOverride} />
             <div className="col-span-2 sm:col-span-1">
               <Stat label="Area" value={`${formatNumber(areaM2, 0)} m²`} />
             </div>
           </div>
+          <p className="mt-3 text-[11px] leading-snug text-muted">
+            {widthOverride === null && metresOverride === null
+              ? `Pouch Cost job se liya: slit ${formatNumber(jobWidthMm, 0)} mm × ${formatNumber(jobMetres, 0)} m (waste ke saath). Badalna ho to upar likho.`
+              : `Aapke likhe hue numbers. Pouch Cost job: ${formatNumber(jobWidthMm, 0)} mm × ${formatNumber(jobMetres, 0)} m.`}
+          </p>
+          {(widthOverride !== null || metresOverride !== null) && (
+            <button
+              type="button"
+              onClick={() => {
+                setWidthOverride(null);
+                setMetresOverride(null);
+              }}
+              className="mt-1 cursor-pointer text-xs font-semibold text-accent underline-offset-4 hover:underline"
+            >
+              Pouch Cost job ke numbers wapas lo
+            </button>
+          )}
         </Card>
 
         <Card title="Ink — colour by colour" hint="Dry kg = area × coverage % × dry GSM ÷ 1000, har colour ke liye.">

@@ -19,8 +19,12 @@ export interface WasteStage {
 
 const pos = (value: number): number => (Number.isFinite(value) && value > 0 ? value : 0);
 
-/** Clamp to [0, 95] so a typo can never divide by zero. */
-const wasteFraction = (percent: number): number => Math.min(95, pos(percent)) / 100;
+/** Run waste is capped here so a typo (100%) can never divide by zero. The UI says when the cap applies. */
+export const MAX_RUN_WASTE_PERCENT = 95;
+
+export const isWasteClamped = (percent: number): boolean => pos(percent) >= MAX_RUN_WASTE_PERCENT;
+
+const wasteFraction = (percent: number): number => Math.min(MAX_RUN_WASTE_PERCENT, pos(percent)) / 100;
 
 /** One machine: metres to feed in for `goodMetres` out. */
 export function inputMetresForStage(goodMetres: number, runWastePercent: number, setupMetres = 0): number {

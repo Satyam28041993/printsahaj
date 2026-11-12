@@ -5,12 +5,14 @@ import {
   ALLIANCE_FLEXO_PLATE,
   KANODIA_CYLINDER,
   checkRepeat,
+  computePouchGeometry,
+  costInputFor,
   formatInr,
   formatInt,
   formatNumber,
-  kanodiaRateFor,
   spreadTooling,
   toolingCost,
+  toolingRateFor,
 } from "@/lib/flexpack";
 import { Card, Notice, NumberField, Row, Segmented, Stat } from "./ui";
 import RateField from "./RateField";
@@ -19,16 +21,13 @@ import { useJob, useRateBook } from "./store";
 export default function CylinderTool() {
   const { job, patch } = useJob();
   const { book } = useRateBook();
-  const [repeatMm, setRepeatMm] = useState(160);
+  // Print repeat follows the shared pouch job until the owner types their own.
+  const jobRepeatMm = computePouchGeometry(costInputFor(job, book).geometry).repeatMm;
+  const [repeatOverride, setRepeatOverride] = useState<number | null>(null);
+  const repeatMm = repeatOverride ?? jobRepeatMm;
   const [repeatOrders, setRepeatOrders] = useState(3);
   const gravure = job.process === "gravure";
-  const rate = gravure
-    ? kanodiaRateFor(job.circumferenceMm, {
-        rateBelow: book.gravureRateBelow,
-        rateAbove: book.gravureRateAbove,
-        thresholdCircumferenceMm: book.gravureThresholdMm,
-      })
-    : book.flexoPlateRate;
+  const rate = toolingRateFor(job, book);
   const tooling = toolingCost({ faceLengthMm: job.faceLengthMm, circumferenceMm: job.circumferenceMm, ratePerCm2: rate, colours: job.colours });
   const lifetimeQty = job.quantity * (1 + Math.max(0, Math.floor(repeatOrders)));
   const spread = spreadTooling(tooling.total, job.quantity, lifetimeQty);
@@ -51,8 +50,23 @@ export default function CylinderTool() {
             <NumberField label={gravure ? "Face length" : "Plate width"} unit="mm" value={job.faceLengthMm} onChange={(value) => patch({ faceLengthMm: value })} help="Slit width + margin. Cylinder maker se confirm karo." />
             <NumberField label={gravure ? "Circumference" : "Plate repeat"} unit="mm" value={job.circumferenceMm} onChange={(value) => patch({ circumferenceMm: value })} />
             <NumberField label="Colours" step={1} value={job.colours} onChange={(value) => patch({ colours: Math.floor(value) })} />
-            <NumberField label="Print repeat (one pouch)" unit="mm" value={repeatMm} onChange={setRepeatMm} help="Standy mein repeat = pouch width." />
+            <NumberField
+              label="Print repeat (one pouch)"
+              unit="mm"
+              value={repeatMm}
+              onChange={setRepeatOverride}
+              help={
+                repeatOverride === null
+                  ? `Pouch Cost job se liya: ${formatNumber(jobRepeatMm, 0)} mm. Badalna ho to yahan likho.`
+                  : `Aapka likha hua. Pouch Cost job ka repeat ${formatNumber(jobRepeatMm, 0)} mm hai.`
+              }
+            />
           </div>
+          {repeatOverride !== null && (
+            <button type="button" onClick={() => setRepeatOverride(null)} className="mt-2 cursor-pointer text-xs font-semibold text-accent underline-offset-4 hover:underline">
+              Pouch Cost job ka repeat wapas lo ({formatNumber(jobRepeatMm, 0)} mm)
+            </button>
+          )}
           <div className="mt-3">
             {repeat.isWholeMultiple ? (
               <Notice>{repeat.upsAround} repeat around — circumference theek hai.</Notice>

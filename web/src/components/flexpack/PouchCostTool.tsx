@@ -3,20 +3,26 @@
 import React from "react";
 import {
   CONVERSION_LABELS,
-  CONVERSION_ORDER,
   EXCEL_DENSITIES,
-  backSealAllowanceFor,
+  MAX_RUN_WASTE_PERCENT,
+  backSealAllowanceOnSwitch,
   checkRepeat,
-  computeExcelJob,
   computePouchCost,
   computeSlabs,
+  costInputFor,
+  displayOrder,
+  displayQuote,
+  excelJobProblem,
+  filmsMissingRate,
   formatInr,
   formatInt,
   formatNumber,
-  kanodiaRateFor,
+  isWasteClamped,
+  stagesFor,
+  tryComputeExcelJob,
+  type ExcelJobInput,
   type ExcelMaterial,
   type OrderCost,
-  type PouchCostInput,
   type PouchType,
 } from "@/lib/flexpack";
 import { Card, Notice, NumberField, Row, Segmented, Stat, Toggle } from "./ui";
@@ -25,8 +31,7 @@ import RateField from "./RateField";
 import StructureBuilder from "./StructureBuilder";
 import PouchDiagram from "./PouchDiagram";
 import BreakdownChart, { type BreakdownPart } from "./BreakdownChart";
-import { structureInputFor, useJob, useRateBook, type JobState } from "./store";
-import type { RateBook } from "@/lib/flexpack";
+import { useJob, useRateBook } from "./store";
 
 const POUCH_TYPES: { value: PouchType; label: string; sub: string }[] = [
   { value: "three-side-seal", label: "3-side seal", sub: "3SS / sachet" },
@@ -46,70 +51,20 @@ const EXCEL_MAP: Record<string, ExcelMaterial> = {
   alu: "AL.FOIL",
 };
 
-export function costInputFor(job: JobState, book: RateBook): PouchCostInput {
-  const gravure = job.process === "gravure";
-  // A plain pouch never goes through the press: no ink, no cylinders, and no
-  // printing conversion, print waste or print setup either.
-  const stages = CONVERSION_ORDER.filter((id) => job.printed || id !== "printing");
-  return {
-    structure: structureInputFor(job, book, !job.printed),
-    geometry: {
-      type: job.pouchType,
-      width: job.width,
-      height: job.height,
-      gusset: job.gusset,
-      backSealAllowance: job.backSealAllowance,
-      edgeTrimPerSide: book.edgeTrimMm,
-      lanes: job.advanced ? job.lanes : 1,
-      repeatGap: job.advanced ? job.repeatGap : 0,
-      threeSideSealAcross: job.advanced ? job.threeSideSealAcross : "width",
-    },
-    quantity: job.quantity,
-    waste:
-      job.advanced && job.wasteMode === "stages"
-        ? {
-            mode: "stages",
-            stages: stages.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.stageWaste[id] })),
-          }
-        : { mode: "simple", combinedPercent: book.combinedWastePercent, setupMetres: job.advanced ? job.simpleSetupMetres : 0 },
-    conversion: stages.map((id) => ({ id, label: CONVERSION_LABELS[id], ...book.conversion[id] })),
-    tooling: job.printed
-      ? {
-          faceLengthMm: job.faceLengthMm,
-          circumferenceMm: job.circumferenceMm,
-          colours: job.colours,
-          ratePerCm2: gravure
-            ? kanodiaRateFor(job.circumferenceMm, {
-                rateBelow: book.gravureRateBelow,
-                rateAbove: book.gravureRateAbove,
-                thresholdCircumferenceMm: book.gravureThresholdMm,
-              })
-            : book.flexoPlateRate,
-        }
-      : null,
-    hardware: [
-      { id: "zipper", label: "Zipper", enabled: job.zipper, ratePerPiece: book.zipperPerPiece },
-      { id: "spout", label: "Spout / cap", enabled: job.spout, ratePerPiece: book.spoutPerPiece },
-      { id: "valve", label: "Valve", enabled: job.valve, ratePerPiece: book.valvePerPiece },
-    ],
-    packingPercent: book.packingPercent,
-    profitPercent: book.profitPercent,
-    gstPercent: book.gstPercent,
-  };
-}
-
 function OrderColumn({ title, note, order, highlight }: { title: string; note: string; order: OrderCost; highlight?: boolean }) {
+  // Rounded for display so that selling price + GST = invoice price on screen.
+  const shown = displayQuote(order.perPouch);
   return (
     <div className={`rounded-2xl border p-4 ${highlight ? "border-accent-line bg-accent-weak" : "border-hairline bg-sunken"}`}>
       <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-faint">{title}</p>
-      <p className="mt-1 font-display text-3xl font-bold tabular-nums text-primary">{formatInr(order.perPouch.cost)}</p>
+      <p className="mt-1 font-display text-3xl font-bold tabular-nums text-primary">{formatInr(shown.cost)}</p>
       <p className="text-[11px] text-muted">cost per pouch · {note}</p>
       <div className="mt-3">
-        <Row label="Per 1,000" value={formatInr(order.perPouch.costPer1000, 0)} />
+        <Row label="Per 1,000" value={formatInr(shown.costPer1000, 0)} />
         <Row label="Order cost" value={formatInr(order.costBeforeProfit, 0)} />
-        <Row label="Selling price (ex-GST)" value={formatInr(order.perPouch.sellingPrice)} />
-        <Row label="GST" value={formatInr(order.perPouch.gst)} />
-        <Row strong label="Invoice price / pouch" value={formatInr(order.perPouch.invoicePrice)} />
+        <Row label="Selling price (ex-GST)" value={formatInr(shown.sellingPrice)} />
+        <Row label="GST" value={formatInr(shown.gst)} />
+        <Row strong label="Invoice price / pouch" value={formatInr(shown.invoicePrice)} />
       </div>
     </div>
   );
@@ -123,7 +78,14 @@ export default function PouchCostTool() {
   const gravure = job.process === "gravure";
   const repeat = checkRepeat(job.circumferenceMm, r.geometry.repeatMm);
   const first = r.firstOrder;
-  const stageIds = CONVERSION_ORDER.filter((id) => job.printed || id !== "printing");
+  const firstShown = displayOrder(first);
+  const stageIds = stagesFor(job);
+  const missingRates = filmsMissingRate(r.structure);
+  const noQuantity = r.quantity <= 0;
+  const stageWise = job.advanced && job.wasteMode === "stages";
+  const wasteClamped = stageWise
+    ? stageIds.some((id) => isWasteClamped(book.stageWaste[id].runWastePercent))
+    : isWasteClamped(book.combinedWastePercent);
 
   const parts: BreakdownPart[] = [
     { id: "material", label: "Material (film in pouch + trim)", amount: r.material.net + r.material.trim, slot: 1 },
@@ -137,8 +99,8 @@ export default function PouchCostTool() {
 
   const excelFilms = job.layers.map((layer) => ({ material: EXCEL_MAP[layer.materialId], microns: layer.thickness, ratePerKg: book.filmRates[layer.materialId] ?? 0 }));
   const excelPossible = job.pouchType === "three-side-seal" && excelFilms.every((film) => film.material);
-  const excel = excelPossible
-    ? computeExcelJob({
+  const excelInput: ExcelJobInput | null = excelPossible
+    ? {
         films: excelFilms,
         inkGsm: job.printed ? job.inkDryGsm : 0,
         inkRatePerKg: book.inkRatePerKgDry,
@@ -152,8 +114,10 @@ export default function PouchCostTool() {
         zipperCharge: job.zipper ? book.zipperPerPiece : 0,
         packing: book.packingPercent / 100,
         profit: book.profitPercent / 100,
-      })
+      }
     : null;
+  const excelProblem = excelInput ? excelJobProblem(excelInput) : null;
+  const excel = excelInput ? tryComputeExcelJob(excelInput) : null;
 
   return (
     <div className="space-y-6">
@@ -163,10 +127,16 @@ export default function PouchCostTool() {
         className="sticky top-20 z-20 flex items-center justify-between gap-3 rounded-2xl border border-accent-line bg-elevated px-4 py-2.5 shadow-[var(--shadow-card)] lg:hidden"
       >
         <span className="text-[11px] text-muted">
-          First <strong className="font-mono text-sm text-primary">{formatInr(r.firstOrder.perPouch.cost)}</strong>
-          <span className="mx-2 text-faint">·</span>
-          Repeat <strong className="font-mono text-sm text-primary">{formatInr(r.repeatOrder.perPouch.cost)}</strong>
-          <span className="text-faint"> / pouch</span>
+          {noQuantity ? (
+            "Quantity daalo — cost per pouch tab dikhega."
+          ) : (
+            <>
+              First <strong className="font-mono text-sm text-primary">{formatInr(r.firstOrder.perPouch.cost)}</strong>
+              <span className="mx-2 text-faint">·</span>
+              Repeat <strong className="font-mono text-sm text-primary">{formatInr(r.repeatOrder.perPouch.cost)}</strong>
+              <span className="text-faint"> / pouch</span>
+            </>
+          )}
         </span>
         <span className="text-xs font-semibold text-accent">Breakdown ↓</span>
       </a>
@@ -226,14 +196,17 @@ export default function PouchCostTool() {
                 <Segmented
                   label="Back seal type"
                   value={job.backSealType}
-                  onChange={(value) => patch({ backSealType: value, backSealAllowance: backSealAllowanceFor(value, 10) })}
+                  onChange={(value) =>
+                    patch({ backSealType: value, backSealAllowance: backSealAllowanceOnSwitch(job.backSealAllowance, job.backSealType, value) })
+                  }
                   options={[
                     { value: "fin", label: "Fin seal" },
                     { value: "lap", label: "Lap seal" },
                   ]}
                 />
                 <span className="text-[11px] text-muted">
-                  Starting default — change me (geometry-based, not sourced). 10 mm seal: fin = 20 mm, lap = 10 mm. Apna total upar likho.
+                  Starting default — change me (geometry-based, not sourced). 10 mm seal: fin = 20 mm, lap = 10 mm. Agar aapne apna total likha hai
+                  to switch use nahi badlega.
                 </span>
               </div>
             )}
@@ -313,6 +286,13 @@ export default function PouchCostTool() {
             )}
           </Card>
 
+          {wasteClamped && (
+            <Notice tone="warn">
+              Waste {MAX_RUN_WASTE_PERCENT}% ya usse zyada likha hai. Calculation mein ise {MAX_RUN_WASTE_PERCENT}% par roka gaya hai (100% par film
+              infinite ho jati). Waste % dobara check karo.
+            </Notice>
+          )}
+
           <Card title="4. Conversion" hint="Apne plant ke rate daalo. India ka koi bharosemand published ₹/kg schedule nahi hai.">
             <div className="space-y-3">
               {stageIds.map((id) => (
@@ -327,7 +307,7 @@ export default function PouchCostTool() {
           </Card>
 
           <Card title="5. Cylinder / plate" hint="Tooling sirf first order par lagti hai. Repeat order mein nahi.">
-            <Toggle label="Printed job" checked={job.printed} onChange={(checked) => patch({ printed: checked })} help="Plain pouch ho to band kar do — ink aur cylinder hat jayenge." />
+            <Toggle label="Printed job" checked={job.printed} onChange={(checked) => patch({ printed: checked })} help="Plain pouch ho to band kar do — ink, cylinder / plate, printing conversion, print waste aur print setup metres sab hat jayenge." />
             {job.printed && (
               <>
                 <div className="mt-4">
@@ -405,23 +385,36 @@ export default function PouchCostTool() {
 
         <div id="fp-result" className="scroll-mt-36 space-y-6 lg:sticky lg:top-28 lg:col-span-5">
           <Card title="Cost per pouch" hint={`${formatInt(r.quantity)} pouches · ${formatNumber(r.structure.totalGsm)} GSM`}>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <OrderColumn title="First order" note={job.printed ? "tooling on" : "no tooling"} order={r.firstOrder} highlight />
-              <OrderColumn title="Repeat order" note="tooling off" order={r.repeatOrder} />
-            </div>
-            {r.tooling.total > 0 && (
-              <p className="mt-3 text-xs text-muted">
-                {gravure ? "Cylinder" : "Plate"} share on the first order: <strong className="text-primary">{formatInr(r.toolingPerPouch)}</strong> per pouch — isiliye first aur repeat ka rate alag hona chahiye.
-              </p>
+            {missingRates.length > 0 && (
+              <div className="mb-4">
+                <Notice tone="warn">
+                  {missingRates.join(", ")} ka film rate 0 hai, isliye yeh cost kam dikh raha hai. Structure mein uska ₹/kg daalo.
+                </Notice>
+              </div>
             )}
-            <div className="mt-5 border-t border-hairline pt-5">
-              <BreakdownChart title="First order — where the ex-GST price goes" parts={parts} perPieces={r.quantity} />
-            </div>
-            <div className="mt-4 rounded-2xl border border-hairline p-4">
-              <Row label="Ex-GST order value" value={formatInr(first.sellingPrice, 0)} />
-              <Row label={`GST ${formatNumber(book.gstPercent, 0)}% (shown separately)`} value={formatInr(first.gst, 0)} />
-              <Row strong label="Invoice total, first order" value={formatInr(first.invoiceTotal, 0)} />
-            </div>
+            {noQuantity ? (
+              <Notice>Quantity 0 hai. Order quantity daalo — tab cost per pouch, first vs repeat aur breakdown dikhega.</Notice>
+            ) : (
+              <>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <OrderColumn title="First order" note={job.printed ? "tooling on" : "no tooling"} order={r.firstOrder} highlight />
+                  <OrderColumn title="Repeat order" note="tooling off" order={r.repeatOrder} />
+                </div>
+                {r.tooling.total > 0 && (
+                  <p className="mt-3 text-xs text-muted">
+                    {gravure ? "Cylinder" : "Plate"} share on the first order: <strong className="text-primary">{formatInr(r.toolingPerPouch)}</strong> per pouch — isiliye first aur repeat ka rate alag hona chahiye.
+                  </p>
+                )}
+                <div className="mt-5 border-t border-hairline pt-5">
+                  <BreakdownChart title="First order — where the ex-GST price goes" parts={parts} perPieces={r.quantity} />
+                </div>
+                <div className="mt-4 rounded-2xl border border-hairline p-4">
+                  <Row label="Ex-GST order value" value={formatInr(firstShown.sellingPrice, 0)} />
+                  <Row label={`GST ${formatNumber(book.gstPercent, 0)}% (shown separately)`} value={formatInr(firstShown.gst, 0)} />
+                  <Row strong label="Invoice total, first order" value={formatInr(firstShown.invoicePrice, 0)} />
+                </div>
+              </>
+            )}
           </Card>
 
           <Card title="Film to buy">
@@ -431,8 +424,8 @@ export default function PouchCostTool() {
             </div>
             <div className="mt-4">
               <Row label="Film in pouches" value={`${formatNumber(r.netKg, 1)} kg`} />
-              <Row label="+ Layout trim" value={`${formatNumber(r.goodKg - r.netKg, 1)} kg`} />
-              <Row label="+ Process waste & setup" value={`${formatNumber(r.inputKg - r.goodKg, 1)} kg`} />
+              <Row label="+ Layout trim" value={`${formatNumber(r.trimKg, 1)} kg`} />
+              <Row label="+ Process waste & setup" value={`${formatNumber(r.processWasteKg, 1)} kg`} />
               <Row strong label="= Laminate to run" value={`${formatNumber(r.inputKg, 1)} kg`} sub={`${formatInt(r.inputMetres)} m × ${formatNumber(r.geometry.slitWidthMm, 0)} mm`} />
             </div>
           </Card>
@@ -479,6 +472,8 @@ export default function PouchCostTool() {
                     cylinder, trim aur GST nahi hai.
                   </p>
                 </>
+              ) : excelProblem ? (
+                <Notice tone="warn">{excelProblem} Purani sheet yahan #DIV/0! dikhati — isliye koi number nahi dikha rahe.</Notice>
               ) : (
                 <p className="text-xs text-muted">
                   Excel sheet sirf 3-side seal aur PET / MET PET / POLY / BOPP / BOPA / Alu foil jaanti hai. Pouch type 3SS karo aur wahi films rakho to comparison dikhega.

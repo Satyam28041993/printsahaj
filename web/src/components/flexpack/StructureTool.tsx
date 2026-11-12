@@ -1,17 +1,18 @@
 "use client";
 
 import React from "react";
-import { computeStructure, formatInr, formatNumber } from "@/lib/flexpack";
+import { computeStructure, filmsMissingRate, formatInr, formatNumber, structureInputFor } from "@/lib/flexpack";
 import { Card, Notice, Stat } from "./ui";
 import ModeBar from "./ModeBar";
 import StructureBuilder from "./StructureBuilder";
-import { structureInputFor, useJob, useRateBook } from "./store";
+import { useJob, useRateBook } from "./store";
 
 export default function StructureTool() {
   const { job } = useJob();
   const { book } = useRateBook();
   const result = computeStructure(structureInputFor(job, book));
-  const missingRate = result.lines.some((line) => line.kind === "film" && line.gsm > 0 && line.ratePerKg === 0);
+  const missing = filmsMissingRate(result);
+  const missingRate = missing.length > 0;
 
   return (
     <div className="space-y-6">
@@ -30,7 +31,7 @@ export default function StructureTool() {
             </div>
             {missingRate && (
               <div className="mt-4">
-                <Notice tone="warn">Kisi film ka rate 0 hai. Uska ₹/kg daalo, warna ₹/m² aur ₹/kg kam dikhega.</Notice>
+                <Notice tone="warn">{missing.join(", ")} ka rate 0 hai. Uska ₹/kg daalo, warna ₹/m² aur ₹/kg kam dikhega.</Notice>
               </div>
             )}
             <table className="mt-5 w-full text-xs">

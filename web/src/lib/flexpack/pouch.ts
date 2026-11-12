@@ -101,6 +101,14 @@ export function backSealAllowanceFor(type: BackSealType, sealWidth: number): num
   return type === "fin" ? 2 * pos(sealWidth) : pos(sealWidth);
 }
 
+/**
+ * Switching fin ↔ lap: re-fill the allowance only if it still holds the
+ * untouched pre-fill of the old type. A total the owner typed is kept.
+ */
+export function backSealAllowanceOnSwitch(current: number, from: BackSealType, to: BackSealType, sealWidth = 10): number {
+  return current === backSealAllowanceFor(from, sealWidth) ? backSealAllowanceFor(to, sealWidth) : current;
+}
+
 export interface InsideDimensions {
   type: PouchType;
   insideWidth: number;
