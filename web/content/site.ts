@@ -103,6 +103,7 @@ export const printSahajSite: PrintSahajSite = {
       { label: "Products", href: "/products" },
       { label: "CRM", href: "/crm" },
       { label: "Tools", href: "/tools" },
+      { label: "Calculators", href: "/calculators" },
       { label: "Work", href: "/work" },
       // /insights stays on its URL. It returns here when there is a piece to publish.
       { label: "About", href: "/about" },
