@@ -585,6 +585,13 @@ export const home: HomeContent = {
     ],
     tools: [
       {
+        name: "Flexible Packaging Calculators",
+        kind: "tool",
+        tag: "Live",
+        description: "Laminate GSM, pouch cost (3SS, center seal, standy), cylinder spread, ink and adhesive consumption.",
+        href: "/calculators/flexible/",
+      },
+      {
         name: "Label Rate & Matrix Costing",
         kind: "tool",
         tag: "Live",
