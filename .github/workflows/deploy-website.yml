@@ -80,6 +80,12 @@ jobs:
       # after the files are already uploaded. A new name makes the first deploy
       # upload everything and delete nothing; old orphaned chunks stay behind
       # harmlessly. Later deploys diff against the v4 file as usual.
+      #
+      # state-name v5 (Nov 2026): the same thing happened to the v4 state. A
+      # run that failed part-way had already removed the old _next/static/<buildId>
+      # files but never wrote the new state, so every later run tried to delete
+      # that folder again and died with 550 after uploading. A fresh state name
+      # uploads everything once, deletes nothing, and writes a clean state.
       # continue-on-error only lets the retry step below run; the job still
       # fails if the retry fails too.
       - name: Deploy to Hostinger via FTP
@@ -92,7 +98,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v4.json
+          state-name: .ftp-deploy-sync-state-v5.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*
@@ -111,7 +117,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: web/out/
           server-dir: ${{ secrets.FTP_SERVER_DIR || './' }}
-          state-name: .ftp-deploy-sync-state-v4.json
+          state-name: .ftp-deploy-sync-state-v5.json
           dangerous-clean-slate: false
           exclude: |
             **/.git*

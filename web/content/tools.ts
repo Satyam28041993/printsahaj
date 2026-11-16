@@ -48,6 +48,51 @@ export const tools: ToolsContent = {
       status: "Open it online with a sign-in, or run it on your own computer",
     },
     {
+      name: "Flexible Packaging Calculators",
+      href: "/calculators/flexible/",
+      category: "Flexible packaging",
+      visual: "ups",
+      summary:
+        "All four flexible-packaging tools and the rate book in one place: structure GSM, pouch cost, cylinder spread, ink and adhesive.",
+      status: "Live",
+    },
+    {
+      name: "Flexible Structure / GSM / Yield",
+      href: "/calculators/flexible/structure/",
+      category: "Flexible packaging",
+      visual: "gsm",
+      summary:
+        "2, 3 or 4-layer laminate builder: total GSM, m²/kg, ₹/m² and ₹/kg from micron × density and dry coat weights.",
+      status: "Live",
+    },
+    {
+      name: "Flexible Pouch Cost",
+      href: "/calculators/flexible/cost/",
+      category: "Flexible packaging",
+      visual: "label",
+      summary:
+        "3-side seal, center seal and standy pouch costing. First order vs repeat, cylinder share, zipper, GST shown separately.",
+      status: "Live",
+    },
+    {
+      name: "Cylinder / Plate Cost Spread",
+      href: "/calculators/flexible/cylinder/",
+      category: "Flexible packaging",
+      visual: "repeat",
+      summary:
+        "Gravure cylinder or flexo plate cost from face length × circumference × ₹/cm² × colours, spread over the order.",
+      status: "Live",
+    },
+    {
+      name: "Ink & Adhesive Consumption",
+      href: "/calculators/flexible/ink/",
+      category: "Flexible packaging",
+      visual: "board",
+      summary:
+        "Dry and wet kg of ink and adhesive from web area, coverage %, dry GSM and solids %.",
+      status: "Live",
+    },
+    {
       name: "Label Rate & Matrix Costing",
       href: "/calculators/?tab=label-rate",
       category: "Calculator",
@@ -90,42 +135,6 @@ export const tools: ToolsContent = {
       visual: "board",
       summary:
         "3-ply board bursting strength estimator with 1.45 flute take-up.",
-      status: "Live",
-    },
-    {
-      name: "Flexible Structure / GSM / Yield",
-      href: "/calculators/flexible/structure/",
-      category: "Flexible packaging",
-      visual: "gsm",
-      summary:
-        "2, 3 or 4-layer laminate builder: total GSM, m²/kg, ₹/m² and ₹/kg from micron × density and dry coat weights.",
-      status: "Live",
-    },
-    {
-      name: "Flexible Pouch Cost",
-      href: "/calculators/flexible/cost/",
-      category: "Flexible packaging",
-      visual: "label",
-      summary:
-        "3-side seal, center seal and standy pouch costing. First order vs repeat, cylinder share, zipper, GST shown separately.",
-      status: "Live",
-    },
-    {
-      name: "Cylinder / Plate Cost Spread",
-      href: "/calculators/flexible/cylinder/",
-      category: "Flexible packaging",
-      visual: "repeat",
-      summary:
-        "Gravure cylinder or flexo plate cost from face length × circumference × ₹/cm² × colours, spread over the order.",
-      status: "Live",
-    },
-    {
-      name: "Ink & Adhesive Consumption",
-      href: "/calculators/flexible/ink/",
-      category: "Flexible packaging",
-      visual: "board",
-      summary:
-        "Dry and wet kg of ink and adhesive from web area, coverage %, dry GSM and solids %.",
       status: "Live",
     },
   ],

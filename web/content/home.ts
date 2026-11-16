@@ -585,6 +585,41 @@ export const home: HomeContent = {
     ],
     tools: [
       {
+        name: "Flexible Packaging Calculators",
+        kind: "tool",
+        tag: "Live",
+        description: "Laminate GSM, pouch cost (3SS, center seal, standy), cylinder spread, ink and adhesive consumption.",
+        href: "/calculators/flexible/",
+      },
+      {
+        name: "Structure / GSM / Yield",
+        kind: "tool",
+        tag: "Live",
+        description: "2, 3 or 4-layer laminate: total GSM, m²/kg, ₹/m² and ₹/kg.",
+        href: "/calculators/flexible/structure/",
+      },
+      {
+        name: "Pouch Cost",
+        kind: "tool",
+        tag: "Live",
+        description: "3-side seal, center seal and standy. First order vs repeat, GST shown separately.",
+        href: "/calculators/flexible/cost/",
+      },
+      {
+        name: "Cylinder / Plate Cost Spread",
+        kind: "tool",
+        tag: "Live",
+        description: "Gravure cylinder or flexo plate cost, and its share on every pouch of the first order.",
+        href: "/calculators/flexible/cylinder/",
+      },
+      {
+        name: "Ink & Adhesive Consumption",
+        kind: "tool",
+        tag: "Live",
+        description: "Dry and wet kg of ink and adhesive from web area, coverage and solids.",
+        href: "/calculators/flexible/ink/",
+      },
+      {
         name: "Label Rate & Matrix Costing",
         kind: "tool",
         tag: "Live",

@@ -5,6 +5,7 @@ import { Calculator, Layers, FileSpreadsheet, RotateCw, Box, Settings, Sparkles 
 import Link from "next/link";
 import { labelAreaPer1kSqm, labelRatePerThousand } from "@/lib/labelRate";
 import { isCalculatorTab, type CalculatorTab } from "@content/tools";
+import { flexpack } from "@content/flexpack";
 
 export default function CalculatorsPage() {
   const [activeTab, setActiveTab] = useState<CalculatorTab>("label-rate");
@@ -126,20 +127,31 @@ export default function CalculatorsPage() {
         </p>
       </div>
 
-      {/* Flexible packaging tools live on their own routes */}
-      <div className="max-w-7xl mx-auto">
-        <Link
-          href="/calculators/flexible/"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 px-5 py-4 text-left transition hover:bg-cyan-500/10"
-        >
-          <span>
-            <span className="block text-sm font-bold text-slate-900 dark:text-white">New: Flexible packaging calculators</span>
-            <span className="block text-xs text-slate-600 dark:text-slate-400">
-              Laminate GSM, pouch cost (3SS, center seal, standy), cylinder spread, ink &amp; adhesive consumption.
-            </span>
-          </span>
-          <span className="text-sm font-bold text-cyan-600 dark:text-cyan-400">Open →</span>
-        </Link>
+      {/* Flexible packaging tools live on their own routes — one button each */}
+      <div className="max-w-7xl mx-auto rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Flexible packaging calculators</h2>
+          <Link href="/calculators/flexible/" className="text-sm font-bold text-cyan-600 dark:text-cyan-400 hover:underline">
+            Open all →
+          </Link>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+          {flexpack.tools.map((tool) => (
+            <Link
+              key={tool.slug}
+              href={tool.href}
+              className="rounded-xl bg-cyan-500 px-4 py-3 text-center text-sm font-bold text-white shadow-md shadow-cyan-500/25 transition hover:bg-cyan-600"
+            >
+              {tool.name}
+            </Link>
+          ))}
+          <Link
+            href={flexpack.rateBook.href}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold text-slate-800 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {flexpack.rateBook.name}
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
